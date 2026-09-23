@@ -324,6 +324,19 @@ class MockHandballApiService implements HandballApiService {
         final pos = positions[seed % positions.length];
         final goals = 40 + (seed * 13) % 110;
         final assists = 10 + (seed * 7) % 60;
+        final stats = PlayerSeasonSummary(
+          games: 18 + seed % 8,
+          goals: pos == 'GK' ? 0 : goals,
+          shots: pos == 'GK' ? 0 : goals + 40 + seed % 50,
+          goalRate: pos == 'GK' ? null : 45 + (seed * 3) % 25,
+          assists: assists,
+          steals: 3 + seed % 20,
+          blocks: 2 + seed % 15,
+          turnovers: 5 + seed % 20,
+          saves: pos == 'GK' ? 120 + seed % 90 : null,
+          saveRate: pos == 'GK' ? 28 + (seed % 12).toDouble() : null,
+          playMinutes: 300 + (seed * 37) % 900,
+        );
         players.add(Player(
           id: 'p-${team.teamNum}-$i',
           name: '${surnames[seed % surnames.length]}'
@@ -332,12 +345,46 @@ class MockHandballApiService implements HandballApiService {
           teamLogoUrl: team.logoUrl,
           number: 1 + (seed * 5) % 40,
           position: pos,
-          goals: pos == 'GK' ? 0 : goals,
-          statLine: pos == 'GK' ? '선방 ${120 + seed % 90}' : '$goals골 · ${assists}AS',
+          stats: stats,
+          statLine: stats.line,
         ));
       }
     }
     return players;
+  }
+
+  @override
+  Future<PlayerDetail> fetchPlayerDetail(Player player) async {
+    await _delay();
+    final stats = player.stats ?? const PlayerSeasonSummary();
+    return PlayerDetail(
+      player: player,
+      career: PlayerSeasonSummary(
+        games: (stats.games ?? 20) * 5,
+        goals: stats.goals * 5,
+        shots: stats.shots * 5,
+        goalRate: stats.goalRate,
+        assists: stats.assists * 5,
+        steals: stats.steals * 5,
+        blocks: stats.blocks * 5,
+        turnovers: stats.turnovers * 5,
+        saves: stats.saves == null ? null : stats.saves! * 5,
+        saveRate: stats.saveRate,
+        playMinutes: (stats.playMinutes ?? 0) * 5,
+      ),
+      seasons: [
+        for (var i = 0; i < 3; i++)
+          PlayerSeasonRow(
+            season: '${2025 - i}-${2026 - i}',
+            postseason: false,
+            stats: stats,
+          ),
+      ],
+      birthLabel: '1997년 2월 3일',
+      heightCm: 180,
+      weightKg: 78,
+      school: '한국체육대학교',
+    );
   }
 
   @override

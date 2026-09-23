@@ -67,6 +67,18 @@ void main() {
         ' ${players.first.statLine}');
     expect(players, isNotEmpty);
 
+    // 선수 상세 — 목록에 없는 경기 수·프로필이 채워지는지
+    final withSeq = players.firstWhere((p) => p.playerSeq != null);
+    final detail = await api.fetchPlayerDetail(withSeq);
+    print('  상세: ${detail.player.name} '
+        '${detail.heightCm}cm/${detail.weightKg}kg ${detail.school}');
+    print('    25-26: ${detail.statsForSeason('2025').summaryCells}');
+    print('    통산: ${detail.career.summaryCells}');
+    print('    시즌별 ${detail.seasons.length}행');
+    expect(detail.seasons, isNotEmpty);
+    expect(detail.career.games, isNotNull,
+        reason: '통산 경기 수는 상세에서만 온다');
+
     for (final cat in StatCategory.values) {
       final top = await api.fetchTopPlayers(Gender.men, cat);
       print('  ${cat.label}: ${top.take(2).map((p) => '${p.name} ${p.value}')}');

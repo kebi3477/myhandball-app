@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/schedule_repository.dart';
+import '../../../data/services/api_client.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
@@ -33,6 +35,27 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
       .read(preferencesRepositoryProvider)
       .isFavoritePlayer(widget.player.id);
 
+  /// 목록에는 경기 수와 프로필이 없어서 상세를 따로 받는다.
+  /// 실패해도 시트는 목록에서 받은 기록으로 열린다.
+  PlayerDetail? _detail;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final detail = await ref
+          .read(handballApiServiceProvider)
+          .fetchPlayerDetail(widget.player);
+      if (mounted) setState(() => _detail = detail);
+    } on ApiException {
+      // 프로필 없이 그대로 둔다.
+    }
+  }
+
   Future<void> _toggleFavorite() async {
     await ref
         .read(preferencesRepositoryProvider)
@@ -45,14 +68,12 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
     final c = context.mh;
     final p = widget.player;
 
-    // 선수 상세(`GET /api/player/:playerSeq`)는 통산·시즌별 기록까지 주지만
-    // 이 시트는 목록에서 받은 요약만 보여준다.
-    final summary = <(String, String)>[
-      ('기록', p.statLine.split(' · ').first),
-      ('포지션', p.positionText),
-      ('등번호', p.numberText),
-      ('소속', p.teamName),
-    ];
+    // 상세가 오면 경기 수까지 채워진다. 오기 전에는 목록 기록으로 그린다.
+    final season = ref.read(preferencesRepositoryProvider).season;
+    final stats = _detail?.statsForSeason(season.year) ??
+        p.stats ??
+        const PlayerSeasonSummary();
+    final summary = stats.summaryCells;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -134,7 +155,7 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
             ],
           ),
           const SizedBox(height: 20),
-          Text('25-26 시즌 요약',
+          Text('${season.label} 시즌 요약',
               style: MhText.custom(
                   size: 13, weight: FontWeight.w700, color: c.text)),
           const SizedBox(height: MhSpacing.xs),
@@ -165,10 +186,67 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Text('경기별 기록은 선수 기록 API가 생기면 채워진다',
-              style: MhText.custom(
-                  size: 11, weight: FontWeight.w400, color: c.textFaint)),
+          if (_detail case final detail?) ...[
+            if (detail.profileFacts.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text('프로필',
+                  style: MhText.custom(
+                      size: 13, weight: FontWeight.w700, color: c.text)),
+              const SizedBox(height: MhSpacing.xs),
+              for (final (label, value) in detail.profileFacts)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 72,
+                        child: Text(label, style: MhText.caption(c.textSub)),
+                      ),
+                      Expanded(
+                        child: Text(value,
+                            style: MhText.custom(
+                                size: 13,
+                                weight: FontWeight.w600,
+                                color: c.text)),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 20),
+            Text('정규리그 통산',
+                style: MhText.custom(
+                    size: 13, weight: FontWeight.w700, color: c.text)),
+            const SizedBox(height: MhSpacing.xs),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+              decoration: BoxDecoration(
+                color: c.card,
+                borderRadius: BorderRadius.circular(MhRadius.chip),
+              ),
+              child: Row(
+                children: [
+                  for (final (label, value) in detail.career.summaryCells)
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(value,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: MhText.custom(
+                                  size: 18,
+                                  weight: FontWeight.w800,
+                                  color: c.text)),
+                          const SizedBox(height: 4),
+                          Text(label, style: MhText.caption(c.textSub)),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           MhTap(
             onTap: _toggleFavorite,

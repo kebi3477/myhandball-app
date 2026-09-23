@@ -12,9 +12,9 @@ import '../../core/ui/team_logo.dart';
 
 /// 선수 비교. 시안 PLAYER COMPARE.
 ///
-/// 두 선수를 고르면 5개 축 레이더 차트로 비교한다. 축 값은 실제 세부 기록이
-/// 없어 `statLine`에서 뽑을 수 있는 것과 등번호·포지션으로 만든 근사치다 —
-/// 선수 기록 API가 생기면 그 값으로 바꾼다.
+/// 두 선수를 고르면 5개 축 레이더 차트로 비교한다. **축 값은 `/api/player`가
+/// 주는 실제 시즌 기록**이고, 비교 대상 중 최대값을 1로 잡아 상대 비교로
+/// 읽는다 (골 몇 개가 만점인지에 대한 절대 기준이 없다).
 class PlayerCompareScreen extends ConsumerStatefulWidget {
   const PlayerCompareScreen({super.key, required this.candidates});
 
@@ -141,33 +141,35 @@ class _PlayerCompareScreenState extends ConsumerState<PlayerCompareScreen> {
     );
   }
 
-  /// statLine에서 뽑을 수 있는 값으로 0~1 축 값을 만든다.
+  /// 다섯 축을 **실제 시즌 기록**으로 만든다.
+  ///
+  /// 예전에는 득점·어시스트만 `statLine` 문자열에서 뽑고 나머지 셋은
+  /// 등번호·포지션으로 지어냈다. `/api/player`가 기록을 통째로 주므로
+  /// 더 이상 그럴 이유가 없다.
+  ///
+  /// 각 축은 **비교 대상 중 최대값 기준**으로 0~1이 된다. 절대 기준이 없어
+  /// (골 200이 만점인지 알 수 없다) 상대 비교로 읽는 게 맞다.
   List<double> _valuesOf(Player p) {
-    final goals = _firstNumber(p.statLine).toDouble();
-    final assists = _lastNumber(p.statLine).toDouble();
-    final maxGoals = widget.candidates
-        .map((x) => _firstNumber(x.statLine))
-        .fold<int>(1, (a, b) => a > b ? a : b);
-    final maxAssists = widget.candidates
-        .map((x) => _lastNumber(x.statLine))
-        .fold<int>(1, (a, b) => a > b ? a : b);
+    final stats = p.stats;
+    if (stats == null) return List.filled(_axes.length, 0.05);
+
+    double axis(num Function(PlayerSeasonSummary s) pick) {
+      final mine = pick(stats).toDouble();
+      final max = widget.candidates
+          .map((x) => x.stats == null ? 0.0 : pick(x.stats!).toDouble())
+          .fold<double>(0, (a, b) => a > b ? a : b);
+      if (max <= 0) return 0.05;
+      return (mine / max).clamp(0.05, 1.0);
+    }
 
     return [
-      (goals / maxGoals).clamp(0.05, 1.0),
-      (assists / maxAssists).clamp(0.05, 1.0),
-      // 출전·성공률·수비는 실제 값이 없어 등번호·포지션에서 만든 근사치다.
-      (((p.number ?? 0) % 20) / 20).clamp(0.2, 1.0),
-      ((goals + assists) % 40 / 40).clamp(0.2, 1.0),
-      (p.position == 'GK' ? 1.0 : (p.position == 'PV' ? 0.8 : 0.45)),
+      axis((s) => s.goals),
+      axis((s) => s.assists),
+      axis((s) => s.playMinutes ?? 0),
+      // 골키퍼는 슛 성공률이 없어 방어율로 대신한다.
+      axis((s) => s.goalRate ?? s.saveRate ?? 0),
+      axis((s) => s.defense),
     ];
-  }
-
-  int _firstNumber(String s) =>
-      int.tryParse(RegExp(r'\d+').firstMatch(s)?.group(0) ?? '') ?? 0;
-
-  int _lastNumber(String s) {
-    final all = RegExp(r'\d+').allMatches(s).toList();
-    return all.isEmpty ? 0 : int.parse(all.last.group(0)!);
   }
 }
 

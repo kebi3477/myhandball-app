@@ -45,6 +45,9 @@ abstract interface class HandballApiService {
   /// `GET /api/player?gender=`
   Future<List<Player>> fetchPlayers(Gender gender);
 
+  /// `GET /api/player/:playerSeq` — 프로필 + 통산·시즌별 기록.
+  Future<PlayerDetail> fetchPlayerDetail(Player player);
+
   /// `GET /api/game/:matchSeq` + `GET /api/game/:matchSeq/live`
   ///
   /// 맞대결 기록은 대응 엔드포인트가 없어서 일정에서 계산한다.

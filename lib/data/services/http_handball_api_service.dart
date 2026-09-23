@@ -288,28 +288,75 @@ class HttpHandballApiService implements HandballApiService {
 
   Player _player(Map<String, dynamic> p, String name) {
     final seq = _int(p['playerSeq']);
-    final stats = _map(p['stats']);
+    final stats = _stats(p['stats']);
     return Player(
       id: seq != null ? 'p$seq' : 'n:$name',
+      playerSeq: seq,
       name: name,
       teamName: _str(p['teamName']) ?? '',
       teamLogoUrl: _str(p['teamLogoUrl']),
+      photoUrl: _str(p['photoUrl']),
       number: _int(p['number']),
       position: _str(p['position']),
-      goals: _int(stats['goals']),
-      statLine: _statLine(stats, _str(p['position'])),
+      stats: stats,
+      statLine: stats.line,
     );
   }
 
-  /// 카드 아래 한 줄. 골키퍼는 선방이 의미 있고 나머지는 득점·어시스트다.
-  String _statLine(Map<String, dynamic> stats, String? position) {
-    if (position == 'GK') {
-      final saves = _int(stats['saves']);
-      if (saves != null) return '선방 $saves';
+  PlayerSeasonSummary _stats(Object? raw) {
+    final s = _map(raw);
+    return PlayerSeasonSummary(
+      games: _int(s['games']),
+      goals: _int(s['goals']) ?? 0,
+      shots: _int(s['shots']) ?? 0,
+      goalRate: _num(s['goalRate'])?.toDouble(),
+      assists: _int(s['assists']) ?? 0,
+      steals: _int(s['steals']) ?? 0,
+      blocks: _int(s['blocks']) ?? 0,
+      turnovers: _int(s['turnovers']) ?? 0,
+      saves: _int(s['saves']),
+      saveRate: _num(s['saveRate'])?.toDouble(),
+      playMinutes: PlayerSeasonSummary.minutesFromLabel(_str(s['playTime'])),
+    );
+  }
+
+  @override
+  Future<PlayerDetail> fetchPlayerDetail(Player player) async {
+    final seq = player.playerSeq;
+    if (seq == null) {
+      throw const ApiException('이 선수는 상세 기록이 없어요');
     }
-    final goals = _int(stats['goals']) ?? 0;
-    final assists = _int(stats['assists']) ?? 0;
-    return '$goals골 · ${assists}AS';
+    final j = _map(await client.get('/player/$seq'));
+
+    return PlayerDetail(
+      player: Player(
+        id: player.id,
+        playerSeq: seq,
+        name: _str(j['name']) ?? player.name,
+        teamName: _str(j['teamName']) ?? player.teamName,
+        teamLogoUrl: _str(j['teamLogoUrl']) ?? player.teamLogoUrl,
+        photoUrl: _str(j['photoUrl']) ?? player.photoUrl,
+        number: _int(j['number']) ?? player.number,
+        position: _str(j['position']) ?? player.position,
+        stats: player.stats,
+        statLine: player.statLine,
+      ),
+      nameEn: _str(j['nameEn']),
+      birthLabel: _str(j['birthLabel']),
+      heightCm: _int(j['heightCm']),
+      weightKg: _int(j['weightKg']),
+      school: _str(j['school']),
+      career: _stats(j['careerStats']),
+      seasons: [
+        for (final raw in _list(j['seasonStats']))
+          if (_map(raw) case final row)
+            PlayerSeasonRow(
+              season: _str(row['season']) ?? '',
+              postseason: row['postseason'] == true,
+              stats: _stats(row['stats']),
+            ),
+      ],
+    );
   }
 
   @override
