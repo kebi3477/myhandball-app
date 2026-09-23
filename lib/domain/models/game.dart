@@ -1,5 +1,14 @@
 import 'team.dart';
 
+/// 외부 중계 링크. API `GameItem.liveLinks[]`.
+class LiveLink {
+  const LiveLink({required this.provider, required this.url});
+
+  /// `naver` / `daum` 등.
+  final String provider;
+  final String url;
+}
+
 /// 경기 상태. 시안 위젯 명세의 `pre / live / final`과 같다.
 ///
 /// 현재 API(`/api/schedule`)는 상태를 직접 주지 않고 `scoreText`와 경기
@@ -29,6 +38,7 @@ class Game {
     this.canBook = false,
     this.matchSeq,
     this.startsAt,
+    this.liveLinks = const [],
   });
 
   final String id;
@@ -58,8 +68,22 @@ class Game {
   /// 경기 시작 시각. API가 `startsAt`(ISO 8601, `+09:00`)으로 준다.
   final DateTime? startsAt;
 
+  /// 외부 중계 링크. v1 웹이 그랬듯 네이버를 먼저 고른다.
+  final List<LiveLink> liveLinks;
+
   /// 서버 기능(예측·MVP·중계)을 걸 수 있는 경기인지.
   bool get hasDetail => matchSeq != null;
+
+  /// "중계 보기"가 열 주소. 경기별 링크가 없으면 `null`이고,
+  /// 그때는 연맹 중계 편성표([AppConfig.broadcastUrl])로 간다.
+  String? get liveUrl {
+    for (final provider in const ['naver', 'daum']) {
+      for (final link in liveLinks) {
+        if (link.provider == provider) return link.url;
+      }
+    }
+    return liveLinks.isEmpty ? null : liveLinks.first.url;
+  }
 
   bool get hasScore => status != GameStatus.pre;
 

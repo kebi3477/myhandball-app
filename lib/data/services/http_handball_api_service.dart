@@ -150,6 +150,12 @@ class HttpHandballApiService implements HandballApiService {
       scoreHome: _int(j['scoreHome']),
       scoreAway: _int(j['scoreAway']),
       venue: _str(j['venue']),
+      liveLinks: [
+        for (final raw in _list(j['liveLinks']))
+          if (_map(raw) case final l)
+            if (_str(l['url']) case final url?)
+              LiveLink(provider: _str(l['provider']) ?? '', url: url),
+      ],
     );
   }
 

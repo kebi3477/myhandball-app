@@ -26,6 +26,26 @@ abstract final class AppConfig {
   static const openGuide =
       bool.fromEnvironment('MH_OPEN_GUIDE', defaultValue: false);
 
+  /// 중계 편성표. 시안이 "중계 보기"에 걸어 둔 주소다.
+  /// 경기별 네이버 중계 링크가 있으면 그쪽을 먼저 연다.
+  static const broadcastUrl =
+      'https://www.koreahandball.com/medianews/broadcast.php';
+
+  /// 예매. 시안이 "예매하기"에 걸어 둔 주소다.
+  static const ticketUrl = 'https://www.ticketlink.co.kr/sports/handball';
+
+  /// 개인정보 처리방침·이용약관. **웹에서 관리한다.**
+  /// 앱에 문구를 넣으면 고칠 때마다 심사를 다시 받아야 한다.
+  /// `--dart-define=MH_PRIVACY_URL=...`로 바꿀 수 있다.
+  static const privacyUrl = String.fromEnvironment(
+    'MH_PRIVACY_URL',
+    defaultValue: 'https://myhandball.kro.kr/privacy',
+  );
+  static const termsUrl = String.fromEnvironment(
+    'MH_TERMS_URL',
+    defaultValue: 'https://myhandball.kro.kr/terms',
+  );
+
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).
   static const guideLessonCount = 5;
 

@@ -119,10 +119,13 @@ class ScheduleState {
     return null;
   }
 
-  int get upcomingMyTeamCount => myTeamDays
+  /// 아직 안 치른 마이팀 경기. 캘린더 내보내기가 이 목록을 쓴다.
+  List<Game> get upcomingMyTeamGames => myTeamDays
       .expand((d) => d.games)
       .where((g) => g.status == GameStatus.pre)
-      .length;
+      .toList();
+
+  int get upcomingMyTeamCount => upcomingMyTeamGames.length;
 
   ScheduleState copyWith({
     ScheduleView? view,

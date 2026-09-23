@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/app_config.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 
@@ -88,10 +90,20 @@ class GameCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                   ),
                   const SizedBox(width: MhSpacing.xs),
-                  _OutlineButton(label: game.watchLabel),
+                  _OutlineButton(
+                    label: game.watchLabel,
+                    // 시안은 연맹 중계 편성표로 보낸다. 경기별 네이버 중계
+                    // 링크가 오면 그쪽이 더 쓸모 있어 먼저 쓴다.
+                    onTap: () => openExternalUrl(
+                        context, game.liveUrl ?? AppConfig.broadcastUrl),
+                  ),
                   if (game.canBook) ...[
                     const SizedBox(width: MhSpacing.xs),
-                    const _FilledButton(label: '예매하기'),
+                    _FilledButton(
+                      label: '예매하기',
+                      onTap: () =>
+                          openExternalUrl(context, AppConfig.ticketUrl),
+                    ),
                   ],
                 ],
               ),
@@ -132,14 +144,17 @@ class _CardTeam extends StatelessWidget {
 }
 
 class _OutlineButton extends StatelessWidget {
-  const _OutlineButton({required this.label});
+  const _OutlineButton({required this.label, required this.onTap});
 
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return Container(
+    return MhTap(
+      onTap: onTap,
+      child: Container(
       height: 32,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -147,21 +162,26 @@ class _OutlineButton extends StatelessWidget {
         border: Border.all(color: c.border),
         borderRadius: BorderRadius.circular(MhRadius.chip),
       ),
-      child: Text(label,
-          style:
-              MhText.custom(size: 12, weight: FontWeight.w700, color: c.text)),
+        child: Text(label,
+            style: MhText.custom(
+                size: 12, weight: FontWeight.w700, color: c.text)),
+      ),
     );
   }
 }
 
 class _FilledButton extends StatelessWidget {
-  const _FilledButton({required this.label});
+  const _FilledButton({required this.label, required this.onTap});
 
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return MhTap(
+      haptic: MhHaptic.impact,
+      onTap: onTap,
+      child: Container(
       height: 32,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -169,9 +189,10 @@ class _FilledButton extends StatelessWidget {
         color: MhColors.brand,
         borderRadius: BorderRadius.circular(MhRadius.chip),
       ),
-      child: Text(label,
-          style: MhText.custom(
-              size: 12, weight: FontWeight.w700, color: Colors.white)),
+        child: Text(label,
+            style: MhText.custom(
+                size: 12, weight: FontWeight.w700, color: Colors.white)),
+      ),
     );
   }
 }

@@ -5,6 +5,8 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/schedule_day.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/change_my_team.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
@@ -60,7 +62,11 @@ class MyTeamCalendarView extends ConsumerWidget {
                           color: context.mh.textSub)),
                 ),
               const SizedBox(height: 14),
-              _IcsExportCard(count: state.upcomingMyTeamCount),
+              _IcsExportCard(
+                count: state.upcomingMyTeamCount,
+                games: state.upcomingMyTeamGames,
+                teamName: state.myTeam?.name ?? 'MY팀',
+              ),
             ],
           ),
         ),
@@ -69,13 +75,13 @@ class MyTeamCalendarView extends ConsumerWidget {
   }
 }
 
-class _TeamHeader extends StatelessWidget {
+class _TeamHeader extends ConsumerWidget {
   const _TeamHeader({required this.state});
 
   final ScheduleState state;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
     final team = state.myTeam!;
     final total = state.myTeamDays.expand((d) => d.games).length;
@@ -96,7 +102,11 @@ class _TeamHeader extends StatelessWidget {
             ],
           ),
         ),
-        Text('팀변경 >', style: MhText.meta(c.textFaint)),
+        MhTap(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => changeMyTeam(context, ref, current: team),
+          child: Text('팀변경 >', style: MhText.meta(c.textFaint)),
+        ),
       ],
     );
   }
@@ -413,7 +423,16 @@ class _SelectedGameCard extends StatelessWidget {
               if (!finished) ...[
                 const SizedBox(width: MhSpacing.xs),
                 Expanded(
-                  child: Container(
+                  child: MhTap(
+                    haptic: MhHaptic.impact,
+                    onTap: () => exportGamesToCalendar(
+                      context,
+                      [game],
+                      calendarName:
+                          '${game.home.name} vs ${game.away.name}',
+                      fileName: 'myhandball-game.ics',
+                    ),
+                    child: Container(
                     height: 44,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
@@ -433,6 +452,7 @@ class _SelectedGameCard extends StatelessWidget {
                                 color: Colors.white)),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ],
@@ -467,11 +487,18 @@ class _MiniTeam extends StatelessWidget {
 }
 
 /// 시안 하단의 ICS 내보내기 카드.
-/// 기존 API에 `/api/schedule/ics/my-team`이 있어 나중에 여기에 연결한다.
+///
+/// 서버에도 `/api/schedule/ics/my-team`이 있지만 시즌 전체만 준다.
+/// 경기 하나만 넣는 버튼과 경로를 하나로 두려고 앱에서 만든다 ([Ics]).
 class _IcsExportCard extends StatelessWidget {
-  const _IcsExportCard({required this.count});
+  const _IcsExportCard({required this.count, required this.games, required this.teamName});
 
   final int count;
+
+  /// 남은 경기. 이미 끝난 경기를 캘린더에 넣을 이유가 없다.
+  final List<Game> games;
+
+  final String teamName;
 
   @override
   Widget build(BuildContext context) {
@@ -512,17 +539,26 @@ class _IcsExportCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: MhSpacing.xs),
-          Container(
-            height: 34,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: MhColors.brand,
-              borderRadius: BorderRadius.circular(17),
+          MhTap(
+            haptic: MhHaptic.impact,
+            onTap: () => exportGamesToCalendar(
+              context,
+              games,
+              calendarName: '$teamName 일정',
+              fileName: 'myhandball-$teamName.ics',
             ),
-            child: Text('내보내기',
-                style: MhText.custom(
-                    size: 13, weight: FontWeight.w700, color: Colors.white)),
+            child: Container(
+              height: 34,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: MhColors.brand,
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: Text('내보내기',
+                  style: MhText.custom(
+                      size: 13, weight: FontWeight.w700, color: Colors.white)),
+            ),
           ),
         ],
       ),

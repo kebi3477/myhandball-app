@@ -5,10 +5,10 @@ import '../../../config/app_config.dart';
 import '../../../domain/models/season.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../view_models/settings_view_model.dart';
-import 'policy_screen.dart';
 
 /// 설정 화면. 시안 SETTINGS PAGE.
 class SettingsScreen extends ConsumerWidget {
@@ -50,21 +50,18 @@ class SettingsScreen extends ConsumerWidget {
           ]),
           const SizedBox(height: MhSpacing.sm),
           _Group(children: [
+            // 문구는 웹에서 관리한다. 앱에 넣으면 고칠 때마다 심사를
+            // 다시 받아야 한다.
             _LinkRow(
               label: '개인정보 처리방침',
               trailing: '>',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                    builder: (_) => const PolicyScreen()),
-              ),
+              onTap: () => openExternalUrl(context, AppConfig.privacyUrl),
             ),
             _Divider(),
             _LinkRow(
               label: '서비스 이용약관',
               trailing: '>',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const TermsScreen()),
-              ),
+              onTap: () => openExternalUrl(context, AppConfig.termsUrl),
             ),
             _Divider(),
             _LinkRow(

@@ -28,6 +28,12 @@ dependencies:
   # 기기 설정 영구 저장. 익명 기기 ID(X-Device-Id)도 여기 남는다.
   shared_preferences: ^2.3.2
 
+  # 중계·예매 같은 외부 링크 열기
+  url_launcher: ^6.3.1
+
+  # 경기 일정을 .ics로 내보내 캘린더에 넣기
+  share_plus: ^11.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
