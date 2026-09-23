@@ -57,12 +57,16 @@ class SettingsScreen extends ConsumerWidget {
               trailing: '>',
               onTap: () => openExternalUrl(context, AppConfig.privacyUrl),
             ),
-            _Divider(),
-            _LinkRow(
-              label: '서비스 이용약관',
-              trailing: '>',
-              onTap: () => openExternalUrl(context, AppConfig.termsUrl),
-            ),
+            // 약관 문서가 아직 없다. 주소가 생기기 전에는 줄을 숨긴다 —
+            // 눌러서 404를 보여주느니 없는 편이 낫다.
+            if (AppConfig.termsUrl.isNotEmpty) ...[
+              _Divider(),
+              _LinkRow(
+                label: '서비스 이용약관',
+                trailing: '>',
+                onTap: () => openExternalUrl(context, AppConfig.termsUrl),
+              ),
+            ],
             _Divider(),
             _LinkRow(
               label: '앱 버전',

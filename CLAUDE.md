@@ -169,11 +169,15 @@ lib/
 |---|---|
 | 중계 보기 | 경기별 네이버 중계 링크(`liveLinks`), 없으면 `AppConfig.broadcastUrl` |
 | 예매하기 | `AppConfig.ticketUrl` (티켓링크) |
-| 개인정보 처리방침 · 이용약관 | `MH_PRIVACY_URL` / `MH_TERMS_URL` dart-define |
+| 개인정보 처리방침 | `GET /api/policy/privacy/page` (API가 서빙) |
 | 캘린더에 추가 · 내보내기 | 앱에서 만든 `.ics` (`domain/ics.dart`) |
 
-**정책 문구는 앱에 넣지 않는다.** 고칠 때마다 심사를 다시 받아야 해서 웹으로
-뺐다. 기본 URL은 `myhandball.lab241.com/privacy`·`/terms`이고 dart-define으로 바꾼다.
+**정책 문구는 앱에 넣지 않는다.** 고칠 때마다 심사를 다시 받아야 해서 서버로
+뺐다. API가 같은 원본으로 JSON(`/api/policy/privacy`)과 웹페이지
+(`/api/policy/privacy/page`)를 준다. 앱은 웹페이지를 연다.
+
+**서비스 이용약관은 아직 문서가 없다.** `MH_TERMS_URL`이 비어 있으면 설정에서
+그 줄을 숨긴다 — 눌러서 404를 보여주느니 없는 편이 낫다.
 
 `.ics`는 서버에도 `/api/schedule/ics/my-team`이 있지만 **시즌 전체만** 준다.
 경기 하나만 넣는 버튼과 경로를 하나로 두려고 앱에서 만든다. `test/ics_test.dart`가
@@ -500,10 +504,13 @@ Flutter에서는 `upgrader` 패키지나 원격 설정으로 대체하는 게 �
 
 ## 서버 상태
 
-`myhandball.lab241.com` (2026-09-24 이전 `myhandball.kro.kr`에서 옮김) —
-가정 회선 자체 호스팅. 도커로 postgres / redis / api / web(nginx) 4개 컨테이너를
-띄우고, **nginx가 443에서 TLS를 종료해 `/api/`를 `api:3000`으로 프록시**한다.
-API 프로세스 자체는 인증서를 갖지 않는다.
+**`myhandball.lab241.com`** — 회사 도메인 `lab241.com`의 하위 도메인(DNS 가비아),
+집 미니 PC에 도커로 올린다. `api + postgres + redis + caddy` 네 컨테이너이고
+**HTTPS는 Caddy가 인증서를 자동 발급·갱신**한다. 구성과 순서는 API 저장소의
+`deploy/README.md`에 있다.
+
+예전 `myhandball.kro.kr`은 Let's Encrypt의 `kro.kr` 공용 발급 한도에 걸려
+인증서를 못 받아 옮겼다.
 
 ### 같은 와이파이에서는 도메인으로 못 붙는다 — 중요
 
@@ -525,7 +532,7 @@ A 레코드와 같으면 루프백 상황이다. 그러므로
 ### 그 밖에
 
 - **앱은 웹과 달리 인증서가 만료되면 완전히 먹통이 된다** (iOS ATS).
-  자동 갱신(certbot 등) 또는 관리형 호스팅을 검토한다
+  Caddy가 자동 갱신하지만, 갱신이 멈춘 걸 앱 쪽에서 알 방법은 없다
 - 마지막 응답을 저장소가 캐시해 서버 장애 시에도 일정·순위가 보인다
 - 흰 화면 대신 `MhErrorView`가 오프라인/서버 오류를 구분해 띄운다
 - **인증서 피닝은 하지 않는다.** 갱신 때마다 배포된 구버전 앱이 전부 죽는다

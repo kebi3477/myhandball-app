@@ -48,17 +48,23 @@ abstract final class AppConfig {
   /// 예매. 시안이 "예매하기"에 걸어 둔 주소다.
   static const ticketUrl = 'https://www.ticketlink.co.kr/sports/handball';
 
-  /// 개인정보 처리방침·이용약관. **웹에서 관리한다.**
-  /// 앱에 문구를 넣으면 고칠 때마다 심사를 다시 받아야 한다.
-  /// `--dart-define=MH_PRIVACY_URL=...`로 바꿀 수 있다.
+  /// 개인정보 처리방침. **API가 웹페이지로 서빙한다**
+  /// (`GET /api/policy/privacy/page`). 앱에 문구를 넣으면 고칠 때마다 심사를
+  /// 다시 받아야 해서 서버로 뺐다. 스토어의 "개인정보 처리방침 URL"에도
+  /// 같은 주소를 넣는다.
+  ///
+  /// 서버에는 같은 내용의 JSON(`/api/policy/privacy`)도 있다. 앱 화면에서
+  /// 직접 그리고 싶어지면 그쪽을 쓰면 된다.
   static const privacyUrl = String.fromEnvironment(
     'MH_PRIVACY_URL',
-    defaultValue: 'https://myhandball.lab241.com/privacy',
+    defaultValue: '$apiBaseUrl/api/policy/privacy/page',
   );
-  static const termsUrl = String.fromEnvironment(
-    'MH_TERMS_URL',
-    defaultValue: 'https://myhandball.lab241.com/terms',
-  );
+
+  /// 서비스 이용약관. **아직 문서가 없다.**
+  ///
+  /// 비어 있으면 설정에서 그 줄을 아예 숨긴다 — 눌러서 404를 보여주느니
+  /// 없는 편이 낫다. 서버에 약관이 생기면 여기에 주소를 넣는다.
+  static const termsUrl = String.fromEnvironment('MH_TERMS_URL');
 
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).
   static const guideLessonCount = 5;
