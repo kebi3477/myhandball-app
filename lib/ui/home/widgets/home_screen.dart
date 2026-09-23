@@ -7,6 +7,7 @@ import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
+import '../../guide/view_models/guide_progress.dart';
 import '../../search/widgets/search_screen.dart';
 import '../view_models/home_view_model.dart';
 import 'guide_banner.dart';
@@ -47,7 +48,7 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   NearbyGamesSection(games: state.games),
                   const SizedBox(height: MhSpacing.md),
-                  GuideBanner(doneCount: state.guideDoneCount),
+                  GuideBanner(doneCount: ref.watch(guideDoneCountProvider)),
                   const SizedBox(height: MhSpacing.md),
                   RankingSection(state: state),
                   const SizedBox(height: MhSpacing.md),

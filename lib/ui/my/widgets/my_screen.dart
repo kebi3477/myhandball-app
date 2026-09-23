@@ -5,6 +5,7 @@ import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
+import '../../guide/view_models/guide_progress.dart';
 import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
@@ -52,8 +53,8 @@ class MyScreen extends ConsumerWidget {
                   MyTeamCard(state: state),
                   const SizedBox(height: MhSpacing.md),
                   MyGuideBadge(
-                    doneCount: state.guideDoneCount,
-                    allDone: state.guideAllDone,
+                    doneCount: ref.watch(guideDoneCountProvider),
+                    allDone: ref.watch(guideDoneCountProvider.notifier).allDone,
                   ),
                   const SizedBox(height: MhSpacing.md),
                   FavoritePlayersSection(

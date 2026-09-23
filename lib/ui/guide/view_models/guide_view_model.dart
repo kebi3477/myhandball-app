@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_config.dart';
-import '../../../data/repositories/preferences_repository.dart';
 import '../../../domain/models/guide_lesson.dart';
+import 'guide_progress.dart';
 
 class GuideState {
   const GuideState({
@@ -72,7 +72,7 @@ class GuideState {
 class GuideViewModel extends AutoDisposeNotifier<GuideState> {
   @override
   GuideState build() => GuideState(
-        doneCount: ref.read(preferencesRepositoryProvider).guideDoneCount,
+        doneCount: ref.read(guideDoneCountProvider),
       );
 
   void openLesson(int index) {
@@ -98,8 +98,9 @@ class GuideViewModel extends AutoDisposeNotifier<GuideState> {
     final index = state.lessonIndex!;
     if (index == state.doneCount) {
       final done = state.doneCount + 1;
-      await ref.read(preferencesRepositoryProvider).setGuideDoneCount(done);
-      state = state.copyWith(doneCount: done);
+      // 홈 배너·MY 배지가 바로 따라오도록 공용 진행도를 통해 저장한다.
+      await ref.read(guideDoneCountProvider.notifier).set(done);
+      state = state.copyWith(doneCount: ref.read(guideDoneCountProvider));
     }
     exitLesson();
   }

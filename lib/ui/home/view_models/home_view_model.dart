@@ -15,7 +15,6 @@ class HomeState {
     required this.topPlayers,
     required this.gender,
     required this.category,
-    required this.guideDoneCount,
   });
 
   final List<Game> games;
@@ -25,7 +24,6 @@ class HomeState {
   /// 시안 `rankGender` — 순위·기록에 함께 걸린다.
   final Gender gender;
   final StatCategory category;
-  final int guideDoneCount;
 
   /// 시상대에 올라가는 1~3위.
   List<RankRow> get podium => ranking.take(3).toList();
@@ -39,7 +37,6 @@ class HomeState {
     List<PlayerStat>? topPlayers,
     Gender? gender,
     StatCategory? category,
-    int? guideDoneCount,
   }) =>
       HomeState(
         games: games ?? this.games,
@@ -47,7 +44,6 @@ class HomeState {
         topPlayers: topPlayers ?? this.topPlayers,
         gender: gender ?? this.gender,
         category: category ?? this.category,
-        guideDoneCount: guideDoneCount ?? this.guideDoneCount,
       );
 }
 
@@ -66,7 +62,6 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
       topPlayers: topPlayers,
       gender: gender,
       category: category,
-      guideDoneCount: prefs.guideDoneCount,
     );
   }
 

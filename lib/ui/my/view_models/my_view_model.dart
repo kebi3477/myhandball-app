@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_config.dart';
 import '../../../data/repositories/preferences_repository.dart';
 import '../../../data/repositories/ranking_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
@@ -50,7 +49,6 @@ class MyState {
   const MyState({
     required this.team,
     required this.rank,
-    required this.guideDoneCount,
     required this.favoritePlayers,
     required this.teamPlayers,
     required this.nextGame,
@@ -61,7 +59,6 @@ class MyState {
 
   final Team? team;
   final RankRow? rank;
-  final int guideDoneCount;
   final List<Player> favoritePlayers;
 
   /// 시안 "주요 선수" — 마이팀의 **득점 상위** 선수.
@@ -77,7 +74,6 @@ class MyState {
   final List<AttendanceRecord> attendance;
   final List<PredictionRecord> predictions;
 
-  bool get guideAllDone => guideDoneCount >= AppConfig.guideLessonCount;
 
   String get rankLabel =>
       rank == null ? '순위 정보 없음' : '${rank!.rank}위 · 승점 ${rank!.points}';
@@ -181,7 +177,6 @@ class MyViewModel extends AsyncNotifier<MyState> {
     return MyState(
       team: team,
       rank: rank,
-      guideDoneCount: prefs.guideDoneCount,
       favoritePlayers: favorites,
       teamPlayers: teamPlayers,
       nextGame: nextGame.isEmpty ? null : nextGame.first,
@@ -254,7 +249,6 @@ class MyViewModel extends AsyncNotifier<MyState> {
     state = AsyncData(MyState(
       team: current.team,
       rank: current.rank,
-      guideDoneCount: current.guideDoneCount,
       favoritePlayers:
           current.favoritePlayers.where((p) => p.id != playerId).toList(),
       teamPlayers: current.teamPlayers,
