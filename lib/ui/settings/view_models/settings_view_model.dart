@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/repositories/preferences_repository.dart';
 import '../../../domain/models/season.dart';
 import '../../app/view_models/app_view_model.dart';
+import '../../core/ui/push_sync.dart';
 
 class SettingsState {
   const SettingsState({
@@ -54,6 +55,9 @@ class SettingsViewModel extends Notifier<SettingsState> {
     final next = !state.notificationsOn;
     state = state.copyWith(notificationsOn: next);
     await _prefs.setNotificationsOn(value: next);
+
+    // 껐으면 서버에서 토큰을 지운다. 안 지우면 알림이 계속 간다.
+    await syncPushSubscriptionWith(ref.read);
   }
 
 }

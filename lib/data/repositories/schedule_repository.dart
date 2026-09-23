@@ -8,6 +8,7 @@ import '../services/api_client.dart';
 import '../services/handball_api_service.dart';
 import '../services/http_handball_api_service.dart';
 import '../services/mock_handball_api_service.dart';
+import '../services/push_service.dart';
 import 'preferences_repository.dart';
 
 /// 데이터 소스. **기본은 운영 서버**([AppConfig.apiBaseUrl])다.
@@ -19,17 +20,24 @@ import 'preferences_repository.dart';
 ///
 /// 목업은 서버가 죽었을 때나 디자인만 볼 때 쓴다. 예전에는 URL이 비면
 /// 목업으로 떨어졌는데, 그러면 dart-define을 빠뜨린 배포본이 목업을 싣는다.
-final handballApiServiceProvider = Provider<HandballApiService>((ref) {
-  if (AppConfig.useMock || AppConfig.apiBaseUrl.isEmpty) {
-    return const MockHandballApiService();
-  }
-
+/// 서버를 치는 HTTP 클라이언트. 데이터 서비스와 푸시가 같이 쓴다.
+final apiClientProvider = Provider<ApiClient>((ref) {
   final prefs = ref.watch(preferencesRepositoryProvider);
   final client = ApiClient(
     baseUrl: AppConfig.apiBaseUrl,
     deviceId: prefs.deviceId,
   );
   ref.onDispose(client.close);
+  return client;
+});
+
+final handballApiServiceProvider = Provider<HandballApiService>((ref) {
+  if (AppConfig.useMock || AppConfig.apiBaseUrl.isEmpty) {
+    return const MockHandballApiService();
+  }
+
+  final prefs = ref.watch(preferencesRepositoryProvider);
+  final client = ref.watch(apiClientProvider);
 
   return HttpHandballApiService(
     client: client,
@@ -167,3 +175,11 @@ class ScheduleRepository {
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
   (ref) => ScheduleRepository(ref.watch(handballApiServiceProvider)),
 );
+
+/// 마이팀 경기 푸시.
+///
+/// 목업으로 돌 때는 서버가 없으므로 만들지 않는다.
+final pushServiceProvider = Provider<PushService?>((ref) {
+  if (AppConfig.useMock || AppConfig.apiBaseUrl.isEmpty) return null;
+  return PushService(ref.watch(apiClientProvider));
+});

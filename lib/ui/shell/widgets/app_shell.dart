@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_config.dart';
+import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/schedule_repository.dart';
+import '../../../data/services/push_service.dart';
+import '../../../domain/models/schedule_day.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
+import '../../core/ui/push_sync.dart';
+import '../../game_detail/widgets/game_detail_screen.dart';
 import '../../guide/widgets/guide_screen.dart';
 import '../../home/widgets/home_screen.dart';
 import '../../my/widgets/my_screen.dart';
@@ -36,10 +42,66 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   void initState() {
     super.initState();
-    if (!AppConfig.openGuide) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) GuideScreen.open(context);
+      if (!mounted) return;
+      if (AppConfig.openGuide) GuideScreen.open(context);
+      _startPush();
     });
+  }
+
+  /// 푸시를 붙이고 구독을 지금 설정과 맞춘다.
+  ///
+  /// 온보딩을 마친 뒤(=셸에 들어온 뒤)에 한다. 온보딩 도중에 권한을 물으면
+  /// 무엇에 대한 알림인지 모르는 상태에서 묻는 셈이다.
+  /// dispose에서 `ref`를 못 쓰므로 여기서 잡아 둔다.
+  PushService? _push;
+
+  Future<void> _startPush() async {
+    final push = ref.read(pushServiceProvider);
+    if (push == null) return;
+    _push = push;
+
+    await push.initialize();
+    if (!mounted) return;
+    await syncPushSubscription(ref);
+
+    // 알림을 눌러 들어온 경우 그 경기를 연다.
+    push.tappedMatchSeq.addListener(_openTappedGame);
+    if (push.tappedMatchSeq.value != null) _openTappedGame();
+  }
+
+  Future<void> _openTappedGame() async {
+    final seq = _push?.tappedMatchSeq.value;
+    if (seq == null) return;
+    _push!.tappedMatchSeq.value = null;
+
+    final prefs = ref.read(preferencesRepositoryProvider);
+    final gender = prefs.myTeam?.gender ?? prefs.preferredGender;
+    final List<ScheduleDay> days;
+    try {
+      days = await ref
+          .read(scheduleRepositoryProvider)
+          .getSeasonSchedule(gender, prefs.season.year);
+    } on Exception {
+      return;
+    }
+
+    for (final day in days) {
+      for (final game in day.games) {
+        if (game.matchSeq == seq) {
+          if (mounted) GameDetailScreen.open(context, game);
+          return;
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // Riverpod은 dispose 뒤 `ref` 사용을 막는다. initState에서 잡아 둔
+    // 참조를 쓴다.
+    _push?.tappedMatchSeq.removeListener(_openTappedGame);
+    super.dispose();
   }
 
   @override

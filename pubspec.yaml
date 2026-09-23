@@ -33,6 +33,11 @@ dependencies:
   # 경기 일정을 .ics로 내보내 캘린더에 넣기
   share_plus: ^11.0.0
 
+  # 마이팀 경기 푸시 (FCM). 설정 파일이 없으면 조용히 꺼진다 —
+  # lib/data/services/push_service.dart 참조
+  firebase_core: ^4.1.1
+  firebase_messaging: ^16.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
