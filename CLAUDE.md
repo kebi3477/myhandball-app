@@ -213,17 +213,42 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 
 ## 배포 제약
 
-스토어에 이미 올라간 앱을 갱신하는 것이므로 식별자가 고정이다.
+스토어에 이미 올라간 앱을 갱신하는 것이므로 식별자가 고정이다. 아래 값은
+실제 배포된 프로젝트(`_legercy/myhandball-ios`)에서 그대로 가져왔다.
 
 | 항목 | 값 |
 |---|---|
-| iOS 번들 ID | `com.kebi.myhandball-ios` (하이픈 포함 — 기본값에서 수정함) |
-| 서명 팀 | `R36UYT2XU8` |
-| iOS 최소 버전 | 15.0 (v1은 26.0이었으나 잘못된 설정으로 판단해 낮춤) |
-| 스토어 최종 버전 | 1.1.0 (빌드 3) — 새 빌드는 **빌드 번호 4 이상** |
-| Android applicationId | **미확인.** 현재 `com.kebi.myhandball`로 들어가 있으나 Play Console 실제 값과 대조 필요. 다르면 기존 설치 사용자를 업데이트로 잡지 못한다 |
+| iOS 번들 ID | `com.kebi.myhandball-ios` (하이픈 포함 — Flutter 기본값에서 수정함) |
+| 서명 팀 | `R36UYT2XU8` / CODE_SIGN_STYLE Automatic |
+| 표시 이름 | 마이핸드볼 |
+| 앱 카테고리 | `public.app-category.entertainment` |
+| 버전 | `1.1.0+3` — 스토어 현재 값. **다음 배포 시 빌드 번호 4 이상** |
+| 지원 기기 | iPhone + iPad (`TARGETED_DEVICE_FAMILY = "1,2"`) |
+| 방향 | iPhone 세로+가로, iPad 4방향 (배포본과 동일, Flutter 기본값과도 일치) |
+| iOS 최소 버전 | 15.0 (배포본은 26.0이었으나 잘못된 설정으로 판단해 낮춤) |
+| Android applicationId | **미확인.** 현재 `com.kebi.myhandball`. Play Console 실제 값과 대조 필요 |
 
-Dart 패키지명은 하이픈을 못 쓰므로 `myhandball`이다(디렉터리명 `myhandball-app`과 다름).
+앱 아이콘과 런치 스크린도 배포본에서 가져왔다 — 런치 스크린은 `#0068FF`
+바탕에 흰 로고(`LaunchImage`), 아이콘은 배포본 1024px 원본에서 리사이즈.
+
+### 배포본에서 일부러 안 가져온 것
+
+`NSAppTransportSecurity.NSAllowsArbitraryLoadsInWebContent = true`.
+기존 앱이 WKWebView로 웹을 띄우느라 넣은 예외인데, Flutter 앱은 WebView를
+쓰지 않는다. 그대로 두면 ATS를 이유 없이 약화시키므로 뺐다.
+
+### 아직 안 옮긴 기능
+
+배포본의 `AppUpdateChecker.swift` — iTunes lookup API로 최신 버전을 확인해
+"업데이트 안내" 알럿을 띄운다. 설정이 아니라 기능이라 이식하지 않았다.
+Flutter에서는 `upgrader` 패키지나 원격 설정으로 대체하는 게 낫다.
+
+### 방향 · iPad 관련 주의
+
+v2 시안은 375x812 세로 화면 하나만 그려져 있다. 배포본이 가로와 iPad를
+허용한 건 WebView라 반응형으로 넘어갔기 때문이고, 지금 UI는 세로 고정을
+전제로 짜여 있다. 실제 배포 전에 `ios/Runner/Info.plist`의
+`UISupportedInterfaceOrientations`를 세로만 남기는 쪽을 검토한다.
 
 ## 서버 상태
 

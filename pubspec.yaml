@@ -2,8 +2,9 @@ name: myhandball
 description: "마이핸드볼 - 핸드볼 경기 일정, 순위, 기록"
 publish_to: 'none'
 
-# 스토어 최종 버전은 1.1.0 (빌드 3). 실제 배포 전에 빌드 번호를 4 이상으로 올린다.
-version: 1.0.0+1
+# 스토어에 올라가 있는 버전과 맞춰둔 값이다.
+# 다음 배포 때는 빌드 번호를 4 이상으로 올려야 한다.
+version: 1.1.0+3
 
 environment:
   sdk: ^3.13.2
