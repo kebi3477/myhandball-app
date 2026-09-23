@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/app_config.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/team.dart';
+import '../services/mock_handball_api_service.dart';
 
 /// 기기에 남는 사용자 설정의 source of truth.
 ///
@@ -18,7 +19,10 @@ class PreferencesRepository {
   bool _onboarded = AppConfig.skipOnboarding;
   ThemeMode _themeMode =
       AppConfig.initialTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
-  Team? _myTeam;
+  /// 개발용 스킵 플래그로 들어올 땐 마이팀도 채워둔다.
+  /// 안 그러면 MY팀 달력이 항상 "팀을 골라주세요"로만 보인다.
+  Team? _myTeam =
+      AppConfig.skipOnboarding ? MockHandballApiService.skHawks : null;
   Gender _preferredGender = Gender.men;
   int _guideDoneCount = 0;
 

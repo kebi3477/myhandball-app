@@ -9,10 +9,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myhandball/data/repositories/preferences_repository.dart';
+import 'package:myhandball/data/services/mock_handball_api_service.dart';
 import 'package:myhandball/ui/core/themes/theme.dart';
 import 'package:myhandball/ui/core/themes/tokens.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
+import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
+import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
+import 'package:myhandball/ui/schedule/widgets/schedule_screen.dart';
 
 Future<void> _shoot(
   WidgetTester tester,
@@ -20,16 +24,24 @@ Future<void> _shoot(
   Widget child,
   MhPalette palette, {
   Size size = const Size(390, 1400),
+  void Function(ProviderContainer container)? after,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
+  // 달력 뷰를 보려면 마이팀이 있어야 한다.
+  final prefs = PreferencesRepository();
+  prefs.setMyTeam(MockHandballApiService.skHawks);
+
+  final container = ProviderContainer(
+    overrides: [preferencesRepositoryProvider.overrideWithValue(prefs)],
+  );
+  addTearDown(container.dispose);
+
   await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        preferencesRepositoryProvider.overrideWithValue(PreferencesRepository()),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: buildMhTheme(palette),
@@ -40,6 +52,14 @@ Future<void> _shoot(
   // 목업 서비스의 지연(500ms)과 스켈레톤이 끝날 때까지 기다린다.
   await tester.pump(const Duration(seconds: 1));
   await tester.pump(const Duration(milliseconds: 300));
+
+  if (after != null) {
+    after(container);
+    // PageView 전환(500ms) 같은 애니메이션이 끝날 때까지 여러 프레임 돌린다.
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+  }
 
   await expectLater(
     find.byType(MaterialApp),
@@ -56,8 +76,37 @@ void main() {
     await _shoot(t, 'home-light', const HomeScreen(), MhPalette.light);
   });
 
+  testWidgets('schedule list', (t) async {
+    await _shoot(t, 'schedule-list', const ScheduleScreen(), MhPalette.dark);
+  });
+
+  testWidgets('schedule calendar', (t) async {
+    await _shoot(
+      t,
+      'schedule-calendar',
+      const ScheduleScreen(),
+      MhPalette.dark,
+      after: (container) => container
+          .read(scheduleViewModelProvider.notifier)
+          .setView(ScheduleView.calendar),
+    );
+  });
+
   testWidgets('onboarding', (t) async {
     await _shoot(t, 'onboarding', const OnboardingScreen(), MhPalette.dark,
         size: const Size(390, 844));
+  });
+
+  // figassets 아이콘 4개가 실제로 들어왔는지 확인하는 컷.
+  testWidgets('onboarding interest', (t) async {
+    await _shoot(
+      t,
+      'onboarding-interest',
+      const OnboardingScreen(),
+      MhPalette.dark,
+      size: const Size(390, 844),
+      after: (container) =>
+          container.read(onboardingViewModelProvider.notifier).goTo(1),
+    );
   });
 }

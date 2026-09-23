@@ -2,6 +2,7 @@ import '../../domain/models/game.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
+import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
 import 'handball_api_service.dart';
 
@@ -25,35 +26,80 @@ class MockHandballApiService implements HandballApiService {
 
   static const _logoBase = 'https://www.koreahandball.com/static/images/logo';
 
-  static const skHawks =
-      Team(name: 'SK호크스', logoUrl: '$_logoBase/logo_m_132.png');
-  static const incheon =
-      Team(name: '인천도시공사', logoUrl: '$_logoBase/logo_m_120.png');
-  static const doosan =
-      Team(name: '두산', logoUrl: '$_logoBase/logo_m_149.png');
-  static const chungnam = Team(name: '충남도청');
-  static const sangmu = Team(name: '상무');
-  static const hanam = Team(name: '하남시청');
+  // 팀 번호와 로고 URL은 koreahandball.com의 팀 소개 페이지에서 확인한 값이다
+  // (`/introduce/team_men.php`, `/introduce/team_women.php` — API가 긁는 곳과 동일).
+  static const skHawks = Team(
+      name: 'SK호크스', teamNum: 132, logoUrl: '$_logoBase/logo_m_132.png');
+  static const doosan = Team(
+      name: '두산', teamNum: 149, logoUrl: '$_logoBase/logo_m_149.png');
+  static const incheon = Team(
+      name: '인천도시공사', teamNum: 120, logoUrl: '$_logoBase/logo_m_120.png');
+  static const chungnam = Team(
+      name: '충남도청', teamNum: 113, logoUrl: '$_logoBase/logo_m_113.png');
+  static const sangmu = Team(
+      name: '상무피닉스', teamNum: 22, logoUrl: '$_logoBase/logo_m_22.png');
+  static const hanam = Team(
+      name: '하남시청', teamNum: 150, logoUrl: '$_logoBase/logo_m_150.png');
 
   static const _mensTeams = [
-    skHawks,
-    incheon,
     doosan,
-    chungnam,
     sangmu,
+    incheon,
+    chungnam,
     hanam,
+    skHawks,
   ];
 
-  /// 시안 `W_TEAMS` 그대로.
+  static const skSugar = Team(
+      name: 'SK슈가글라이더즈',
+      gender: Gender.women,
+      teamNum: 123,
+      logoUrl: '$_logoBase/logo_w_123.png');
+  static const seoul = Team(
+      name: '서울시청',
+      gender: Gender.women,
+      teamNum: 107,
+      logoUrl: '$_logoBase/logo_w_107.png');
+  static const busan = Team(
+      name: '부산시설공단',
+      gender: Gender.women,
+      teamNum: 100,
+      logoUrl: '$_logoBase/logo_w_100.png');
+  static const samcheok = Team(
+      name: '삼척시청',
+      gender: Gender.women,
+      teamNum: 93,
+      logoUrl: '$_logoBase/logo_w_93.png');
+  static const gyeongnam = Team(
+      name: '경남개발공사',
+      gender: Gender.women,
+      teamNum: 102,
+      logoUrl: '$_logoBase/logo_w_102.png');
+  static const incheonW = Team(
+      name: '인천광역시청',
+      gender: Gender.women,
+      teamNum: 127,
+      logoUrl: '$_logoBase/logo_w_127.png');
+  static const gwangju = Team(
+      name: '광주도시공사',
+      gender: Gender.women,
+      teamNum: 110,
+      logoUrl: '$_logoBase/logo_w_110.png');
+  static const daegu = Team(
+      name: '대구광역시청',
+      gender: Gender.women,
+      teamNum: 23,
+      logoUrl: '$_logoBase/logo_w_23.png');
+
   static const _womensTeams = [
-    Team(name: 'SK슈가글라이더즈', gender: Gender.women),
-    Team(name: '삼척시청', gender: Gender.women),
-    Team(name: '부산시설공단', gender: Gender.women),
-    Team(name: '경남개발공사', gender: Gender.women),
-    Team(name: '대구광역시청', gender: Gender.women),
-    Team(name: '서울시청', gender: Gender.women),
-    Team(name: '광주도시공사', gender: Gender.women),
-    Team(name: '인천광역시청', gender: Gender.women),
+    gyeongnam,
+    gwangju,
+    daegu,
+    busan,
+    samcheok,
+    seoul,
+    incheonW,
+    skSugar,
   ];
 
   @override
@@ -95,6 +141,63 @@ class MockHandballApiService implements HandballApiService {
   }
 
   @override
+  Future<List<ScheduleDay>> fetchMonthlySchedule(
+    Gender gender,
+    DateTime month,
+  ) async {
+    await _delay();
+
+    final teams = gender == Gender.women ? _womensTeams : _mensTeams;
+    final days = <ScheduleDay>[];
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final today = DateTime.now();
+
+    // 토·일에만 경기를 배치한다. 실제 H리그 편성과 비슷하게 하루 2경기.
+    for (var day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(month.year, month.month, day);
+      if (date.weekday != DateTime.saturday && date.weekday != DateTime.sunday) {
+        continue;
+      }
+
+      final seed = month.month * 100 + day;
+      final games = <Game>[];
+      for (var slot = 0; slot < 2; slot++) {
+        final a = teams[(seed + slot * 2) % teams.length];
+        final b = teams[(seed + slot * 2 + 3) % teams.length];
+        if (a.name == b.name) continue;
+
+        final past = date.isBefore(DateTime(today.year, today.month, today.day));
+        final status = past ? GameStatus.finished : GameStatus.pre;
+        final time = slot == 0 ? '14:00' : '16:00';
+
+        games.add(Game(
+          id: 'm${month.year}${month.month}-$day-$slot',
+          home: a,
+          away: b,
+          status: status,
+          meta: past ? '종료' : time,
+          broadcast: const ['MAXPORTS'],
+          scoreHome: past ? 22 + (seed + slot) % 10 : null,
+          scoreAway: past ? 20 + (seed + slot * 3) % 10 : null,
+          venue: '${a.name} 홈구장',
+          canBook: !past,
+        ));
+      }
+      if (games.isEmpty) continue;
+
+      const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+      final mm = month.month.toString().padLeft(2, '0');
+      final dd = day.toString().padLeft(2, '0');
+      days.add(ScheduleDay(
+        label: '${month.year}.$mm.$dd (${weekdays[date.weekday - 1]})',
+        date: date,
+        games: games,
+      ));
+    }
+    return days;
+  }
+
+  @override
   Future<List<Team>> fetchTeams(Gender gender) async {
     await _delay();
     return gender == Gender.women ? _womensTeams : _mensTeams;
@@ -112,12 +215,12 @@ class MockHandballApiService implements HandballApiService {
       RankRow(rank: 6, team: hanam, points: 13),
     ];
     const womens = [
-      RankRow(rank: 1, team: Team(name: 'SK슈가글라이더즈', gender: Gender.women), points: 36),
-      RankRow(rank: 2, team: Team(name: '서울시청', gender: Gender.women), points: 30),
-      RankRow(rank: 3, team: Team(name: '부산시설공단', gender: Gender.women), points: 28),
-      RankRow(rank: 4, team: Team(name: '삼척시청', gender: Gender.women), points: 21),
-      RankRow(rank: 5, team: Team(name: '경남개발공사', gender: Gender.women), points: 17),
-      RankRow(rank: 6, team: Team(name: '인천광역시청', gender: Gender.women), points: 12),
+      RankRow(rank: 1, team: skSugar, points: 36),
+      RankRow(rank: 2, team: seoul, points: 30),
+      RankRow(rank: 3, team: busan, points: 28),
+      RankRow(rank: 4, team: samcheok, points: 21),
+      RankRow(rank: 5, team: gyeongnam, points: 17),
+      RankRow(rank: 6, team: incheonW, points: 12),
     ];
     return gender == Gender.women ? womens : mens;
   }
@@ -184,7 +287,7 @@ class MockHandballApiService implements HandballApiService {
           PlayerStat(
               rank: 2, name: '문지호', teamName: '두산', position: 'GK', value: '186'),
           PlayerStat(
-              rank: 3, name: '오세준', teamName: '상무', position: 'GK', value: '151'),
+              rank: 3, name: '오세준', teamName: '상무피닉스', position: 'GK', value: '151'),
         ],
     };
   }

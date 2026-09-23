@@ -16,6 +16,10 @@ abstract final class AppConfig {
   /// `--dart-define=MH_INITIAL_THEME=light`
   static const initialTheme = String.fromEnvironment('MH_INITIAL_THEME');
 
+  /// 개발용 — 시작 탭을 고른다. `home` / `schedule` / `stat` / `my`.
+  /// `--dart-define=MH_INITIAL_TAB=schedule`
+  static const initialTab = String.fromEnvironment('MH_INITIAL_TAB');
+
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).
   static const guideLessonCount = 5;
 

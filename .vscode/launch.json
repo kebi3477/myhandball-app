@@ -12,7 +12,19 @@
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
-      "args": ["--dart-define=MH_SKIP_ONBOARDING=true"]
+      "args": [
+        "--dart-define=MH_SKIP_ONBOARDING=true"
+      ]
+    },
+    {
+      "name": "마이핸드볼 (일정 탭부터)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=MH_SKIP_ONBOARDING=true",
+        "--dart-define=MH_INITIAL_TAB=schedule"
+      ]
     },
     {
       "name": "마이핸드볼 (라이트 테마로 시작)",
@@ -30,7 +42,9 @@
       "type": "dart",
       "program": "lib/main.dart",
       "flutterMode": "profile",
-      "args": ["--dart-define=MH_SKIP_ONBOARDING=true"]
+      "args": [
+        "--dart-define=MH_SKIP_ONBOARDING=true"
+      ]
     }
   ]
 }

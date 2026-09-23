@@ -20,7 +20,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 온보딩 5스텝 | 완료 |
 | 홈 탭 | 완료 (가까운 경기 / 가이드 배너 / 팀순위 / 시즌 TOP5) |
 | 하단 4탭 셸 | 완료 |
-| 일정 · 분석 · MY 탭 | **자리표시만** (`ComingSoon`) |
+| 일정 탭 | 완료 (목록 / MY팀 달력) |
+| 분석 · MY 탭 | **자리표시만** (`ComingSoon`) |
 | 경기 상세, 규칙 가이드, 검색, 팀 선택 모달, 설정, 선수 카드, 팀 비교 | 미착수 |
 | 데이터 계층 (repository + service) | 골격 완료 — 구현체가 `MockHandballApiService` 하나 |
 | 실제 API 연동 | 미착수 — `HandballApiService`의 HTTP 구현만 추가하면 된다 |
@@ -109,8 +110,11 @@ flutter test --plain-name "테스트 이름"    # 단일 테스트
 flutter run                              # 개발 실행
 flutter build ios --no-codesign --debug  # iOS 빌드 검증 (서명 없이)
 
-# 온보딩을 건너뛰고 바로 4탭 셸로 (개발용)
-flutter run --dart-define=MH_SKIP_ONBOARDING=true
+# 개발용 플래그 (lib/config/app_config.dart)
+flutter run \
+  --dart-define=MH_SKIP_ONBOARDING=true \  # 온보딩 건너뛰기 (마이팀도 자동 지정)
+  --dart-define=MH_INITIAL_TAB=schedule \  # home / schedule / stat / my
+  --dart-define=MH_INITIAL_THEME=light     # 기본은 시안대로 dark
 
 # 화면 전체를 PNG로 떠서 레이아웃 확인 (tool/preview/*.png, gitignore됨)
 flutter test --update-goldens tool/design_preview_test.dart
@@ -149,6 +153,12 @@ flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr
 
 정확한 타입 정의는 `../myhandball-api/src/{schedule,ranking,team}/types.ts`를 직접 읽는다.
 
+### 팀 로고
+
+로고 URL은 `https://www.koreahandball.com/static/images/logo/logo_{m|w}_{teamNum}.png`
+형식이다. 목업의 팀 번호는 연맹 사이트의 팀 소개 페이지
+(`/introduce/team_men.php`, `/introduce/team_women.php`)에서 확인한 실제 값이다.
+
 ### 실시간 스코어는 없다
 
 API에 이벤트 스트림도 푸시도 없다. v2 시안의 LIVE 위젯·라이브 액티비티·경기 상세 라이브 피드는 **백엔드 신규 작업이 선행돼야** 한다. 해당 기능을 건드리게 되면 먼저 API 작업 프롬프트를 사용자에게 준다 (위 "작업 경계" 참조).
@@ -181,6 +191,18 @@ DesignSync(method="get_file",  projectId="...", path="MyHandball v2.dc.html")
 (`assets/design/*.svg`가 그렇게 만들어졌다). 별도 파일로 존재하는
 일러스트(`figassets/*.svg`, `*.png`)는 사용자가 내보내 넣는다 —
 `assets/figassets/README.md` 참조.
+
+**에셋이 큰 PNG면 `get_file` 결과가 tool-results 파일로 떨어진다.** 그때는
+base64를 컨텍스트로 들이지 말고 파일에서 바로 디코딩한다:
+
+```python
+d = json.load(open('<tool-results 경로>'))
+open('assets/figassets/' + d['path'].split('/')[-1], 'wb').write(
+    base64.b64decode(d['content']))
+```
+
+에셋 누락은 화면만 봐서는 플레이스홀더와 구분이 안 되므로
+`test/assets_test.dart`가 번들 포함 여부를 검사한다.
 
 ## v2 범위
 

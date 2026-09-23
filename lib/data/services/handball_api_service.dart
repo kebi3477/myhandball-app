@@ -2,6 +2,7 @@ import '../../domain/models/game.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
+import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
 
 /// 외부 데이터 소스 래퍼. 상태를 갖지 않는다.
@@ -12,6 +13,12 @@ import '../../domain/models/team.dart';
 abstract interface class HandballApiService {
   /// `GET /api/schedule` — 홈 상단에 띄울 가까운 경기들.
   Future<List<Game>> fetchUpcomingGames();
+
+  /// `GET /api/schedule?gender=&season=&type=&month=` — 월 단위 일정.
+  Future<List<ScheduleDay>> fetchMonthlySchedule(
+    Gender gender,
+    DateTime month,
+  );
 
   /// `GET /api/ranking?gender=`
   Future<List<RankRow>> fetchRanking(Gender gender);

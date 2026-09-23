@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/game.dart';
+import '../../domain/models/gender.dart';
+import '../../domain/models/schedule_day.dart';
 import '../services/handball_api_service.dart';
 import '../services/mock_handball_api_service.dart';
 
@@ -22,6 +24,27 @@ class ScheduleRepository {
 
   /// 마지막으로 성공한 응답. 화면이 "오프라인 표시"를 띄울 때 쓴다.
   List<Game>? get cached => _cached;
+
+  final _monthCache = <String, List<ScheduleDay>>{};
+
+  /// 월 단위 일정. 같은 (부, 연월)은 세션 동안 다시 받지 않는다.
+  Future<List<ScheduleDay>> getMonthlySchedule(
+    Gender gender,
+    DateTime month, {
+    bool forceRefresh = false,
+  }) async {
+    final key = '${gender.code}-${month.year}-${month.month}';
+    final hit = _monthCache[key];
+    if (!forceRefresh && hit != null) return hit;
+    try {
+      final days = await _service.fetchMonthlySchedule(gender, month);
+      _monthCache[key] = days;
+      return days;
+    } on Exception {
+      if (hit != null) return hit;
+      rethrow;
+    }
+  }
 
   Future<List<Game>> getUpcomingGames({bool forceRefresh = false}) async {
     if (!forceRefresh && _cached != null) return _cached!;

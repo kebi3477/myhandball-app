@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_config.dart';
+
 /// 시안 `appScreen` — home / schedule / stat / my
 enum ShellTab {
   home('홈'),
@@ -14,7 +16,10 @@ enum ShellTab {
 
 class ShellViewModel extends Notifier<ShellTab> {
   @override
-  ShellTab build() => ShellTab.home;
+  ShellTab build() => ShellTab.values.firstWhere(
+        (t) => t.name == AppConfig.initialTab,
+        orElse: () => ShellTab.home,
+      );
 
   void select(ShellTab tab) => state = tab;
 }
