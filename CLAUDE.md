@@ -22,9 +22,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 하단 4탭 셸 | 완료 |
 | 일정 탭 | 완료 (목록 / MY팀 달력) |
 | 분석 탭 | 4개 서브탭(순위/기록/팀/선수) 완료 |
-| MY 탭 | **자리표시만** (`ComingSoon`) |
+| MY 탭 | 완료 (마이팀 / 수료 배지 / 관심 선수 / 직관 기록 / 승부 예측 / 다음 경기 / 시즌 기록 / 최근 5경기 / 주요 선수) |
 | 팀 상세, 선수 상세, 선수 비교 | 미착수 — 분석 탭에서 진입만 막아둔 상태 |
 | 경기 상세, 규칙 가이드, 검색, 팀 선택 모달, 설정 | 미착수 |
+
+**메인 4탭은 모두 이식됐다.** 남은 건 거기서 열리는 화면들이다.
+직관 기록(`mh_attended`)과 승부 예측(`mh_preds`)은 경기 상세에서 만들어지므로,
+그 화면이 생기기 전까지 MY 탭에서 항상 빈 상태로 보인다.
 | 데이터 계층 (repository + service) | 골격 완료 — 구현체가 `MockHandballApiService` 하나 |
 | 실제 API 연동 | 미착수 — `HandballApiService`의 HTTP 구현만 추가하면 된다 |
 

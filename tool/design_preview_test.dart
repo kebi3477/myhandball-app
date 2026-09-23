@@ -9,10 +9,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myhandball/data/repositories/preferences_repository.dart';
+import 'package:myhandball/data/repositories/schedule_repository.dart';
 import 'package:myhandball/data/services/mock_handball_api_service.dart';
 import 'package:myhandball/ui/core/themes/theme.dart';
 import 'package:myhandball/ui/core/themes/tokens.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
+import 'package:myhandball/ui/my/widgets/my_screen.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
@@ -37,7 +39,14 @@ Future<void> _shoot(
   prefs.setMyTeam(MockHandballApiService.skHawks);
 
   final container = ProviderContainer(
-    overrides: [preferencesRepositoryProvider.overrideWithValue(prefs)],
+    overrides: [
+      preferencesRepositoryProvider.overrideWithValue(prefs),
+      // 지연 0. MY 탭은 목업 호출이 4번 이어져 기본 지연(500ms)으로는
+      // 프리뷰가 로딩 상태에서 끝난다.
+      handballApiServiceProvider.overrideWithValue(
+        const MockHandballApiService(latency: Duration.zero),
+      ),
+    ],
   );
   addTearDown(container.dispose);
 
@@ -106,6 +115,11 @@ void main() {
       );
     });
   }
+
+  testWidgets('my', (t) async {
+    await _shoot(t, 'my', const MyScreen(), MhPalette.dark,
+        size: const Size(390, 2100));
+  });
 
   testWidgets('onboarding', (t) async {
     await _shoot(t, 'onboarding', const OnboardingScreen(), MhPalette.dark,
