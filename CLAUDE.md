@@ -62,6 +62,10 @@ pat = re.compile(r'<sc-if value="\{\{ sc\.(\w+) \}\}"[^>]*>(<svg.*?</svg>)', re.
 (추천 검색어 칩이 그랬다). 글자 폭에 맞추려면 `alignment`를 빼고 필요하면
 `Center(widthFactor: 1)`을 쓴다.
 
+**오류 문구에 `'$e'`를 쓰지 않는다.** `ApiException`의 `toString()`이
+`ApiException(null /ranking): 서버에 연결하지 못했어요`처럼 내부 정보를
+그대로 노출한다. `mhErrorMessage(e)`(`ui/core/ui/error_message.dart`)를 쓴다.
+
 **Pretendard에 `✕`(U+2715) 글리프가 없다.** 시안이 이 문자를 닫기 버튼에
 쓰는데 그대로 옮기면 네모(두부)로 찍힌다. `Icons.close_rounded`로 그린다.
 

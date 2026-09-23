@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
@@ -137,7 +138,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 loading: () => const Center(
                     child: CircularProgressIndicator(color: MhColors.brand)),
                 error: (e, _) => Center(
-                  child: Text('$e', style: MhText.meta(c.textSub)),
+                  child: Text(mhErrorMessage(e), style: MhText.meta(c.textSub)),
                 ),
                 data: (state) => state.isIdle
                     ? _IdleView(state: state, onUse: _use, vm: vm)

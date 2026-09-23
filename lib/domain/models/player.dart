@@ -11,6 +11,7 @@ class Player {
     required this.position,
     required this.statLine,
     this.teamLogoUrl,
+    this.goals,
   });
 
   final String id;
@@ -34,6 +35,12 @@ class Player {
   final String statLine;
 
   final String? teamLogoUrl;
+
+  /// 시즌 득점. `/api/player`의 `stats.goals`.
+  ///
+  /// MY 화면의 "주요 선수"가 이걸로 줄을 세운다. 팀 상세의 선수 명단처럼
+  /// 기록 없이 만든 [Player]는 `null`이다.
+  final int? goals;
 
   /// 포지션 전체 이름 (팀 상세의 주요 선수 목록에서 쓴다).
   String get positionFull => switch (position) {

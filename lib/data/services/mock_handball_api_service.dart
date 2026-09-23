@@ -332,6 +332,7 @@ class MockHandballApiService implements HandballApiService {
           teamLogoUrl: team.logoUrl,
           number: 1 + (seed * 5) % 40,
           position: pos,
+          goals: pos == 'GK' ? 0 : goals,
           statLine: pos == 'GK' ? '선방 ${120 + seed % 90}' : '$goals골 · ${assists}AS',
         ));
       }

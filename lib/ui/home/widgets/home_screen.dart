@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../search/widgets/search_screen.dart';
@@ -35,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
             // 이전 값이 있으면 그걸 계속 보여준다 (성별 전환 시 화면이 안 비게).
             skipLoadingOnReload: true,
             loading: () => const HomeSkeleton(),
-            error: (e, _) => _ErrorView(message: '$e'),
+            error: (e, _) => _ErrorView(message: mhErrorMessage(e)),
             data: (state) => RefreshIndicator(
               color: MhColors.brand,
               backgroundColor: c.card,

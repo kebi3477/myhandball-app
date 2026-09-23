@@ -64,7 +64,9 @@ class MyState {
   final int guideDoneCount;
   final List<Player> favoritePlayers;
 
-  /// 마이팀 소속 선수 (시안 "주요 선수").
+  /// 시안 "주요 선수" — 마이팀의 **득점 상위** 선수.
+  ///
+  /// 소속 선수 전부가 아니다. 시안 변수명이 `topScorers`이고 목록이 3줄이다.
   final List<Player> teamPlayers;
 
   final Game? nextGame;
@@ -120,6 +122,9 @@ class MyState {
 }
 
 class MyViewModel extends AsyncNotifier<MyState> {
+  /// 시안 "주요 선수" 줄 수.
+  static const _topScorerCount = 3;
+
   @override
   Future<MyState> build() async {
     final prefs = ref.read(preferencesRepositoryProvider);
@@ -154,7 +159,13 @@ class MyViewModel extends AsyncNotifier<MyState> {
       for (final r in ranking) {
         if (r.team.name == team.name) rank = r;
       }
-      teamPlayers = players.where((p) => p.teamName == team.name).toList();
+      // 시안 `topScorers` — 명단 전체가 아니라 득점 상위 3명이다.
+      // 그냥 소속 선수를 다 넣으면 16줄이 깔린다.
+      teamPlayers = players.where((p) => p.teamName == team.name).toList()
+        ..sort((a, b) => (b.goals ?? 0).compareTo(a.goals ?? 0));
+      if (teamPlayers.length > _topScorerCount) {
+        teamPlayers = teamPlayers.sublist(0, _topScorerCount);
+      }
 
       final games = allGames
           .where((g) =>

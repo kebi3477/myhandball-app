@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
@@ -36,7 +37,7 @@ class MyScreen extends ConsumerWidget {
             error: (e, _) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(MhSpacing.gutter),
-                child: Text('$e',
+                child: Text(mhErrorMessage(e),
                     textAlign: TextAlign.center,
                     style: MhText.meta(context.mh.textSub)),
               ),

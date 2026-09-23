@@ -282,6 +282,7 @@ class HttpHandballApiService implements HandballApiService {
 
   Player _player(Map<String, dynamic> p, String name) {
     final seq = _int(p['playerSeq']);
+    final stats = _map(p['stats']);
     return Player(
       id: seq != null ? 'p$seq' : 'n:$name',
       name: name,
@@ -289,7 +290,8 @@ class HttpHandballApiService implements HandballApiService {
       teamLogoUrl: _str(p['teamLogoUrl']),
       number: _int(p['number']),
       position: _str(p['position']),
-      statLine: _statLine(_map(p['stats']), _str(p['position'])),
+      goals: _int(stats['goals']),
+      statLine: _statLine(stats, _str(p['position'])),
     );
   }
 

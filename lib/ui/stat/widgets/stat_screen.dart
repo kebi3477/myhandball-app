@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/gender.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../search/widgets/search_screen.dart';
@@ -36,7 +37,7 @@ class StatScreen extends ConsumerWidget {
           child: async.when(
             skipLoadingOnReload: true,
             loading: () => const StatSkeleton(),
-            error: (e, _) => _ErrorView(message: '$e', onRetry: vm.refresh),
+            error: (e, _) => _ErrorView(message: mhErrorMessage(e), onRetry: vm.refresh),
             data: (state) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

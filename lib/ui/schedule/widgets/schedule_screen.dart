@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/schedule_view_model.dart';
 import 'my_team_calendar_view.dart';
@@ -33,7 +34,7 @@ class ScheduleScreen extends ConsumerWidget {
             skipLoadingOnReload: true,
             loading: () => const ScheduleSkeleton(),
             error: (e, _) => _ErrorView(
-              message: '$e',
+              message: mhErrorMessage(e),
               onRetry: vm.refresh,
             ),
             data: (state) => switch (state.view) {

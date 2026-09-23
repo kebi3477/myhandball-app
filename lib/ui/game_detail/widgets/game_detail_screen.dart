@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../view_models/game_detail_view_model.dart';
@@ -50,7 +51,7 @@ class GameDetailScreen extends ConsumerWidget {
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(MhSpacing.gutter),
-            child: Text('$e',
+            child: Text(mhErrorMessage(e),
                 textAlign: TextAlign.center,
                 style: MhText.meta(context.mh.textSub)),
           ),
