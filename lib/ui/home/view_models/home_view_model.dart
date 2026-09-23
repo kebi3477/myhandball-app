@@ -122,8 +122,7 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
           .getSeasonSchedule(gender, next.year);
       final starts = [
         for (final d in days)
-          for (final g in d.games)
-            if (g.startsAt case final at?) at,
+          for (final g in d.games) ?g.startsAt,
       ]..sort();
       return starts.isEmpty ? null : starts.first;
     } on Exception {
