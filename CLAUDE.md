@@ -12,7 +12,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - v1 iOS: `/Users/kebi/projects/_legercy/myhandball-ios` (SwiftUI + WKWebView 껍데기)
 - API: `../myhandball-api` (NestJS, **이 저장소에서 직접 수정하지 않는다** — 아래 참조)
 
-이 저장소는 `flutter create` 직후 상태다. 실제 화면 구현은 아직 시작 전.
+### 구현 현황
+
+| 영역 | 상태 |
+|---|---|
+| 디자인 토큰 · 테마 (`lib/ui/core/themes/`) | 완료 — 다크/라이트 2벌, 시안 `c.*` 키와 1:1 |
+| 온보딩 5스텝 | 완료 |
+| 홈 탭 | 완료 (가까운 경기 / 가이드 배너 / 팀순위 / 시즌 TOP5) |
+| 하단 4탭 셸 | 완료 |
+| 일정 · 분석 · MY 탭 | **자리표시만** (`ComingSoon`) |
+| 경기 상세, 규칙 가이드, 검색, 팀 선택 모달, 설정, 선수 카드, 팀 비교 | 미착수 |
+| 데이터 계층 (repository + service) | 골격 완료 — 구현체가 `MockHandballApiService` 하나 |
+| 실제 API 연동 | 미착수 — `HandballApiService`의 HTTP 구현만 추가하면 된다 |
+
+### 시안에서 의도적으로 뺀 것
+
+시안은 375x812 목업 프레임 안에 **가짜 상태바(`9:41`, 배터리)와 다이나믹
+아일랜드**를 그려둔다. 시안을 브라우저에서 보여주려는 장식이므로 옮기지
+않았다. 실제 기기에서는 `SafeArea`가 그 자리를 차지한다.
+
+스코어 숫자의 `font-family: Impact, Pretendard, sans-serif`도 iOS/Android에
+Impact가 없어 실제로는 Pretendard로 떨어진다. `MhText.score()`가 가장 무거운
+웨이트(w800)로 대신한다.
+
+## 아키텍처
+
+**Flutter 공식 아키텍처 가이드**(docs.flutter.dev/app-architecture)의 MVVM +
+Repository 구조를 따른다.
+
+```
+lib/
+├── config/              # 빌드 타임 설정 (dart-define)
+├── domain/models/       # 앱 도메인 모델
+├── data/
+│   ├── services/        # 외부 소스 래퍼, 무상태
+│   └── repositories/    # source of truth, 캐시·에러 처리
+└── ui/
+    ├── core/themes/     # 토큰, ThemeData, 텍스트 스타일
+    ├── core/ui/         # 공유 위젯 (TeamLogo, 아이콘 페인터 등)
+    └── <feature>/
+        ├── view_models/
+        └── widgets/
+```
+
+규칙:
+
+- **View는 상태를 만들지 않는다.** 화면 상태는 ViewModel이 갖는다. 위젯 내부
+  `State`는 애니메이션 컨트롤러·`PageController`처럼 순수 UI 자원만 둔다
+- **View는 repository를 직접 부르지 않는다.** 반드시 ViewModel을 거친다
+- ViewModel은 `Notifier` / `AsyncNotifier`로 구현한다. 가이드의 예제는
+  `ChangeNotifier`를 쓰지만 이 프로젝트는 Riverpod을 쓰므로 역할만 같게 맞춘다
+- **빈 ViewModel은 만들지 않는다.** 화면에 실제 상태가 생길 때 같이 만든다.
+  지금 `schedule` / `stat` / `my` 탭에 `view_models/`가 없는 이유다
+- `routing/`은 아직 없다. 화면 전환이 4탭 `IndexedStack` + 조건부 `home`뿐이라
+  라우터가 필요 없다. 경기 상세·가이드처럼 전체화면이 붙을 때 go_router를 넣는다
 
 ## 작업 경계: API 변경은 프롬프트로 넘긴다
 
@@ -20,42 +73,52 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **API(`../myhandball-api`) 코드는 직접 수정하지 않는다.** 읽는 것은 자유롭게 하되(계약 확인용), 변경이 필요하면 **API 저장소에서 작업할 다른 Claude 세션에 넘길 프롬프트를 작성**한다.
 
-작성 위치: `docs/api-requests/<NNN>-<슬러그>.md` (번호는 3자리 순번)
+프롬프트는 **파일로 쓰지 않고 사용자에게 채팅으로 바로 준다.** 그대로 복사해 붙일 수 있게 코드블럭 하나로 감싼다. 프롬프트 본문에 마크다운 제목·코드블럭이 들어가므로 바깥 펜스는 백틱 4개(````)를 쓴다.
 
 프롬프트는 API 저장소만 열어둔 세션이 **이 저장소를 보지 않고도** 수행할 수 있도록 자기완결적으로 쓴다. 최소 다음을 포함한다:
 
-```markdown
-# <제목>
+- **배경** — 왜 필요한지, 앱의 어느 화면/기능이 요구하는지
+- **엔드포인트** — `METHOD /api/...`, 쿼리 파라미터와 기본값
+- **응답 스펙** — TypeScript 타입으로. 기존 타입 확장이면 어느 파일의 무엇인지 명시
+- **하위 호환** — 기존 웹(v1)이 같은 엔드포인트를 쓰므로 필드 추가는 되지만 제거·타입 변경은 안 된다 (웹을 내린 뒤라면 그 사실을 명시)
+- **검증** — curl 예시와 기대 응답
 
-## 배경
-왜 필요한지. 앱의 어느 화면/기능이 이걸 요구하는지.
+프롬프트를 준 뒤에는 API 쪽 작업이 끝나 배포될 때까지 앱에서 해당 기능을 목업/스텁으로 둔다.
 
-## 엔드포인트
-METHOD /api/... — 쿼리 파라미터와 기본값
+### 지금 API 작업이 필요한 것
 
-## 응답 스펙
-TypeScript 타입으로. 기존 타입을 확장하는 경우 어느 파일의 무엇인지 명시.
+- **선수 기록(시즌 TOP5)** — 대응 엔드포인트가 없다. `lib/domain/models/player_stat.dart` 참조
+- **경기 상태(pre/live/finished) 판정** — 현재 `scoreText` 문자열과 시작 시각만 오고, v1 웹이 클라이언트에서 계산했다. 위젯·라이브 액티비티까지 가려면 서버가 줘야 한다
+- **실시간 스코어 + 득점 이벤트 푸시** — 위젯 LIVE 상태의 전제
 
-## 하위 호환
-기존 웹(v1)이 같은 엔드포인트를 쓰고 있으므로, 필드 추가는 되지만 제거·타입 변경은 안 된다.
-(웹을 완전히 내린 뒤라면 그 사실을 명시)
+## 커밋
 
-## 검증
-curl 예시와 기대 응답.
-```
+**작업이 한 단락 끝나면 커밋까지 알아서 한다.** 따로 요청을 기다리지 않는다.
 
-프롬프트를 쓴 뒤에는 사용자에게 파일 경로를 알리고, API 쪽 작업이 끝나 배포될 때까지 앱에서는 해당 기능을 목업/스텁으로 둔다.
+- 커밋 전에 `flutter analyze`와 `flutter test`가 통과하는지 확인한다
+- 메시지는 한국어로, 무엇을/왜 바꿨는지 한 줄 요약 + 필요하면 본문
+- 푸시는 하지 않는다 (요청받았을 때만)
 
 ## 명령어
 
 ```bash
 flutter analyze                          # 정적 분석
-flutter test                             # 전체 테스트
+flutter test                             # 전체 테스트 (test/ 만)
 flutter test test/widget_test.dart       # 파일 단위
 flutter test --plain-name "테스트 이름"    # 단일 테스트
 flutter run                              # 개발 실행
 flutter build ios --no-codesign --debug  # iOS 빌드 검증 (서명 없이)
+
+# 온보딩을 건너뛰고 바로 4탭 셸로 (개발용)
+flutter run --dart-define=MH_SKIP_ONBOARDING=true
+
+# 화면 전체를 PNG로 떠서 레이아웃 확인 (tool/preview/*.png, gitignore됨)
+flutter test --update-goldens tool/design_preview_test.dart
 ```
+
+`tool/`은 `flutter test`의 기본 대상(`test/`)에 없으므로 CI를 깨지 않는다.
+프리뷰 PNG는 테스트 환경이라 **본문이 네모로 렌더된다** — 커스텀 폰트가
+로드되지 않아서다. 레이아웃 확인용이고, 타이포 확인은 시뮬레이터로 한다.
 
 API 베이스 URL은 컴파일 타임에 주입한다. 웹 v1은 미지정 시 `window.location.origin`으로 폴백했지만 **앱에는 origin이 없으므로 항상 명시해야 한다.**
 
@@ -88,7 +151,7 @@ flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr
 
 ### 실시간 스코어는 없다
 
-API에 이벤트 스트림도 푸시도 없다. v2 시안의 LIVE 위젯·라이브 액티비티·경기 상세 라이브 피드는 **백엔드 신규 작업이 선행돼야** 한다. 해당 기능을 건드리게 되면 먼저 `docs/api-requests/`에 프롬프트를 쓴다.
+API에 이벤트 스트림도 푸시도 없다. v2 시안의 LIVE 위젯·라이브 액티비티·경기 상세 라이브 피드는 **백엔드 신규 작업이 선행돼야** 한다. 해당 기능을 건드리게 되면 먼저 API 작업 프롬프트를 사용자에게 준다 (위 "작업 경계" 참조).
 
 ## 디자인 원본
 
@@ -107,6 +170,17 @@ DesignSync(method="get_file",  projectId="...", path="MyHandball v2.dc.html")
 - `figassets/`, `assets/` — 아이콘, 스티커 8종, 하이라이트 이미지
 
 `get_file` 결과가 크면 tool-results 파일로 떨어진다. python으로 JSON 언이스케이프 후 grep하면 된다.
+
+**주의 — `get_file`은 256KiB에서 잘린다.** `MyHandball v2.dc.html`이 이 상한을
+넘어서, **스크립트 뒷부분(`renderVals` 상당 부분과 `LESSONS` 뒤쪽)이 잘린 채
+온다.** `truncated: false`로 와도 실제로는 잘려 있다. 마크업(1~1665줄)은
+온전하므로 레이아웃·색상 리터럴은 거기서 읽으면 된다.
+
+에셋은 `get_file`이 base64를 인라인으로 뱉어 컨텍스트를 크게 먹는다.
+**v2.html을 로컬에 받아둔 뒤 python으로 인라인 SVG를 추출**하는 쪽이 싸다
+(`assets/design/*.svg`가 그렇게 만들어졌다). 별도 파일로 존재하는
+일러스트(`figassets/*.svg`, `*.png`)는 사용자가 내보내 넣는다 —
+`assets/figassets/README.md` 참조.
 
 ## v2 범위
 
