@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/app_config.dart';
@@ -8,6 +9,11 @@ import 'ui/app/widgets/my_handball_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 시안이 375x812 세로 한 벌뿐이다. iOS는 Info.plist에서도 막았지만
+  // 안드로이드까지 한 번에 맞추려고 여기서도 고정한다.
+  await SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
 
   // 테마가 첫 프레임에 깜빡이지 않도록 설정을 먼저 읽는다.
   final preferences = PreferencesRepository();

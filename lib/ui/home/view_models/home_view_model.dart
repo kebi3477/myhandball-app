@@ -17,6 +17,7 @@ class HomeState {
     required this.gender,
     required this.category,
     this.nextSeasonOpensAt,
+    this.rankingUpdatedAt,
   });
 
   final List<Game> games;
@@ -29,6 +30,21 @@ class HomeState {
 
   /// 다음 시즌 개막 시각. 연맹이 일정을 올리기 전에는 `null`이다.
   final DateTime? nextSeasonOpensAt;
+
+  /// 순위가 마지막으로 바뀐 시점 = **마지막으로 치른 경기 날짜**.
+  ///
+  /// API가 갱신 시각을 주지 않아 일정에서 계산한다. 시안은 날짜를 박아
+  /// 두었지만 그대로 두면 영영 틀린 날짜가 남는다.
+  final DateTime? rankingUpdatedAt;
+
+  /// `2026.05.26 업데이트`
+  String? get rankingUpdatedLabel {
+    final at = rankingUpdatedAt;
+    if (at == null) return null;
+    final m = at.month.toString().padLeft(2, '0');
+    final d = at.day.toString().padLeft(2, '0');
+    return '${at.year}.$m.$d 업데이트';
+  }
 
   /// 시안 `isOffseason` — 앞으로 치를 경기가 하나도 없는 상태.
   ///
@@ -78,6 +94,7 @@ class HomeState {
     Gender? gender,
     StatCategory? category,
     DateTime? nextSeasonOpensAt,
+    DateTime? rankingUpdatedAt,
   }) =>
       HomeState(
         games: games ?? this.games,
@@ -86,6 +103,7 @@ class HomeState {
         gender: gender ?? this.gender,
         category: category ?? this.category,
         nextSeasonOpensAt: nextSeasonOpensAt ?? this.nextSeasonOpensAt,
+        rankingUpdatedAt: rankingUpdatedAt ?? this.rankingUpdatedAt,
       );
 }
 
@@ -107,7 +125,25 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
       gender: gender,
       category: category,
       nextSeasonOpensAt: offseason ? await _nextSeasonOpening(gender) : null,
+      rankingUpdatedAt: await _lastPlayedAt(gender),
     );
+  }
+
+  /// 마지막으로 치른 경기 시각. 순위 갱신 시점으로 쓴다.
+  Future<DateTime?> _lastPlayedAt(Gender gender) async {
+    try {
+      final days = await ref
+          .read(scheduleRepositoryProvider)
+          .getSeasonSchedule(gender, Season.current.year);
+      final played = [
+        for (final d in days)
+          for (final g in d.games)
+            if (g.status == GameStatus.finished) ?g.startsAt,
+      ]..sort();
+      return played.isEmpty ? null : played.last;
+    } on Exception {
+      return null;
+    }
   }
 
   /// 다음 시즌 첫 경기 시각.

@@ -29,11 +29,13 @@ class RankingSection extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('팀순위', style: MhText.sectionTitle(c.text)),
-              Text('2026.05.26 업데이트',
-                  style: MhText.custom(
-                      size: 10,
-                      weight: FontWeight.w400,
-                      color: c.textNeutral)),
+              // 시안은 날짜를 박아 뒀지만 그대로 두면 영영 틀린 값이 남는다.
+              if (state.rankingUpdatedLabel case final label?)
+                Text(label,
+                    style: MhText.custom(
+                        size: 10,
+                        weight: FontWeight.w400,
+                        color: c.textNeutral)),
             ],
           ),
           const SizedBox(height: MhSpacing.xs),
