@@ -62,3 +62,10 @@ flutter:
           weight: 700
         - asset: assets/fonts/Pretendard-ExtraBold.otf
           weight: 800
+
+    # 시안이 스코어·등번호에 쓰는 Impact의 대체.
+    # iOS/Android에 Impact가 없어 Pretendard로 떨어지면 훨씬 넓게 보인다.
+    # Anton은 SIL OFL 1.1 (assets/fonts/Anton-OFL.txt).
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton-Regular.ttf

@@ -379,7 +379,8 @@ class HttpHandballApiService implements HandballApiService {
             name: _str(p['name']) ?? '',
             teamName: _str(p['teamName']) ?? '',
             position: _str(p['position']) ?? '-',
-            value: '${_num(p['value']) ?? 0}$unit',
+            value: '${_num(p['value']) ?? 0}',
+            unit: unit,
             logoUrl: _str(p['teamLogoUrl']),
           ),
     ];

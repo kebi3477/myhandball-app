@@ -15,10 +15,21 @@ class PlayerCard extends StatelessWidget {
     required this.favorite,
     required this.onToggleFavorite,
     this.onTap,
+    this.width = width375,
   });
 
-  static const width = 97.0;
+  /// 시안 기준 폭. 375 화면에서 `97×3 + 18×2 = 327`로 거터에 딱 맞는다.
+  /// 더 넓은 화면에서는 [width]를 늘려 3열이 폭을 채우게 한다.
+  static const width375 = 97.0;
   static const cardHeight = 123.0;
+
+  /// 시안 카드 사이 간격.
+  static const gap = 18.0;
+
+  /// 주어진 폭에서 3열로 놓을 때의 카드 폭.
+  static double widthFor(double available) => (available - gap * 2) / 3;
+
+  final double width;
 
   final Player player;
   final bool favorite;
@@ -69,9 +80,9 @@ class PlayerCard extends StatelessWidget {
                               fit: BoxFit.scaleDown,
                               child: Text(
                                 player.numberText,
-                                style: MhText.custom(
+                                // 시안 Impact 44px / line-height 0.9
+                                style: mhDisplay(
                                   size: 44,
-                                  weight: FontWeight.w800,
                                   color: MhColors.brand,
                                   height: 0.9,
                                 ),

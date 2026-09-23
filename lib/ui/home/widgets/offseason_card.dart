@@ -45,11 +45,7 @@ class OffseasonCard extends StatelessWidget {
                       color: MhColors.brand)),
               const SizedBox(height: 6),
               Text('D-$days',
-                  style: MhText.custom(
-                      size: 44,
-                      weight: FontWeight.w800,
-                      color: c.text,
-                      height: 1.1)),
+                  style: mhDisplay(size: 44, color: c.text, height: 1.1)),
               const SizedBox(height: 6),
             ] else ...[
               Text('다음 시즌을 기다리는 중',

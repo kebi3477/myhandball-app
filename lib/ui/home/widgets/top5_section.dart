@@ -196,7 +196,7 @@ class _PlayerRow extends StatelessWidget {
                   size: 16, weight: FontWeight.w800, color: c.text),
               children: [
                 TextSpan(
-                  text: ' $unit',
+                  text: ' ${player.unit}',
                   style: MhText.custom(
                       size: 11, weight: FontWeight.w500, color: c.textSub),
                 ),

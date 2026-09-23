@@ -162,13 +162,17 @@ void main() {
       expect(players.first.statLine, '166골 · 82AS');
     });
 
-    test('기록 랭킹은 원본 단위를 붙여 보여준다', () async {
+    test('기록 랭킹은 값과 단위를 따로 준다', () async {
+      // 값에 단위를 붙여 두면 화면이 한 번 더 붙여 `166골골`이 된다.
       final api = build({'/api/player/ranking': _fixture('player_ranking')});
 
       final top = await api.fetchTopPlayers(Gender.men, StatCategory.goals);
 
       expect(top.first.rank, 1);
-      expect(top.first.value, endsWith('골'));
+      expect(top.first.value, isNot(contains('골')));
+      expect(int.tryParse(top.first.value), isNotNull,
+          reason: 'value는 숫자만이어야 한다');
+      expect(top.first.unit, '골');
     });
   });
 

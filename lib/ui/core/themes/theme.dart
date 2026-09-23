@@ -5,10 +5,30 @@ import 'tokens.dart';
 /// 시안이 쓰는 폰트 패밀리. `assets/fonts/`에 Pretendard 5종을 번들한다.
 const kFontFamily = 'Pretendard';
 
-/// 시안의 스코어 숫자는 `font-family: Impact, Pretendard, sans-serif`다.
-/// iOS/Android에는 Impact가 없어 실제로는 Pretendard로 떨어지므로,
-/// 가장 무거운 웨이트로 대신한다.
-const kScoreFontWeight = FontWeight.w800;
+/// 시안이 스코어·등번호에 쓰는 `font-family: Impact, Pretendard, sans-serif`의
+/// 대체. **iOS/Android에는 Impact가 없다.**
+///
+/// Pretendard의 가장 무거운 웨이트로 대신했더니 시안보다 훨씬 넓어 보여서,
+/// 폭이 비슷한 Anton(SIL OFL 1.1)을 번들한다. 굵기 변형이 없는 폰트라
+/// 웨이트를 지정하지 않는다.
+const kDisplayFontFamily = 'Anton';
+
+/// 시안이 Impact를 쓰는 자리의 글자 스타일.
+///
+/// 스코어, 등번호, D-day, 가이드의 큰 숫자가 여기 해당한다.
+TextStyle mhDisplay({
+  required double size,
+  required Color color,
+  double height = 1,
+  double? letterSpacing,
+}) =>
+    TextStyle(
+      fontFamily: kDisplayFontFamily,
+      fontSize: size,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
 
 ThemeData buildMhTheme(MhPalette palette) {
   final base = palette.isDark ? ThemeData.dark() : ThemeData.light();
@@ -80,15 +100,9 @@ abstract final class MhText {
         height: 1.4,
       );
 
-  /// 스코어 — `36px`, Impact 대체
-  static TextStyle score(Color c, {double size = 36}) => TextStyle(
-        fontFamily: _f,
-        fontSize: size,
-        fontWeight: kScoreFontWeight,
-        color: c,
-        height: 1,
-        letterSpacing: -0.5,
-      );
+  /// 스코어 — `36px`. 시안 Impact 자리 → Anton.
+  static TextStyle score(Color c, {double size = 36}) =>
+      mhDisplay(size: size, color: c, letterSpacing: -0.5);
 
   /// 메타/보조 — `12px/500`
   static TextStyle meta(Color c) => TextStyle(

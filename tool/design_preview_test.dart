@@ -123,6 +123,11 @@ void main() {
     }
     await loader.load();
 
+    // 시안 Impact 자리를 대신하는 디스플레이 폰트.
+    final anton = FontLoader('Anton')
+      ..addFont(rootBundle.load('assets/fonts/Anton-Regular.ttf'));
+    await anton.load();
+
     // Material 아이콘도 마찬가지로 안 올라와서 전부 네모(□)로 찍힌다.
     // 자물쇠·체크가 깨진 건지 폰트가 없는 건지 구분이 안 되므로 같이 올린다.
     // SDK 안의 폰트를 직접 읽는다 — 앱 번들에는 없다.

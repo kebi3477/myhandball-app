@@ -27,19 +27,26 @@ class StatPlayerTab extends ConsumerWidget {
       children: [
         _CompareEntry(candidates: players),
         const SizedBox(height: MhSpacing.sm),
-        Wrap(
-          spacing: 18,
-          runSpacing: 18,
-          children: [
-            for (final p in players)
-              PlayerCard(
-                player: p,
-                favorite: state.favoritePlayerIds.contains(p.id),
-                onToggleFavorite: () => vm.toggleFavorite(p.id),
-                onTap: () => showPlayerDetailSheet(context, p),
-              ),
-          ],
-        ),
+        // 시안은 375에서 3열이 거터에 딱 맞게 짜여 있다. 카드 폭을 고정하면
+        // 더 넓은 화면에서 오른쪽에 여백이 남아 위 "선수 비교" 카드와
+        // 오른쪽 끝이 어긋난다. 폭을 나눠 always 3열이 꽉 차게 한다.
+        LayoutBuilder(builder: (context, constraints) {
+          final cardWidth = PlayerCard.widthFor(constraints.maxWidth);
+          return Wrap(
+            spacing: PlayerCard.gap,
+            runSpacing: PlayerCard.gap,
+            children: [
+              for (final p in players)
+                PlayerCard(
+                  player: p,
+                  width: cardWidth,
+                  favorite: state.favoritePlayerIds.contains(p.id),
+                  onToggleFavorite: () => vm.toggleFavorite(p.id),
+                  onTap: () => showPlayerDetailSheet(context, p),
+                ),
+            ],
+          );
+        }),
       ],
     );
   }

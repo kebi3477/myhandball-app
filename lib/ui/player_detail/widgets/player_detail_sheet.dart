@@ -116,10 +116,8 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text('No.${p.numberText}',
-                            style: MhText.custom(
-                                size: 28,
-                                weight: FontWeight.w800,
-                                color: MhColors.brand)),
+                            style: mhDisplay(
+                                size: 28, color: MhColors.brand)),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(p.name,

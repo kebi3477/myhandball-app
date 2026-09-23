@@ -242,11 +242,7 @@ class _Slot extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(player!.numberText,
-                          style: MhText.custom(
-                              size: 34,
-                              weight: FontWeight.w800,
-                              color: color,
-                              height: 1)),
+                          style: mhDisplay(size: 34, color: color)),
                       Text(player!.positionText,
                           style: MhText.custom(
                               size: 11,

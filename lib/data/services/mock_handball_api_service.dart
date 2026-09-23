@@ -243,7 +243,8 @@ class MockHandballApiService implements HandballApiService {
     StatCategory category,
   ) async {
     await _delay();
-    return switch (category) {
+    // 단위는 목록을 만든 뒤 한 번에 붙인다. 항목마다 적으면 빠뜨리기 쉽다.
+    return _withUnit(category, switch (category) {
       StatCategory.goals => const [
           PlayerStat(
               rank: 1,
@@ -301,8 +302,24 @@ class MockHandballApiService implements HandballApiService {
           PlayerStat(
               rank: 3, name: '오세준', teamName: '상무피닉스', position: 'GK', value: '151'),
         ],
-    };
+    });
   }
+
+  /// 실제 API는 카테고리마다 단위를 따로 준다 (`골` `개` `회`).
+  /// 목업도 같은 모양으로 맞춘다.
+  List<PlayerStat> _withUnit(StatCategory category, List<PlayerStat> rows) => [
+        for (final r in rows)
+          PlayerStat(
+            rank: r.rank,
+            name: r.name,
+            teamName: r.teamName,
+            position: r.position,
+            value: r.value,
+            unit: category.unit,
+            isEstimated: r.isEstimated,
+            logoUrl: r.logoUrl,
+          ),
+      ];
 
   @override
   Future<List<Player>> fetchPlayers(Gender gender) async {
