@@ -7,6 +7,7 @@ import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/team_logo.dart';
+import '../../game_detail/widgets/game_detail_screen.dart';
 import '../view_models/schedule_view_model.dart';
 import 'month_switcher.dart';
 
@@ -60,7 +61,10 @@ class ScheduleListView extends ConsumerWidget {
                     itemCount: games.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: MhSpacing.xs),
-                    itemBuilder: (_, i) => _ScheduleGameCard(game: games[i]),
+                    itemBuilder: (context, i) => GestureDetector(
+                      onTap: () => GameDetailScreen.open(context, games[i]),
+                      child: _ScheduleGameCard(game: games[i]),
+                    ),
                   ),
                 ),
         ),

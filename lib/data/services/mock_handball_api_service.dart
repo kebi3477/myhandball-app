@@ -1,4 +1,5 @@
 import '../../domain/models/game.dart';
+import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
@@ -326,5 +327,140 @@ class MockHandballApiService implements HandballApiService {
       }
     }
     return players;
+  }
+
+  @override
+  Future<GameDetail> fetchGameDetail(Game game) async {
+    await _delay();
+
+    final home = game.scoreHome ?? 0;
+    final away = game.scoreAway ?? 0;
+    // 경기 id로 고정 시드를 만들어, 같은 경기는 항상 같은 중계가 나오게 한다.
+    var seed = game.id.codeUnits.fold<int>(7, (a, b) => (a * 31 + b) % 100000);
+    int next(int max) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return max == 0 ? 0 : seed % max;
+    }
+
+    final roster = await fetchPlayers(game.home.gender);
+    List<Player> of(String team) =>
+        roster.where((p) => p.teamName == team).toList();
+    final homeRoster = of(game.home.name);
+    final awayRoster = of(game.away.name);
+    String scorer(List<Player> list) =>
+        list.isEmpty ? '선수' : list[next(list.length)].name;
+
+    final events = <GameEvent>[
+      const GameEvent(type: GameEventType.start, minute: 0),
+    ];
+
+    if (game.status != GameStatus.pre) {
+      final upTo = game.status == GameStatus.live ? 30 : 60;
+      final minutes = List.generate(home + away, (_) => 1 + next(upTo - 1))
+        ..sort();
+      var a = 0, b = 0, remA = home, remB = away;
+
+      for (final m in minutes) {
+        final isHome = remA > 0 && (remB == 0 || next(remA + remB) < remA);
+        if (isHome) {
+          a++;
+          remA--;
+        } else {
+          b++;
+          remB--;
+        }
+        events.add(GameEvent(
+          type: GameEventType.goal,
+          minute: m,
+          isHome: isHome,
+          playerName: scorer(isHome ? homeRoster : awayRoster),
+          sevenMeter: next(100) < 12,
+          scoreHome: a,
+          scoreAway: b,
+        ));
+        if (next(100) < 14) {
+          events.add(GameEvent(
+            type: GameEventType.save,
+            minute: m,
+            isHome: !isHome,
+            playerName: scorer(isHome ? awayRoster : homeRoster),
+          ));
+        }
+        if (next(100) < 7) {
+          final side = next(2) == 0;
+          events.add(GameEvent(
+            type: GameEventType.twoMinutes,
+            minute: m,
+            isHome: side,
+            playerName: scorer(side ? homeRoster : awayRoster),
+          ));
+        }
+      }
+      if (upTo >= 30) {
+        events.add(const GameEvent(type: GameEventType.halfTime, minute: 30));
+      }
+      if (game.status == GameStatus.finished) {
+        events.add(const GameEvent(type: GameEventType.end, minute: 60));
+      }
+      events.sort((x, y) => x.minute.compareTo(y.minute));
+    }
+
+    final shots = home + 12 + next(8);
+    final shotsAway = away + 12 + next(8);
+
+    return GameDetail(
+      game: game,
+      firstHalfHome: (home / 2).round(),
+      firstHalfAway: (away / 2).round(),
+      events: events.reversed.toList(),
+      stats: [
+        TeamStatLine(label: '슛', home: shots, away: shotsAway),
+        TeamStatLine(
+          label: '슛 성공률',
+          home: shots == 0 ? 0 : (home * 100 / shots).round(),
+          away: shotsAway == 0 ? 0 : (away * 100 / shotsAway).round(),
+          isPercent: true,
+        ),
+        TeamStatLine(label: '7m 드로', home: 2 + next(4), away: 2 + next(4)),
+        TeamStatLine(label: '선방', home: 6 + next(8), away: 6 + next(8)),
+        TeamStatLine(label: '실책', home: 5 + next(9), away: 5 + next(9)),
+        TeamStatLine(label: '2분 퇴장', home: next(4), away: next(4)),
+      ],
+      headToHead: HeadToHead(
+        homeWins: 3 + next(3),
+        draws: next(2),
+        awayWins: 2 + next(3),
+        avgHome: 26 + next(6) / 2,
+        avgAway: 25 + next(6) / 2,
+        games: List.generate(4, (i) {
+          final hs = 24 + next(8);
+          final as_ = 23 + next(8);
+          return HeadToHeadGame(
+            season: '${2025 - i}',
+            date: '${3 + i}.${10 + next(18)}',
+            score: '$hs : $as_',
+            resultLabel: hs > as_ ? '${game.home.name} 승' : '${game.away.name} 승',
+            homeWon: hs > as_,
+          );
+        }),
+      ),
+      mvpCandidates: [
+        for (var i = 0; i < 5; i++)
+          () {
+            final fromHome = i.isEven;
+            final list = fromHome ? homeRoster : awayRoster;
+            final p = list.isEmpty ? null : list[i % list.length];
+            return MvpCandidate(
+              id: 'mvp-${game.id}-$i',
+              name: p?.name ?? '선수 ${i + 1}',
+              teamName: fromHome ? game.home.name : game.away.name,
+              teamLogoUrl:
+                  fromHome ? game.home.logoUrl : game.away.logoUrl,
+              statLine: p?.statLine ?? '-',
+              votes: 40 - i * 7 + next(6),
+            );
+          }(),
+      ],
+    );
   }
 }

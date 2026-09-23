@@ -5,14 +5,14 @@ import '../../../data/repositories/preferences_repository.dart';
 import '../../../data/repositories/ranking_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../domain/models/game.dart';
+import '../../../domain/models/game_detail.dart';
 import '../../../domain/models/player.dart';
 import '../../../domain/models/rank_row.dart';
 import '../../../domain/models/team.dart';
 
 /// 시안 `나의 직관 기록` 한 줄 (`mh_attended`).
 ///
-/// 경기 상세 화면이 아직 없어 추가할 방법이 없다. 지금은 항상 비어 있고
-/// 빈 상태 안내만 보인다.
+/// 경기 상세의 "직관 기록하기"를 누르면 쌓인다.
 class AttendanceRecord {
   const AttendanceRecord({
     required this.matchLabel,
@@ -31,7 +31,7 @@ class AttendanceRecord {
   final String result;
 }
 
-/// 시안 `나의 승부 예측` 한 줄 (`mh_preds`). 역시 경기 상세에서 만들어진다.
+/// 시안 `나의 승부 예측` 한 줄 (`mh_preds`). 경기 상세의 예측 탭에서 만들어진다.
 class PredictionRecord {
   const PredictionRecord({
     required this.matchLabel,
@@ -137,13 +137,29 @@ class MyViewModel extends AsyncNotifier<MyState> {
     var nextGame = <Game>[];
     var recent = <Game>[];
 
+    // 직관·예측 기록은 경기 상세에서 저장한 id를 실제 경기로 되살린다.
+    final allGames = await _allGames();
+    final attendance = <AttendanceRecord>[];
+    final predictions = <PredictionRecord>[];
+
+    for (final g in allGames) {
+      if (prefs.didAttend(g.id)) {
+        attendance.add(_toAttendance(g, team?.name));
+      }
+      final pick = prefs.predictionFor(g.id);
+      if (pick != null) predictions.add(_toPrediction(g, pick));
+    }
+
     if (team != null) {
       for (final r in ranking) {
         if (r.team.name == team.name) rank = r;
       }
       teamPlayers = players.where((p) => p.teamName == team.name).toList();
 
-      final games = await _myTeamGames(team);
+      final games = allGames
+          .where((g) =>
+              g.home.name == team.name || g.away.name == team.name)
+          .toList();
       nextGame = games.where((g) => g.status == GameStatus.pre).toList();
       recent = games.reversed
           .where((g) => g.status == GameStatus.finished)
@@ -159,14 +175,49 @@ class MyViewModel extends AsyncNotifier<MyState> {
       teamPlayers: teamPlayers,
       nextGame: nextGame.isEmpty ? null : nextGame.first,
       recentGames: recent,
-      // 경기 상세 화면이 없어 아직 쌓일 길이 없다.
-      attendance: const [],
-      predictions: const [],
+      attendance: attendance,
+      predictions: predictions,
     );
   }
 
-  /// 이번 달과 지난달에서 마이팀 경기만 시간순으로 모은다.
-  Future<List<Game>> _myTeamGames(Team team) async {
+  AttendanceRecord _toAttendance(Game g, String? myTeamName) {
+    final isHome = g.home.name == myTeamName;
+    final mine = isHome ? g.scoreHome : g.scoreAway;
+    final theirs = isHome ? g.scoreAway : g.scoreHome;
+    final result = (mine == null || theirs == null)
+        ? '-'
+        : (mine > theirs ? '승' : (mine < theirs ? '패' : '무'));
+
+    return AttendanceRecord(
+      matchLabel: '${g.home.name} vs ${g.away.name}',
+      dateLabel: g.meta,
+      venue: g.venue ?? '경기장',
+      score: '${g.scoreHomeText} : ${g.scoreAwayText}',
+      result: result,
+    );
+  }
+
+  PredictionRecord _toPrediction(Game g, PredictionPick pick) {
+    final h = g.scoreHome ?? 0;
+    final a = g.scoreAway ?? 0;
+    final actual = h > a
+        ? PredictionPick.home
+        : (h < a ? PredictionPick.away : PredictionPick.draw);
+
+    return PredictionRecord(
+      matchLabel: '${g.home.name} vs ${g.away.name}',
+      pickLabel: switch (pick) {
+        PredictionPick.home => '${g.home.name} 승',
+        PredictionPick.away => '${g.away.name} 승',
+        PredictionPick.draw => '무승부',
+      },
+      dateLabel: g.meta,
+      hit: g.status == GameStatus.finished && pick == actual,
+    );
+  }
+
+  /// 이번 달과 지난달 경기를 시간순으로 모은다.
+  Future<List<Game>> _allGames() async {
     final repo = ref.read(scheduleRepositoryProvider);
     final gender = ref.read(preferencesRepositoryProvider).preferredGender;
     final now = DateTime.now();
@@ -180,9 +231,7 @@ class MyViewModel extends AsyncNotifier<MyState> {
     for (final month in months) {
       final days = await repo.getMonthlySchedule(gender, month);
       for (final d in days) {
-        games.addAll(d.games.where(
-          (g) => g.home.name == team.name || g.away.name == team.name,
-        ));
+        games.addAll(d.games);
       }
     }
     return games;

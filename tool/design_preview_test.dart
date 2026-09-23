@@ -5,6 +5,7 @@
 // 주의: 테스트 환경은 커스텀 폰트를 로드하지 않아 **본문이 네모로 렌더된다.**
 // 레이아웃 확인용이고, 타이포 확인은 시뮬레이터로 한다.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +14,10 @@ import 'package:myhandball/data/repositories/schedule_repository.dart';
 import 'package:myhandball/data/services/mock_handball_api_service.dart';
 import 'package:myhandball/ui/core/themes/theme.dart';
 import 'package:myhandball/ui/core/themes/tokens.dart';
+import 'package:myhandball/data/services/mock_handball_api_service.dart' as mock;
+import 'package:myhandball/domain/models/game.dart';
+import 'package:myhandball/ui/game_detail/view_models/game_detail_view_model.dart';
+import 'package:myhandball/ui/game_detail/widgets/game_detail_screen.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
 import 'package:myhandball/ui/my/widgets/my_screen.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
@@ -79,6 +84,23 @@ Future<void> _shoot(
 }
 
 void main() {
+  // 테스트 환경은 기본적으로 커스텀 폰트를 로드하지 않아 글자가 네모로
+  // 렌더된다. 번들에서 Pretendard를 직접 올려 실제 타이포로 확인한다.
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final loader = FontLoader('Pretendard');
+    for (final weight in const [
+      'Regular',
+      'Medium',
+      'SemiBold',
+      'Bold',
+      'ExtraBold',
+    ]) {
+      loader.addFont(rootBundle.load('assets/fonts/Pretendard-$weight.otf'));
+    }
+    await loader.load();
+  });
+
   testWidgets('home dark', (t) async {
     await _shoot(t, 'home-dark', const HomeScreen(), MhPalette.dark);
   });
@@ -120,6 +142,32 @@ void main() {
     await _shoot(t, 'my', const MyScreen(), MhPalette.dark,
         size: const Size(390, 2100));
   });
+
+  const finishedGame = Game(
+    id: 'preview-1',
+    home: mock.MockHandballApiService.skHawks,
+    away: mock.MockHandballApiService.incheon,
+    status: GameStatus.finished,
+    meta: '11.09 (일) 14:00',
+    broadcast: ['MAXPORTS'],
+    scoreHome: 28,
+    scoreAway: 26,
+    venue: '청주 SK호크스 아레나',
+  );
+
+  for (final tab in GameDetailTab.values) {
+    testWidgets('game detail ${tab.name}', (t) async {
+      await _shoot(
+        t,
+        'game-${tab.name}',
+        const GameDetailScreen(game: finishedGame),
+        MhPalette.dark,
+        after: (container) => container
+            .read(gameDetailViewModelProvider(finishedGame).notifier)
+            .selectTab(tab),
+      );
+    });
+  }
 
   testWidgets('onboarding', (t) async {
     await _shoot(t, 'onboarding', const OnboardingScreen(), MhPalette.dark,

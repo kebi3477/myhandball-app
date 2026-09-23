@@ -1,4 +1,5 @@
 import '../../domain/models/game.dart';
+import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
@@ -32,4 +33,8 @@ abstract interface class HandballApiService {
 
   /// **대응 엔드포인트 없음.** 선수 명단도 마찬가지다.
   Future<List<Player>> fetchPlayers(Gender gender);
+
+  /// **대응 엔드포인트 없음.** 문자중계·팀 기록·맞대결·MVP 후보가 모두
+  /// 신규 작업이다.
+  Future<GameDetail> fetchGameDetail(Game game);
 }

@@ -6,6 +6,7 @@ import '../../../domain/models/schedule_day.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/team_logo.dart';
+import '../../game_detail/widgets/game_detail_screen.dart';
 import '../view_models/schedule_view_model.dart';
 import 'month_switcher.dart';
 
@@ -391,16 +392,19 @@ class _SelectedGameCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.bg,
-                    borderRadius: BorderRadius.circular(12),
+                child: GestureDetector(
+                  onTap: () => GameDetailScreen.open(context, game),
+                  child: Container(
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.bg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text('경기 상세',
+                        style: MhText.custom(
+                            size: 14, weight: FontWeight.w700, color: c.text)),
                   ),
-                  child: Text('경기 상세',
-                      style: MhText.custom(
-                          size: 14, weight: FontWeight.w700, color: c.text)),
                 ),
               ),
               if (!finished) ...[

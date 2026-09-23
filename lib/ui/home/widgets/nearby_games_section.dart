@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../game_detail/widgets/game_detail_screen.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import 'game_card.dart';
 import 'section_header.dart';
@@ -65,7 +66,11 @@ class _NearbyGamesSectionState extends ConsumerState<NearbyGamesSection> {
               ),
               child: SizedBox(
                 width: width - _cardPeek,
-                child: GameCard(game: widget.games[i]),
+                child: GameCard(
+                  game: widget.games[i],
+                  onTap: () =>
+                      GameDetailScreen.open(context, widget.games[i]),
+                ),
               ),
             ),
           ),

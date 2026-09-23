@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/app_config.dart';
+import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/season.dart';
 import '../../domain/models/team.dart';
@@ -29,6 +30,15 @@ class PreferencesRepository {
 
   /// 시안 `mh_fav_players`
   final _favoritePlayerIds = <String>{};
+
+  /// 시안 `mh_preds` — 경기 id → 내 예측
+  final _predictions = <String, PredictionPick>{};
+
+  /// 시안 `mh_attended` — 직관한 경기 id
+  final _attendedGameIds = <String>{};
+
+  /// 시안 `mh_mvp` — 경기 id → 내가 뽑은 후보 id
+  final _mvpVotes = <String, String>{};
 
   Season _season = Season.latest;
 
@@ -70,6 +80,33 @@ class PreferencesRepository {
 
   Future<void> setPreferredGender(Gender gender) async {
     _preferredGender = gender;
+    await _persist();
+  }
+
+  Map<String, PredictionPick> get predictions => Map.unmodifiable(_predictions);
+
+  PredictionPick? predictionFor(String gameId) => _predictions[gameId];
+
+  Future<void> setPrediction(String gameId, PredictionPick pick) async {
+    _predictions[gameId] = pick;
+    await _persist();
+  }
+
+  Set<String> get attendedGameIds => Set.unmodifiable(_attendedGameIds);
+
+  bool didAttend(String gameId) => _attendedGameIds.contains(gameId);
+
+  Future<void> toggleAttended(String gameId) async {
+    if (!_attendedGameIds.remove(gameId)) _attendedGameIds.add(gameId);
+    await _persist();
+  }
+
+  String? mvpVoteFor(String gameId) => _mvpVotes[gameId];
+
+  /// MVP는 한 번 투표하면 바꿀 수 없다 (시안 `voteMvp`).
+  Future<void> voteMvp(String gameId, String candidateId) async {
+    if (_mvpVotes.containsKey(gameId)) return;
+    _mvpVotes[gameId] = candidateId;
     await _persist();
   }
 
