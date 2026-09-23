@@ -9,8 +9,7 @@ import 'schedule_repository.dart' show handballApiServiceProvider;
 
 /// 팀 순위와 선수 기록의 source of truth.
 ///
-/// 순위는 `/api/ranking`에 대응하지만 **선수 기록은 대응 엔드포인트가 없다.**
-/// 지금은 목업이고, 실제로 붙이려면 API 작업이 선행돼야 한다.
+/// `/api/ranking`과 `/api/player/ranking`에 대응한다.
 class RankingRepository {
   RankingRepository(this._service);
 

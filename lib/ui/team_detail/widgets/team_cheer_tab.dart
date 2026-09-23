@@ -9,8 +9,12 @@ import '../view_models/team_detail_view_model.dart';
 
 /// 팀 상세 — 응원 탭. 작성 폼 + 응원글 목록.
 ///
-/// 응원글은 기기에만 저장된다 (시안 `mh_cheer`). 다른 사용자와 공유하려면
-/// 서버가 필요하고, 그건 API 신규 작업이다.
+/// 응원글은 서버에 저장된다 (`/api/team/:teamNum/cheer`). 좋아요·내 글
+/// 여부는 익명 기기 ID로 서버가 판정한다.
+///
+/// **아직 없는 것은 신고·차단이다.** 지금은 DB에서 `cheers.hidden`을 손으로
+/// 켜는 수밖에 없고, iOS 심사에서 UGC 신고 수단을 요구할 수 있다
+/// (`../myhandball-api/docs/api-tasks/07-후속-작업.md` B-1).
 class TeamCheerTab extends ConsumerStatefulWidget {
   const TeamCheerTab({super.key, required this.state});
 

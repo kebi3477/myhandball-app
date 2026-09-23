@@ -10,11 +10,7 @@ enum StatCategory {
   final String unit;
 }
 
-/// 선수 기록 한 줄.
-///
-/// **대응하는 API 엔드포인트가 아직 없다.** 현재 백엔드는 schedule / ranking /
-/// team / welcome 넷뿐이라, 선수 기록은 신규 작업이 필요하다.
-/// `docs/api-requests/`에 요청서를 쓰고 진행한다.
+/// 선수 기록 한 줄. `GET /api/player/ranking`에 대응한다.
 class PlayerStat {
   const PlayerStat({
     required this.rank,
