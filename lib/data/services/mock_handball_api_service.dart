@@ -6,6 +6,7 @@ import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
+import '../../domain/models/team_detail.dart';
 import 'handball_api_service.dart';
 
 /// 디자인 확인용 고정 데이터.
@@ -461,6 +462,69 @@ class MockHandballApiService implements HandballApiService {
             );
           }(),
       ],
+    );
+  }
+
+  @override
+  Future<TeamDetail> fetchTeamDetail(Team team) async {
+    await _delay();
+
+    final ranking = await fetchRanking(team.gender);
+    final rank = ranking.firstWhere(
+      (r) => r.team.name == team.name,
+      orElse: () => RankRow(rank: ranking.length + 1, team: team, points: 0),
+    );
+    final players =
+        (await fetchPlayers(team.gender)).where((p) => p.teamName == team.name);
+
+    var seed = team.name.codeUnits.fold<int>(11, (a, b) => (a * 31 + b) % 99991);
+    int next(int max) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return max == 0 ? 0 : seed % max;
+    }
+
+    // 순위 추이: 최종 순위 언저리에서 흔들리게 만든다.
+    final trend = List.generate(10, (i) {
+      final drift = next(3) - 1;
+      return (rank.rank + drift).clamp(1, ranking.length);
+    })
+      ..add(rank.rank);
+
+    final results = <MatchResult>[
+      for (var i = 0; i < rank.wins; i++) MatchResult.win,
+      for (var i = 0; i < rank.draws; i++) MatchResult.draw,
+      for (var i = 0; i < rank.losses; i++) MatchResult.loss,
+    ];
+    // 승/무/패를 섞어 실제 경기 순서처럼 보이게 한다.
+    for (var i = results.length - 1; i > 0; i--) {
+      final j = next(i + 1);
+      final tmp = results[i];
+      results[i] = results[j];
+      results[j] = tmp;
+    }
+
+    return TeamDetail(
+      team: team,
+      rank: rank,
+      slogan: '함께 뛰는 우리 팀',
+      intro: '${team.name}은(는) 한국핸드볼리그에 참가하는 구단입니다.\n'
+          '구단 소개 본문은 연맹 구단 페이지에서 가져와야 합니다 — '
+          '지금은 화면 확인용 자리표시 문구입니다.',
+      facts: [
+        ('창단', '${1980 + next(35)}년'),
+        ('연고지', team.name.replaceAll(RegExp(r'(시청|도시공사|시설공단|개발공사)'), '')),
+        ('홈구장', '${team.name} 체육관'),
+        ('감독', '감독 미상'),
+      ],
+      history: [
+        TeamHistoryEntry('${2024 - next(3)}', '정규리그 ${1 + next(4)}위'),
+        TeamHistoryEntry('${2020 - next(3)}', '플레이오프 진출'),
+        TeamHistoryEntry('${2015 - next(5)}', '리그 창단 멤버로 참가'),
+      ],
+      address: '연맹 구단 페이지의 주소 정보가 필요합니다.',
+      players: players.toList(),
+      rankTrend: trend,
+      results: results,
     );
   }
 }

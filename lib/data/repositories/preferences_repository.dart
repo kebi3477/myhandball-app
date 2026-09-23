@@ -5,6 +5,7 @@ import '../../config/app_config.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/season.dart';
+import '../../domain/models/team_detail.dart';
 import '../../domain/models/team.dart';
 import '../services/mock_handball_api_service.dart';
 
@@ -39,6 +40,12 @@ class PreferencesRepository {
 
   /// 시안 `mh_mvp` — 경기 id → 내가 뽑은 후보 id
   final _mvpVotes = <String, String>{};
+
+  /// 시안 `mh_cheer` — 팀명 → 내가 쓴 응원글
+  final _cheersByTeam = <String, List<CheerPost>>{};
+
+  /// 내가 좋아요 누른 응원글 id
+  final _likedCheerIds = <String>{};
 
   Season _season = Season.latest;
 
@@ -107,6 +114,26 @@ class PreferencesRepository {
   Future<void> voteMvp(String gameId, String candidateId) async {
     if (_mvpVotes.containsKey(gameId)) return;
     _mvpVotes[gameId] = candidateId;
+    await _persist();
+  }
+
+  List<CheerPost> cheersFor(String teamName) =>
+      List.unmodifiable(_cheersByTeam[teamName] ?? const []);
+
+  Future<void> addCheer(String teamName, CheerPost post) async {
+    (_cheersByTeam[teamName] ??= []).insert(0, post);
+    await _persist();
+  }
+
+  Future<void> removeCheer(String teamName, String postId) async {
+    _cheersByTeam[teamName]?.removeWhere((p) => p.id == postId);
+    await _persist();
+  }
+
+  bool isCheerLiked(String postId) => _likedCheerIds.contains(postId);
+
+  Future<void> toggleCheerLike(String postId) async {
+    if (!_likedCheerIds.remove(postId)) _likedCheerIds.add(postId);
     await _persist();
   }
 

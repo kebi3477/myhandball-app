@@ -26,6 +26,8 @@ import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
 import 'package:myhandball/ui/schedule/widgets/schedule_screen.dart';
 import 'package:myhandball/ui/stat/view_models/stat_view_model.dart';
 import 'package:myhandball/ui/stat/widgets/stat_screen.dart';
+import 'package:myhandball/ui/team_detail/view_models/team_detail_view_model.dart';
+import 'package:myhandball/ui/team_detail/widgets/team_detail_screen.dart';
 
 Future<void> _shoot(
   WidgetTester tester,
@@ -164,6 +166,22 @@ void main() {
         MhPalette.dark,
         after: (container) => container
             .read(gameDetailViewModelProvider(finishedGame).notifier)
+            .selectTab(tab),
+      );
+    });
+  }
+
+  for (final tab in TeamDetailTab.values) {
+    testWidgets('team detail ${tab.name}', (t) async {
+      await _shoot(
+        t,
+        'team-${tab.name}',
+        const TeamDetailScreen(team: mock.MockHandballApiService.skHawks),
+        MhPalette.dark,
+        after: (container) => container
+            .read(teamDetailViewModelProvider(
+                    mock.MockHandballApiService.skHawks)
+                .notifier)
             .selectTab(tab),
       );
     });

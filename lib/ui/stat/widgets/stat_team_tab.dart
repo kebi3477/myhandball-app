@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/team_logo.dart';
+import '../../team_detail/widgets/team_detail_screen.dart';
 import '../view_models/stat_view_model.dart';
 
-/// 분석 — 팀 탭. 2열 카드 그리드.
-///
-/// 카드를 누르면 시안에는 팀 상세 화면(소개/전적/선수/응원)이 열리지만
-/// 아직 이식 전이라 지금은 동작하지 않는다.
+/// 분석 — 팀 탭. 2열 카드 그리드. 카드를 누르면 팀 상세가 열린다.
 class StatTeamTab extends StatelessWidget {
   const StatTeamTab({super.key, required this.state});
 
@@ -30,7 +28,7 @@ class StatTeamTab extends StatelessWidget {
       itemBuilder: (_, i) {
         final team = state.ranking[i].team;
         return GestureDetector(
-          onTap: () {}, // TODO: 팀 상세 화면 (시안 teamDetail 섹션)
+          onTap: () => TeamDetailScreen.open(context, team),
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(

@@ -6,6 +6,7 @@ import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
+import '../../domain/models/team_detail.dart';
 
 /// 외부 데이터 소스 래퍼. 상태를 갖지 않는다.
 ///
@@ -37,4 +38,7 @@ abstract interface class HandballApiService {
   /// **대응 엔드포인트 없음.** 문자중계·팀 기록·맞대결·MVP 후보가 모두
   /// 신규 작업이다.
   Future<GameDetail> fetchGameDetail(Game game);
+
+  /// `/api/team`이 팀 목록만 주므로 소개·연혁·전적 추이는 신규 작업이다.
+  Future<TeamDetail> fetchTeamDetail(Team team);
 }

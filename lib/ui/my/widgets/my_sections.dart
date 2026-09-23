@@ -6,6 +6,7 @@ import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/team_logo.dart';
+import '../../player_detail/widgets/player_detail_sheet.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import '../../stat/view_models/stat_view_model.dart';
 
@@ -100,7 +101,9 @@ class _FavoriteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return Container(
+    return GestureDetector(
+      onTap: () => showPlayerDetailSheet(context, player),
+      child: Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         border: Border(
@@ -138,6 +141,7 @@ class _FavoriteRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

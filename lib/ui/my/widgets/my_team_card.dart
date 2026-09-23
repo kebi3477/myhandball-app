@@ -6,7 +6,7 @@ import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/team_logo.dart';
 import '../../core/ui/team_picker_sheet.dart';
-import '../../shell/view_models/shell_view_model.dart';
+import '../../team_detail/widgets/team_detail_screen.dart';
 import '../view_models/my_view_model.dart';
 
 /// MY 팀 카드 — 80px 로고 + 팀명 + 순위 + "팀 상세보기".
@@ -85,11 +85,9 @@ class MyTeamCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: MhSpacing.sm),
                 GestureDetector(
-                  // 시안은 분석 탭의 팀 상세로 보낸다. 그 화면이 아직 없어
-                  // 지금은 분석 탭까지만 이동한다.
-                  onTap: () => ref
-                      .read(shellViewModelProvider.notifier)
-                      .select(ShellTab.stat),
+                  onTap: team == null
+                      ? null
+                      : () => TeamDetailScreen.open(context, team),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
