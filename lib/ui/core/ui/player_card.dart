@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/player.dart';
 import '../themes/theme.dart';
 import '../themes/tokens.dart';
+import 'mh_icons.dart';
 import 'mh_tap.dart';
 
 /// 97x123 선수 카드. 분석 > 선수 탭과 팀 상세 > 선수 탭이 함께 쓴다.
@@ -107,10 +108,8 @@ class PlayerCard extends StatelessWidget {
                       child: SizedBox(
                         width: 32,
                         height: 32,
-                        child: Icon(
-                          favorite
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
+                        child: MhIcon(
+                          favorite ? MhIcons.heartFilled : MhIcons.heart,
                           size: 18,
                           color: favorite
                               ? const Color(0xFFFF4D6A)

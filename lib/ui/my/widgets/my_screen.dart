@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../guide/view_models/guide_progress.dart';
 import '../../settings/widgets/settings_screen.dart';
@@ -110,7 +111,7 @@ class _Header extends StatelessWidget {
               child: SizedBox(
                 width: 32,
                 height: 32,
-                child: Icon(Icons.settings_outlined, size: 22, color: c.text),
+                child: MhIcon(MhIcons.gear, size: 22, color: c.text),
               ),
             ),
           ],

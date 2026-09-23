@@ -291,7 +291,8 @@ void main() {
       size: const Size(390, 780),
       after: (_) {},
       tap: (tester) async {
-        await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));
+        // 월 라벨 칩을 눌러 연·월 피커를 연다.
+        await tester.tap(find.textContaining(RegExp(r'년 \d+월')).first);
       },
     );
   });

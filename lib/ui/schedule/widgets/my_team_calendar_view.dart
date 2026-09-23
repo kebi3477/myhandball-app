@@ -7,6 +7,7 @@ import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/change_my_team.dart';
 import '../../core/ui/external_actions.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
@@ -442,7 +443,7 @@ class _SelectedGameCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.calendar_today_rounded,
+                        const MhIcon(MhIcons.calPlus,
                             size: 16, color: Colors.white),
                         const SizedBox(width: 6),
                         Text('캘린더에 추가',
@@ -518,7 +519,7 @@ class _IcsExportCard extends StatelessWidget {
               shape: BoxShape.circle,
               color: MhColors.brand.withValues(alpha: 0.14),
             ),
-            child: const Icon(Icons.calendar_today_rounded,
+            child: const MhIcon(MhIcons.calendar,
                 size: 20, color: MhColors.brand),
           ),
           const SizedBox(width: 12),
@@ -582,8 +583,7 @@ class _NoTeam extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-              child: Icon(Icons.favorite_border_rounded,
-                  size: 30, color: c.textSub),
+              child: MhIcon(MhIcons.heart, size: 30, color: c.textSub),
             ),
             const SizedBox(height: 14),
             Text('마이팀을 먼저 골라주세요',

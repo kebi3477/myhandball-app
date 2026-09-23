@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_error_view.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/schedule_view_model.dart';
 import 'my_team_calendar_view.dart';
@@ -76,14 +77,14 @@ class _Header extends StatelessWidget {
                 children: [
                   _SegmentTab(
                     label: '목록',
-                    icon: Icons.format_list_bulleted_rounded,
+                    icon: MhIcons.list,
                     selected: view == ScheduleView.list,
                     onTap: () => onSelect(ScheduleView.list),
                   ),
                   const SizedBox(width: 2),
                   _SegmentTab(
                     label: 'MY팀 달력',
-                    icon: Icons.calendar_today_rounded,
+                    icon: MhIcons.calendar,
                     selected: view == ScheduleView.calendar,
                     onTap: () => onSelect(ScheduleView.calendar),
                   ),
@@ -106,7 +107,8 @@ class _SegmentTab extends StatelessWidget {
   });
 
   final String label;
-  final IconData icon;
+  /// [MhIcons]의 path.
+  final String icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -125,7 +127,7 @@ class _SegmentTab extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: fg),
+            MhIcon(icon, size: 14, color: fg),
             const SizedBox(width: 5),
             Text(label,
                 style: MhText.custom(

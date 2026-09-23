@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/season.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/schedule_view_model.dart';
 
@@ -127,7 +128,7 @@ class _YearMonthSheetState extends State<_YearMonthSheet> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _YearArrow(
-                  icon: Icons.chevron_left_rounded,
+                  icon: MhIcons.chevLeft,
                   onTap: () => setState(() => _year--),
                 ),
                 const SizedBox(width: 28),
@@ -140,7 +141,7 @@ class _YearMonthSheetState extends State<_YearMonthSheet> {
                 ),
                 const SizedBox(width: 28),
                 _YearArrow(
-                  icon: Icons.chevron_right_rounded,
+                  icon: MhIcons.chevRight,
                   onTap: () => setState(() => _year++),
                 ),
               ],
@@ -179,7 +180,8 @@ class _YearMonthSheetState extends State<_YearMonthSheet> {
 class _YearArrow extends StatelessWidget {
   const _YearArrow({required this.icon, required this.onTap});
 
-  final IconData icon;
+  /// [MhIcons]의 path.
+  final String icon;
   final VoidCallback onTap;
 
   @override
@@ -191,7 +193,7 @@ class _YearArrow extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-        child: Icon(icon, size: 22, color: c.text),
+        child: MhIcon(icon, size: 22, color: c.text),
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
@@ -137,7 +138,7 @@ class _FavoriteRow extends StatelessWidget {
             child: const SizedBox(
               width: 32,
               height: 32,
-              child: Icon(Icons.favorite_rounded,
+              child: MhIcon(MhIcons.heartFilled,
                   size: 18, color: Color(0xFFFF4D6A)),
             ),
           ),

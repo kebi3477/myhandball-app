@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/team_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/team_detail_view_model.dart';
 
@@ -275,10 +276,8 @@ class _CheerCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        liked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
+                      MhIcon(
+                        liked ? MhIcons.heartFilled : MhIcons.heart,
                         size: 14,
                         color: liked ? const Color(0xFFFF4D6A) : c.textSub,
                       ),

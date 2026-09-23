@@ -5,6 +5,7 @@ import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../view_models/game_detail_view_model.dart';
@@ -117,7 +118,7 @@ class _AttendButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(on ? Icons.place : Icons.place_outlined, size: 16, color: fg),
+              MhIcon(MhIcons.pin, size: 16, color: fg),
               const SizedBox(width: MhSpacing.xs),
               Text(on ? '직관 기록됨' : '직관 기록하기',
                   style: MhText.custom(

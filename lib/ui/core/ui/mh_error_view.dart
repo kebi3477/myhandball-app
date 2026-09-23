@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../data/services/api_client.dart';
 import '../themes/theme.dart';
 import '../themes/tokens.dart';
+import 'mh_icons.dart';
 import 'mh_tap.dart';
 
 /// 시안의 오류 화면. 홈·일정·분석이 같은 모양을 쓴다.
@@ -24,12 +25,12 @@ class MhErrorView extends StatelessWidget {
 
     final (icon, title, description) = _offline
         ? (
-            Icons.wifi_off_rounded,
+            MhIcons.wifiOff,
             '연결할 수 없어요',
             '인터넷 연결을 확인하고\n다시 시도해 주세요',
           )
         : (
-            Icons.cloud_off_rounded,
+            MhIcons.alert,
             '잠시 문제가 생겼어요',
             '${_message(error)}\n잠시 뒤에 다시 시도해 주세요',
           );
@@ -44,7 +45,7 @@ class MhErrorView extends StatelessWidget {
             height: 72,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-            child: Icon(icon, size: 32, color: c.textSub),
+            child: MhIcon(icon, size: 32, color: c.textSub),
           ),
           const SizedBox(height: 14),
           Text(title,

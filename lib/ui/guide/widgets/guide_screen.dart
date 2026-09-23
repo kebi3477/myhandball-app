@@ -6,6 +6,7 @@ import '../../../config/app_config.dart';
 import '../../../domain/models/guide_lesson.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
 import 'guide_lesson_view.dart';
@@ -204,7 +205,7 @@ class _LessonRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: done
-                    ? const Icon(Icons.check_rounded,
+                    ? const MhIcon(MhIcons.checkThick,
                         size: 20, color: Colors.white)
                     : Text('${index + 1}',
                         style: MhText.custom(
@@ -247,7 +248,7 @@ class _LessonRow extends StatelessWidget {
                     style: MhText.custom(
                         size: 12, weight: FontWeight.w600, color: c.textSub))
               else
-                Icon(Icons.lock_rounded, size: 18, color: c.textFaint),
+                MhIcon(MhIcons.lock, size: 18, color: c.textFaint),
             ],
           ),
         ),

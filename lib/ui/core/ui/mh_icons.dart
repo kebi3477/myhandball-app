@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+/// 시안의 인라인 SVG 아이콘.
+///
+/// 시안은 아이콘을 전부 24x24 viewBox의 인라인 SVG로 그린다. Material 아이콘으로
+/// 대신하면 획 두께와 모서리 처리가 미묘하게 달라 보여서, **원본 path를 그대로**
+/// 옮겼다. 색만 `ColorFilter`로 입히므로 문자열은 상수로 남아 캐시된다.
+///
+/// 탭바·검색·체크 아이콘은 더 일찍 옮겨서 `nav_icons.dart`의 `CustomPainter`로
+/// 있다. 새로 옮기는 건 이쪽에 모은다.
+abstract final class MhIcons {
+  /// 관심 선수 하트 (채움).
+  static const heartFilled =
+      '<path d="M12 20.5s-7.4-4.5-9.3-9.1C1.3 8 3.4 4.8 6.7 4.8c2 0 3.3 1.1 4.3 2.4 1-1.3 2.3-2.4 4.3-2.4 3.3 0 5.4 3.2 4 6.6-1.9 4.6-9.3 9.1-9.3 9.1z" fill="#000" stroke="#000" stroke-width="1.8" stroke-linejoin="round"></path>';
+
+  /// 일정 목록 뷰 토글
+  static const list =
+      '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="#000" stroke-width="2.4" stroke-linecap="round"></path>';
+
+  /// 일정 달력 뷰 토글
+  static const calendar =
+      '<rect x="3" y="5" width="18" height="16" rx="2" stroke="#000" stroke-width="2.2"></rect><path d="M3 10h18M8 3v4M16 3v4" stroke="#000" stroke-width="2.2" stroke-linecap="round"></path>';
+
+  /// 캘린더에 추가 (달력 + 더하기)
+  static const calPlus =
+      '<rect x="3" y="5" width="18" height="16" rx="2" stroke="#000" stroke-width="2"></rect><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" stroke="#000" stroke-width="2" stroke-linecap="round"></path>';
+
+  /// 설정 톱니
+  static const gear =
+      '<path d="M12 15.5C13.933 15.5 15.5 13.933 15.5 12C15.5 10.067 13.933 8.5 12 8.5C10.067 8.5 8.5 10.067 8.5 12C8.5 13.933 10.067 15.5 12 15.5Z" stroke="#000" stroke-width="1.6"></path><path d="M19.4 13.5C19.47 13 19.5 12.5 19.5 12C19.5 11.5 19.47 11 19.4 10.5L21.4 8.95C21.6 8.8 21.65 8.53 21.52 8.31L19.62 4.99C19.5 4.77 19.23 4.68 19 4.76L16.65 5.7C16.19 5.35 15.69 5.06 15.15 4.84L14.8 2.34C14.77 2.1 14.56 1.92 14.31 1.92H10.51C10.26 1.92 10.05 2.1 10.02 2.34L9.67 4.84C9.13 5.06 8.63 5.36 8.17 5.7L5.82 4.76C5.59 4.67 5.32 4.77 5.2 4.99L3.3 8.31C3.17 8.53 3.22 8.8 3.42 8.95L5.42 10.5C5.35 11 5.32 11.5 5.32 12C5.32 12.5 5.35 13 5.42 13.5L3.42 15.05C3.22 15.2 3.17 15.47 3.3 15.69L5.2 19.01C5.32 19.23 5.59 19.32 5.82 19.24L8.17 18.3C8.63 18.65 9.13 18.94 9.67 19.16L10.02 21.66C10.05 21.9 10.26 22.08 10.51 22.08H14.31C14.56 22.08 14.77 21.9 14.8 21.66L15.15 19.16C15.69 18.94 16.19 18.64 16.65 18.3L19 19.24C19.23 19.33 19.5 19.23 19.62 19.01L21.52 15.69C21.65 15.47 21.6 15.2 21.4 15.05L19.4 13.5Z" stroke="#000" stroke-width="1.6" stroke-linejoin="round"></path>';
+
+  /// 경기장 위치 핀
+  static const pin =
+      '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" stroke="#000" stroke-width="2" stroke-linejoin="round"></path><circle cx="12" cy="9.5" r="2.5" fill="#000"></circle>';
+
+  /// 가이드 레슨 완료 체크
+  static const checkThick =
+      '<path d="M5 12.5l4.5 4.5L19 7.5" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+  /// 가이드 잠긴 레슨
+  static const lock =
+      '<rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="#000"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#000" stroke-width="2.4"></path>';
+
+  /// 별
+  static const star =
+      '<path d="M12 3l2.6 5.5 6 .7-4.4 4.1 1.2 5.9L12 16.3 6.6 19.2l1.2-5.9L3.4 9.2l6-.7L12 3z" stroke="#000" stroke-width="1.7" stroke-linejoin="round"></path>';
+
+  /// 아래 꺾쇠 (월 선택 칩)
+  static const chevDown =
+      '<path d="M6 9l6 6 6-6" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+  /// 왼쪽 꺾쇠
+  static const chevLeft =
+      '<path d="M15 5l-7 7 7 7" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+  /// 오른쪽 꺾쇠
+  static const chevRight =
+      '<path d="M9 5l7 7-7 7" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+  /// 선수 비교 배지
+  static const shield =
+      '<path d="M12 3l8.5 6.2-3.2 10H6.7L3.5 9.2z" stroke="#000" stroke-width="2" stroke-linejoin="round"></path><path d="M12 8l4 3-1.5 4.5h-5L8 11z" fill="#000"></path>';
+
+  /// 서버 오류. 시안의 `errIconPath`는 잘린 스크립트에 있어 확인하지 못했다.
+  /// 시안과 같은 획 문법(24x24, stroke 1.7~2, round cap)으로 맞춰 그린다.
+  static const alert =
+      '<circle cx="12" cy="12" r="9" stroke="#000" stroke-width="1.8"></circle>'
+      '<path d="M12 7.5v5.5M12 16.2h.01" stroke="#000" stroke-width="2" '
+      'stroke-linecap="round"></path>';
+
+  /// 오프라인
+  static const wifiOff =
+      '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18" stroke="#000" stroke-width="2" stroke-linecap="round"></path>';
+
+  /// 관심 선수 하트 (테두리). 시안은 같은 path에 fill만 none이다.
+  static const heart =
+      '<path d="M12 20.5s-7.4-4.5-9.3-9.1C1.3 8 3.4 4.8 6.7 4.8c2 0 3.3 1.1 4.3 2.4 1-1.3 2.3-2.4 4.3-2.4 3.3 0 5.4 3.2 4 6.6-1.9 4.6-9.3 9.1-9.3 9.1z" fill="none" stroke="#000" stroke-width="1.8" stroke-linejoin="round"></path>';
+}
+
+/// [MhIcons]의 path를 그린다.
+class MhIcon extends StatelessWidget {
+  const MhIcon(
+    this.icon, {
+    super.key,
+    required this.size,
+    required this.color,
+  });
+
+  final String icon;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.string(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" '
+      'viewBox="0 0 24 24" fill="none">$icon</svg>',
+      width: size,
+      height: size,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    );
+  }
+}

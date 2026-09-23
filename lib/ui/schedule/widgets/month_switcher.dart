@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 
 /// `< 2026년 11월 ∨ >` 월 이동 줄. 시안 높이 56, gap 24.
@@ -59,8 +60,7 @@ class MonthSwitcher extends StatelessWidget {
                         height: 24 / 16,
                       )),
                   const SizedBox(width: 6),
-                  Icon(Icons.keyboard_arrow_down_rounded,
-                      size: 16, color: c.textNeutral),
+                  MhIcon(MhIcons.chevDown, size: 12, color: c.textNeutral),
                 ],
               ),
             ),

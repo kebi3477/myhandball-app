@@ -7,6 +7,7 @@ import '../../../data/services/api_client.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 
@@ -141,10 +142,8 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
                   alignment: Alignment.center,
                   decoration:
                       BoxDecoration(color: c.card, shape: BoxShape.circle),
-                  child: Icon(
-                    _favorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
+                  child: MhIcon(
+                    _favorite ? MhIcons.heartFilled : MhIcons.heart,
                     size: 22,
                     color: _favorite ? const Color(0xFFFF4D6A) : c.textSub,
                   ),
