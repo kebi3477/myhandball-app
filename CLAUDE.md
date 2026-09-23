@@ -176,6 +176,36 @@ flutter run --dart-define=API_BASE_URL=http://localhost:3000   # 로컬 API
 flutter test tool/api_smoke_test.dart --dart-define=API_BASE_URL=http://localhost:3000
 ```
 
+### 실기기에서 로컬 API에 붙이기
+
+**`localhost`를 그대로 쓰면 안 된다.** 실기기에서 `localhost`는 폰 자신이라
+맥의 서버에 닿지 않는다. 맥의 LAN IP를 넣는다.
+
+```bash
+ipconfig getifaddr en0                       # 예: 192.168.45.37
+flutter run -d <기기> \
+  --dart-define=API_BASE_URL=http://192.168.45.37:3000
+```
+
+전제:
+
+- 폰과 맥이 **같은 Wi-Fi**에 있어야 한다 (게스트망·AP 격리 주의)
+- API 서버는 `0.0.0.0:3000`에 바인딩돼 있다 (`myhandball-api/src/main.ts`) —
+  따로 손댈 것 없다
+- iOS 16+는 **설정 > 개인정보 보호 및 보안 > 개발자 모드**를 켜야 기기가 잡힌다
+- 첫 실행 때 **"로컬 네트워크 기기 검색" 권한 팝업**이 뜬다. 거부하면 요청이
+  전부 실패한다. 실수로 거부했으면 설정 > 마이핸드볼에서 다시 켠다
+
+`ios/Runner/Info.plist`에 `NSAllowsLocalNetworking`과
+`NSLocalNetworkUsageDescription`을 넣어 뒀다. **로컬 네트워크에만 평문을
+허용**하고 인터넷 구간 ATS는 그대로라, 배포본에서 뺐던
+`NSAllowsArbitraryLoadsInWebContent`와는 범위가 다르다. 운영은 https라
+영향이 없다. 실기기 테스트를 접으면 두 키는 지워도 된다.
+
+**주의 — 번들 ID가 스토어 배포본과 같다**(`com.kebi.myhandball-ios`).
+실기기에 디버그 빌드를 깔면 **스토어에서 받은 앱을 덮어쓴다.** 원래대로
+되돌리려면 지우고 App Store에서 다시 받아야 한다.
+
 **Android는 아직 빌드 불가** — `flutter doctor`가 cmdline-tools 누락을 보고한다. Android Studio에서 SDK Command-line Tools 설치 후 `flutter doctor --android-licenses` 필요.
 
 ## API 계약
