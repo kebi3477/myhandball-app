@@ -3,8 +3,22 @@
 /// v1 웹은 `VITE_API_BASE_URL`이 없으면 `window.location.origin`으로
 /// 떨어졌지만, 앱에는 origin이 없다. 베이스 URL은 반드시 주입해야 한다.
 abstract final class AppConfig {
-  /// `flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr`
-  static const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+  /// 운영 서버. 배포 빌드가 그냥 이걸 쓴다.
+  ///
+  /// 예전에는 기본값이 비어 있어서 **dart-define을 빠뜨리면 목업이 배포되는**
+  /// 구조였다. 잊기 쉬운 쪽이 망가지는 게 나쁜 기본값이라 뒤집었다 —
+  /// 이제 잊으면 실제 서버를 본다.
+  ///
+  /// `flutter run --dart-define=API_BASE_URL=http://192.168.0.5:3000`
+  static const apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://myhandball.lab241.com',
+  );
+
+  /// 개발용 — 서버를 안 타고 목업으로 띄운다.
+  /// 서버가 죽었을 때나 디자인만 볼 때 쓴다.
+  /// `--dart-define=MH_USE_MOCK=true`
+  static const useMock = bool.fromEnvironment('MH_USE_MOCK');
 
   /// 개발용 — 온보딩을 건너뛰고 바로 앱 본체로 들어간다.
   /// `--dart-define=MH_SKIP_ONBOARDING=true`
@@ -39,11 +53,11 @@ abstract final class AppConfig {
   /// `--dart-define=MH_PRIVACY_URL=...`로 바꿀 수 있다.
   static const privacyUrl = String.fromEnvironment(
     'MH_PRIVACY_URL',
-    defaultValue: 'https://myhandball.kro.kr/privacy',
+    defaultValue: 'https://myhandball.lab241.com/privacy',
   );
   static const termsUrl = String.fromEnvironment(
     'MH_TERMS_URL',
-    defaultValue: 'https://myhandball.kro.kr/terms',
+    defaultValue: 'https://myhandball.lab241.com/terms',
   );
 
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).

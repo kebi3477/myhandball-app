@@ -173,7 +173,7 @@ lib/
 | 캘린더에 추가 · 내보내기 | 앱에서 만든 `.ics` (`domain/ics.dart`) |
 
 **정책 문구는 앱에 넣지 않는다.** 고칠 때마다 심사를 다시 받아야 해서 웹으로
-뺐다. 기본 URL은 `myhandball.kro.kr/privacy`·`/terms`이고 dart-define으로 바꾼다.
+뺐다. 기본 URL은 `myhandball.lab241.com/privacy`·`/terms`이고 dart-define으로 바꾼다.
 
 `.ics`는 서버에도 `/api/schedule/ics/my-team`이 있지만 **시즌 전체만** 준다.
 경기 하나만 넣는 버튼과 경로를 하나로 두려고 앱에서 만든다. `test/ics_test.dart`가
@@ -185,7 +185,7 @@ lib/
 - **경기 중 PBP가 실시간으로 갱신되는지 아직 확인 못 했다** (조사 시점이 비시즌).
   틀리면 LIVE 뱃지·중계 탭·득점 푸시가 조용히 안 나온다. 개막(11월) 첫 경기에
   확인이 필요하다
-- 서버는 `myhandball.kro.kr` 인증서를 수동 갱신한다. **앱은 만료되면 통째로
+- 서버는 인증서를 수동 갱신한다. **앱은 만료되면 통째로
   먹통이 된다** (아래 "서버 상태")
 
 ## 커밋
@@ -221,16 +221,17 @@ flutter test --update-goldens tool/design_preview_test.dart
 프리뷰 PNG는 테스트 환경이라 **본문이 네모로 렌더된다** — 커스텀 폰트가
 로드되지 않아서다. 레이아웃 확인용이고, 타이포 확인은 시뮬레이터로 한다.
 
-API 베이스 URL은 컴파일 타임에 주입한다. 웹 v1은 미지정 시 `window.location.origin`으로 폴백했지만 **앱에는 origin이 없으므로 항상 명시해야 한다.**
+**기본 API 서버는 `https://myhandball.lab241.com`이다** (`AppConfig.apiBaseUrl`).
+dart-define 없이 빌드하면 운영 서버를 본다.
 
 ```bash
-flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr
 flutter run --dart-define=API_BASE_URL=http://localhost:3000   # 로컬 API
+flutter run --dart-define=MH_USE_MOCK=true                     # 목업
 ```
 
-**비어 있으면 목업으로 떨어진다** (`handballApiServiceProvider`). 서버가 죽어도
-디자인은 확인할 수 있게 남겨 둔 갈림길이고, 지운 적 없다고 착각하기 쉬우니
-"데이터가 이상하다" 싶으면 이 값부터 확인한다.
+예전에는 기본값이 비어 있어 **dart-define을 빠뜨리면 목업이 배포되는** 구조였다.
+잊기 쉬운 쪽이 망가지면 안 되므로 뒤집었다. 목업은 이제 명시적으로 켠다.
+"데이터가 이상하다" 싶으면 기동 로그의 `[MyHandball] 데이터 소스:` 줄을 본다.
 
 ```bash
 # 실제 서버에 붙여 전 엔드포인트 점검 (네트워크 필요, CI는 안 돌린다)
@@ -499,12 +500,35 @@ Flutter에서는 `upgrader` 패키지나 원격 설정으로 대체하는 게 �
 
 ## 서버 상태
 
-`myhandball.kro.kr` — 가정 회선 자체 호스팅. 도커로 postgres / redis / api / web(nginx) 4개 컨테이너를 띄우고, **nginx가 443에서 TLS를 종료해 `/api/`를 `api:3000`으로 프록시**한다. API 프로세스 자체는 인증서를 갖지 않는다.
+`myhandball.lab241.com` (2026-09-24 이전 `myhandball.kro.kr`에서 옮김) —
+가정 회선 자체 호스팅. 도커로 postgres / redis / api / web(nginx) 4개 컨테이너를
+띄우고, **nginx가 443에서 TLS를 종료해 `/api/`를 `api:3000`으로 프록시**한다.
+API 프로세스 자체는 인증서를 갖지 않는다.
 
-2026-09-23 기준 외부에서 443이 응답하지 않는 상태로 관측됐다(서버 측 작업은 사용자가 별도 진행 중). API 연동 코드를 짤 때는:
+### 같은 와이파이에서는 도메인으로 못 붙는다 — 중요
 
-- 마지막 응답을 로컬 캐시해 서버 장애 시에도 일정·순위가 보이게 한다
-- 흰 화면 대신 명시적 오류 화면을 띄운다 (v2 시안에 `오프라인` / `서버 오류` 상태가 이미 설계돼 있다)
+개발 맥과 서버가 **같은 공유기 뒤에 있고, 이 공유기는 NAT 루프백(헤어핀)을
+지원하지 않는다.** 내부에서 `myhandball.lab241.com`을 치면 공인 IP로 나갔다가
+돌아오지 못하고 공유기 자신이 응답한다:
+
+- 80 → 공유기 관리 웹서버(`Server: micro_httpd`)의 404
+- 443 → TCP는 붙지만 TLS ServerHello가 오지 않고 멈춤
+
+**서버가 죽은 게 아니다.** 판별법: 맥의 공인 IP(`curl ifconfig.me`)가 도메인의
+A 레코드와 같으면 루프백 상황이다. 그러므로
+
+- **실기기 테스트는 셀룰러로 하거나**, 와이파이면 `API_BASE_URL`에 서버의
+  **LAN IP**를 넣는다
+- 이 저장소에서 운영 도메인으로 스모크 테스트를 돌릴 수 없다.
+  `tool/api_smoke_test.dart`는 로컬 API(`localhost:3000`)를 기준으로 둔다
+
+### 그 밖에
+
+- **앱은 웹과 달리 인증서가 만료되면 완전히 먹통이 된다** (iOS ATS).
+  자동 갱신(certbot 등) 또는 관리형 호스팅을 검토한다
+- 마지막 응답을 저장소가 캐시해 서버 장애 시에도 일정·순위가 보인다
+- 흰 화면 대신 `MhErrorView`가 오프라인/서버 오류를 구분해 띄운다
 - **인증서 피닝은 하지 않는다.** 갱신 때마다 배포된 구버전 앱이 전부 죽는다
 
-v1의 공지사항은 `AnnouncementBell.tsx`에 **하드코딩**돼 있어 공지 하나 띄우려면 재배포+심사가 필요했다. v2에서는 원격에서 내려받는 구조로 간다.
+v1의 공지사항은 `AnnouncementBell.tsx`에 **하드코딩**돼 있어 공지 하나 띄우려면
+재배포+심사가 필요했다. v2 시안에는 공지 UI가 없다.

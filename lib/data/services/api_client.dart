@@ -47,7 +47,7 @@ class ApiClient {
     this.timeout = const Duration(seconds: 15),
   }) : _client = client ?? http.Client();
 
-  /// 예: `https://myhandball.kro.kr`. 뒤 슬래시는 있어도 된다.
+  /// 예: `https://myhandball.lab241.com`. 뒤 슬래시는 있어도 된다.
   final String baseUrl;
 
   /// 앱이 처음 켜질 때 만든 난수 UUID v4.

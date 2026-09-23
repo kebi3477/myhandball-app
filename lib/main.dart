@@ -23,9 +23,8 @@ Future<void> main() async {
   // API_BASE_URL을 안 넣으면 목업으로 떨어지는데 화면만 봐서는 구분이 어렵다.
   if (kDebugMode) {
     final base = AppConfig.apiBaseUrl;
-    debugPrint(base.isEmpty
-        ? '[MyHandball] 데이터 소스: 목업 '
-            '(--dart-define=API_BASE_URL=... 을 주면 실제 API를 탄다)'
+    debugPrint(AppConfig.useMock || base.isEmpty
+        ? '[MyHandball] 데이터 소스: 목업 (MH_USE_MOCK)'
         : '[MyHandball] 데이터 소스: $base · 시즌 ${preferences.season.label}');
   }
 

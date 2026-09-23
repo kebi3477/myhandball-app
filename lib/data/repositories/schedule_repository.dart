@@ -10,16 +10,19 @@ import '../services/http_handball_api_service.dart';
 import '../services/mock_handball_api_service.dart';
 import 'preferences_repository.dart';
 
-/// 데이터 소스. `API_BASE_URL`이 주입돼 있으면 실제 API를 친다.
+/// 데이터 소스. **기본은 운영 서버**([AppConfig.apiBaseUrl])다.
 ///
 /// ```
-/// flutter run --dart-define=API_BASE_URL=http://localhost:3000
+/// flutter run --dart-define=API_BASE_URL=http://localhost:3000  # 로컬 API
+/// flutter run --dart-define=MH_USE_MOCK=true                    # 목업
 /// ```
 ///
-/// 비어 있으면 목업으로 떨어진다. 디자인만 확인할 때와 서버가 죽었을 때
-/// 앱을 열어 볼 수 있어야 해서 이 갈림길을 남겨 둔다.
+/// 목업은 서버가 죽었을 때나 디자인만 볼 때 쓴다. 예전에는 URL이 비면
+/// 목업으로 떨어졌는데, 그러면 dart-define을 빠뜨린 배포본이 목업을 싣는다.
 final handballApiServiceProvider = Provider<HandballApiService>((ref) {
-  if (AppConfig.apiBaseUrl.isEmpty) return const MockHandballApiService();
+  if (AppConfig.useMock || AppConfig.apiBaseUrl.isEmpty) {
+    return const MockHandballApiService();
+  }
 
   final prefs = ref.watch(preferencesRepositoryProvider);
   final client = ApiClient(
