@@ -167,8 +167,9 @@ class _IdleView extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.mh;
     return ListView(
+      // 시안 `padding: 4px 24px 40px`
       padding: const EdgeInsets.fromLTRB(
-          MhSpacing.gutter, 12, MhSpacing.gutter, MhSpacing.xl),
+          MhSpacing.gutter, 4, MhSpacing.gutter, MhSpacing.xl),
       children: [
         if (state.recent.isNotEmpty) ...[
           Row(

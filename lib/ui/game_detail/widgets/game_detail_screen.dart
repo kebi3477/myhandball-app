@@ -103,8 +103,9 @@ class _AttendButton extends StatelessWidget {
     final fg = on ? Colors.white : MhColors.brand;
 
     return Padding(
+      // 시안 `padding: 4px 24px 16px`
       padding: const EdgeInsets.fromLTRB(
-          MhSpacing.gutter, 0, MhSpacing.gutter, MhSpacing.sm),
+          MhSpacing.gutter, 4, MhSpacing.gutter, MhSpacing.sm),
       child: MhTap(
         onTap: onTap,
         child: Container(
