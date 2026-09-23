@@ -38,14 +38,16 @@ class HttpHandballApiService implements HandballApiService {
 
   // 팀 번호는 일정·순위 응답에 없다. 팀 상세로 넘어가려면 필요해서
   // 팀 목록을 한 번 받아 이름으로 맞춘다. 서버도 24시간 캐시한다.
-  //
-  // 이름이 엔드포인트마다 미묘하게 다르다 — `/api/team`은 `상무피닉스`,
-  // `/api/schedule`·`/api/ranking`은 `상무 피닉스`다(원본 페이지가 다름).
-  // `Team`은 이름으로 같은 팀인지 판단하므로, 공백을 지운 키로 맞춰
-  // **팀 목록의 이름으로 통일**한다. 안 그러면 마이팀이 상무인 사용자는
-  // 달력과 다음 경기가 조용히 비어 버린다.
   final _teamsByKey = <String, Map<String, Team>>{};
 
+  /// 이름 매칭 키. 공백을 뺀다.
+  ///
+  /// 한때 엔드포인트마다 이름이 달랐다 — `/api/team`은 `상무피닉스`,
+  /// 일정·순위는 `상무 피닉스`. **서버가 2026-09-23에 통일했으므로 지금은
+  /// 그냥 일치한다.** 그래도 공백을 빼 두는 건, 배포된 서버가 구버전일 때
+  /// 이 불일치가 **조용한 실패**로 나타나기 때문이다: `Team`은 이름으로 같은
+  /// 팀인지 판단해서, 마이팀이 상무인 사용자의 달력과 다음 경기가 에러 없이
+  /// 그냥 빈다. 한 줄짜리 안전망이라 남겨 둔다.
   static String _key(String name) => name.replaceAll(RegExp(r'\s+'), '');
 
   Map<String, String?> _query(Gender g, {String? month}) => {
