@@ -25,7 +25,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 팀 상세 (소개·전적·선수·응원) | 완료 |
 | 규칙 가이드 (레슨 5개 + 퀴즈) | 완료 |
 | 검색 · 선수 상세 · 선수 비교 | 완료 |
-| 설정 · 시즌 선택 · 팀 선택 · 정책/약관 | 완료 |
+| 설정 · 시즌 선택 · 팀 선택 · 연·월 선택 | 완료 |
+| 오프라인 · 서버 오류 · 비시즌 화면 | 완료 (시안 `demoState` 4종) |
 | 데이터 계층 (repository + service) | 완료 — 목업 / HTTP 두 구현체 |
 | **실제 API 연동** | **완료** — `API_BASE_URL`이 있으면 `HttpHandballApiService` |
 
@@ -144,13 +145,39 @@ lib/
 ### API 연동 상태 — 끝났다
 
 `../myhandball-api/docs/api-tasks/`의 00~06이 전부 구현돼 있고, 앱도 붙어 있다.
-**새로 API 작업이 필요한 건 아래 두 개뿐이다.**
+`/api/player/:playerSeq`까지 연결돼서 **앱이 안 쓰는 엔드포인트는 위젯·푸시뿐**이고
+그 둘은 네이티브 작업이 선행돼야 한다.
+
+**새로 API 작업이 필요한 건 아래 세 개뿐이다.**
 
 - **내 예측 목록** — 서버는 경기별 집계만 준다. MY 화면이 "내가 예측한 경기"를
   모아 보여주려면 목록이 필요한데, 지금은 내 선택만 기기에 캐시해 대신하고 있다
   (`PreferencesRepository._predictions`)
 - **응원글 신고·차단** — `cheers.hidden`을 DB에서 손으로 켜는 것뿐이다.
   스토어 심사에서 UGC 신고 수단을 요구할 수 있다 (API 07 B-1)
+- **선수의 최근 경기별 기록** — 시안 선수 시트에 "최근 5경기"가 있는데
+  `/api/player/:playerSeq`는 시즌 단위만 준다. 경기별은 `/api/game/:matchSeq`를
+  경기마다 받아야 해서 시트에 넣기엔 무겁다. 아직 구현하지 않았다
+
+### 외부로 나가는 동작
+
+`url_launcher`(링크)와 `share_plus`(.ics 공유)를 쓴다. **눌렀는데 아무 일도
+안 일어나는 상태를 만들지 않는다** — 실패하면 `ui/core/ui/external_actions.dart`가
+스낵바로 알린다.
+
+| 동작 | 대상 |
+|---|---|
+| 중계 보기 | 경기별 네이버 중계 링크(`liveLinks`), 없으면 `AppConfig.broadcastUrl` |
+| 예매하기 | `AppConfig.ticketUrl` (티켓링크) |
+| 개인정보 처리방침 · 이용약관 | `MH_PRIVACY_URL` / `MH_TERMS_URL` dart-define |
+| 캘린더에 추가 · 내보내기 | 앱에서 만든 `.ics` (`domain/ics.dart`) |
+
+**정책 문구는 앱에 넣지 않는다.** 고칠 때마다 심사를 다시 받아야 해서 웹으로
+뺐다. 기본 URL은 `myhandball.kro.kr/privacy`·`/terms`이고 dart-define으로 바꾼다.
+
+`.ics`는 서버에도 `/api/schedule/ics/my-team`이 있지만 **시즌 전체만** 준다.
+경기 하나만 넣는 버튼과 경로를 하나로 두려고 앱에서 만든다. `test/ics_test.dart`가
+형식을 잡아 준다 — 한 글자 틀리면 캘린더가 통째로 안 연다.
 
 남은 후속 과제는 앱이 아니라 서버 쪽이고 `../myhandball-api/docs/api-tasks/07-후속-작업.md`에 있다.
 그중 **앱에 직접 영향 있는 것**:
@@ -438,9 +465,9 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 | 서명 팀 | `R36UYT2XU8` / CODE_SIGN_STYLE Automatic |
 | 표시 이름 | 마이핸드볼 |
 | 앱 카테고리 | `public.app-category.entertainment` |
-| 버전 | `1.1.0+3` — 스토어 현재 값. **다음 배포 시 빌드 번호 4 이상** |
+| 버전 | `1.1.0+4` — 스토어 현재 값(빌드 3)에서 하나 올려 둔 상태 |
 | 지원 기기 | iPhone + iPad (`TARGETED_DEVICE_FAMILY = "1,2"`) |
-| 방향 | iPhone 세로+가로, iPad 4방향 (배포본과 동일, Flutter 기본값과도 일치) |
+| 방향 | **세로 고정** — Info.plist·AndroidManifest·`SystemChrome` 세 곳 |
 | iOS 최소 버전 | 15.0 (배포본은 26.0이었으나 잘못된 설정으로 판단해 낮춤) |
 | Android applicationId | **미확인.** 현재 `com.kebi.myhandball`. Play Console 실제 값과 대조 필요 |
 
@@ -459,12 +486,16 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 "업데이트 안내" 알럿을 띄운다. 설정이 아니라 기능이라 이식하지 않았다.
 Flutter에서는 `upgrader` 패키지나 원격 설정으로 대체하는 게 낫다.
 
-### 방향 · iPad 관련 주의
+### 남은 배포 과제
 
-v2 시안은 375x812 세로 화면 하나만 그려져 있다. 배포본이 가로와 iPad를
-허용한 건 WebView라 반응형으로 넘어갔기 때문이고, 지금 UI는 세로 고정을
-전제로 짜여 있다. 실제 배포 전에 `ios/Runner/Info.plist`의
-`UISupportedInterfaceOrientations`를 세로만 남기는 쪽을 검토한다.
+- **Android 빌드가 안 된다.** `~/Library/Android/sdk`에 `cmdline-tools`가 없다.
+  Android Studio에서 SDK Command-line Tools를 설치하고
+  `flutter doctor --android-licenses`를 돌려야 한다 (여기서는 설치할 수 없다)
+- **Android `applicationId`가 `com.kebi.myhandball`인데 Play Console 실제 값과
+  대조하지 못했다.** 다르면 업데이트가 아니라 새 앱으로 올라간다
+- 개인정보 처리방침·이용약관 **웹 페이지를 실제로 올려야 한다.** 링크만 걸려 있다
+- 실기기 테스트가 끝나면 `NSAllowsLocalNetworking`·`NSLocalNetworkUsageDescription`
+  제거를 검토한다
 
 ## 서버 상태
 
