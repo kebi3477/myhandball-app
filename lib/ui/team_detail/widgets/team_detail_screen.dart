@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/team_detail_view_model.dart';
@@ -190,7 +191,7 @@ class _TabBar extends StatelessWidget {
         children: [
           for (final tab in TeamDetailTab.values)
             Expanded(
-              child: GestureDetector(
+              child: MhTap(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => onSelect(tab),
                 child: Container(

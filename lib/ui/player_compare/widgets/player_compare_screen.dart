@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../../core/ui/team_logo.dart';
 
@@ -186,7 +187,7 @@ class _Slot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         constraints: const BoxConstraints(minHeight: 132),
@@ -279,7 +280,7 @@ class _CandidateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

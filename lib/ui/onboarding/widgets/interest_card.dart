@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/onboarding_view_model.dart';
 
 /// 온보딩 1스텝의 관심사 카드 (2x2).
@@ -20,7 +21,7 @@ class InterestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),

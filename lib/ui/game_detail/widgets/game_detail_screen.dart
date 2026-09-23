@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../view_models/game_detail_view_model.dart';
 import 'game_detail_header.dart';
@@ -102,7 +103,7 @@ class _AttendButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
           MhSpacing.gutter, 0, MhSpacing.gutter, MhSpacing.sm),
-      child: GestureDetector(
+      child: MhTap(
         onTap: onTap,
         child: Container(
           height: 48,
@@ -158,7 +159,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
         children: [
           for (final tab in GameDetailTab.values)
             Expanded(
-              child: GestureDetector(
+              child: MhTap(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => onSelect(tab),
                 child: Container(

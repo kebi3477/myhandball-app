@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
@@ -99,7 +100,7 @@ class _Header extends StatelessWidget {
             Text('MY',
                 style: MhText.custom(
                     size: 20, weight: FontWeight.w700, color: c.text)),
-            GestureDetector(
+            MhTap(
               behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),

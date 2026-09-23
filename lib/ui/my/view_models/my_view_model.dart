@@ -219,22 +219,15 @@ class MyViewModel extends AsyncNotifier<MyState> {
   /// 이번 달과 지난달 경기를 시간순으로 모은다.
   Future<List<Game>> _allGames() async {
     final repo = ref.read(scheduleRepositoryProvider);
-    final gender = ref.read(preferencesRepositoryProvider).preferredGender;
-    final now = DateTime.now();
+    final prefs = ref.read(preferencesRepositoryProvider);
 
-    final months = [
-      DateTime(now.year, now.month - 1),
-      DateTime(now.year, now.month),
-    ];
-
-    final games = <Game>[];
-    for (final month in months) {
-      final days = await repo.getMonthlySchedule(gender, month);
-      for (final d in days) {
-        games.addAll(d.games);
-      }
-    }
-    return games;
+    // 이번 달·지난 달만 보면 비시즌에 마이팀 경기가 하나도 안 잡힌다.
+    // 시즌 전체를 받는다 (저장소가 캐시한다).
+    final days = await repo.getSeasonSchedule(
+      prefs.preferredGender,
+      prefs.season.year,
+    );
+    return [for (final d in days) ...d.games];
   }
 
   Future<void> refresh() async {

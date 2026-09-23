@@ -53,7 +53,7 @@ class PreferencesRepository {
   /// 시안 `mh_recent_search`
   final _recentSearches = <String>[];
 
-  Season _season = Season.latest;
+  Season _season = Season.current;
 
   /// 시안 설정의 알림 토글 (`notifOn`).
   bool _notificationsOn = true;
@@ -101,7 +101,7 @@ class PreferencesRepository {
     _guideDoneCount =
         (prefs.getInt(_kGuide) ?? 0).clamp(0, AppConfig.guideLessonCount);
     _notificationsOn = prefs.getBool(_kNotifications) ?? true;
-    _season = Season.fromYear(prefs.getString(_kSeason) ?? Season.latest.year);
+    _season = Season.fromYear(prefs.getString(_kSeason) ?? Season.current.year);
 
     for (final entry in prefs.getStringList(_kPredictions) ?? const []) {
       final sep = entry.lastIndexOf(':');

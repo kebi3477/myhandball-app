@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import 'game_card.dart';
@@ -44,7 +45,7 @@ class _NearbyGamesSectionState extends ConsumerState<NearbyGamesSection> {
       children: [
         SectionHeader(
           title: '가까운 경기',
-          trailing: GestureDetector(
+          trailing: MhTap(
             onTap: () => ref
                 .read(shellViewModelProvider.notifier)
                 .select(ShellTab.schedule),

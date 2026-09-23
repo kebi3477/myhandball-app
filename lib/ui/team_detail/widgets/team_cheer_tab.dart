@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/team_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/team_detail_view_model.dart';
 
 /// 팀 상세 — 응원 탭. 작성 폼 + 응원글 목록.
@@ -94,7 +95,7 @@ class _TeamCheerTabState extends ConsumerState<TeamCheerTab> {
                           size: 11,
                           weight: FontWeight.w400,
                           color: c.textFaint)),
-                  GestureDetector(
+                  MhTap(
                     onTap: state.canSubmitCheer
                         ? () async {
                             await vm.submitCheer();
@@ -256,7 +257,7 @@ class _CheerCard extends StatelessWidget {
           const SizedBox(height: MhSpacing.xs),
           Row(
             children: [
-              GestureDetector(
+              MhTap(
                 onTap: onLike,
                 child: Container(
                   height: 28,
@@ -286,7 +287,7 @@ class _CheerCard extends StatelessWidget {
               ),
               const Spacer(),
               if (post.isMine)
-                GestureDetector(
+                MhTap(
                   onTap: () => _confirmDelete(context),
                   child: Text('삭제',
                       style: MhText.custom(

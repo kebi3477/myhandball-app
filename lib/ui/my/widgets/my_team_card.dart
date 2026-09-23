@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/repositories/preferences_repository.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../core/ui/team_picker_sheet.dart';
 import '../../team_detail/widgets/team_detail_screen.dart';
@@ -29,7 +30,7 @@ class MyTeamCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('MY 팀', style: MhText.sectionTitle(c.text)),
-              GestureDetector(
+              MhTap(
                 onTap: () async {
                   final prefs = ref.read(preferencesRepositoryProvider);
                   final picked = await showTeamPickerSheet(
@@ -84,7 +85,7 @@ class MyTeamCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: MhSpacing.sm),
-                GestureDetector(
+                MhTap(
                   onTap: team == null
                       ? null
                       : () => TeamDetailScreen.open(context, team),

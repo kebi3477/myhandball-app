@@ -143,12 +143,13 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
   Future<ScheduleState> build() async {
     final prefs = ref.read(preferencesRepositoryProvider);
     final gender = prefs.preferredGender;
-    final now = DateTime.now();
-    final month = DateTime(now.year, now.month);
+    final season = prefs.season.year;
+    final repo = ref.read(scheduleRepositoryProvider);
 
-    final days = await ref
-        .read(scheduleRepositoryProvider)
-        .getMonthlySchedule(gender, month);
+    // 오늘 달을 그냥 열면 비시즌에 빈 화면이 된다. 시즌 안에서 오늘에
+    // 가장 가까운, 경기가 있는 달을 고른다.
+    final month = await repo.getFocusMonth(gender, season);
+    final days = await repo.getMonthlySchedule(gender, season, month);
 
     return ScheduleState(
       view: ScheduleView.list,
@@ -162,9 +163,10 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
   Future<void> _reload(ScheduleState next) async {
     state = const AsyncLoading<ScheduleState>().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
+      final season = ref.read(preferencesRepositoryProvider).season.year;
       final days = await ref
           .read(scheduleRepositoryProvider)
-          .getMonthlySchedule(next.gender, next.month);
+          .getMonthlySchedule(next.gender, season, next.month);
       return next.copyWith(days: days);
     });
   }
@@ -178,9 +180,18 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
   Future<void> selectGender(Gender gender) async {
     final current = state.valueOrNull;
     if (current == null || current.gender == gender) return;
-    await ref.read(preferencesRepositoryProvider).setPreferredGender(gender);
+    final prefs = ref.read(preferencesRepositoryProvider);
+    await prefs.setPreferredGender(gender);
+
+    // 남자부는 11월, 여자부는 1월 개막이라 보고 있던 달이 상대 부에는
+    // 없을 수 있다. 시작 달을 다시 고른다.
+    final month = await ref
+        .read(scheduleRepositoryProvider)
+        .getFocusMonth(gender, prefs.season.year);
+
     await _reload(current.copyWith(
       gender: gender,
+      month: month,
       clearSelectedDay: true,
       clearSelectedDate: true,
     ));
@@ -230,6 +241,7 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
     state = await AsyncValue.guard(() async {
       final days = await ref.read(scheduleRepositoryProvider).getMonthlySchedule(
             current.gender,
+            ref.read(preferencesRepositoryProvider).season.year,
             current.month,
             forceRefresh: true,
           );

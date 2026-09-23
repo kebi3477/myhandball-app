@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_config.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
+import '../../guide/widgets/guide_screen.dart';
 import '../../home/widgets/home_screen.dart';
 import '../../my/widgets/my_screen.dart';
 import '../../schedule/widgets/schedule_screen.dart';
@@ -15,18 +18,32 @@ import '../view_models/shell_view_model.dart';
 /// 시안에는 375x812 목업 프레임과 가짜 상태바(`9:41`), 다이나믹 아일랜드가
 /// 그려져 있는데 그건 시안용 장식이라 옮기지 않는다. 실제 기기에서는
 /// SafeArea가 그 역할을 한다.
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
-  static const _icons = {
-    ShellTab.home: MhNavIcon.home,
-    ShellTab.schedule: MhNavIcon.schedule,
-    ShellTab.stat: MhNavIcon.stat,
-    ShellTab.my: MhNavIcon.my,
-  };
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+const _icons = {
+  ShellTab.home: MhNavIcon.home,
+  ShellTab.schedule: MhNavIcon.schedule,
+  ShellTab.stat: MhNavIcon.stat,
+  ShellTab.my: MhNavIcon.my,
+};
+
+class _AppShellState extends ConsumerState<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    if (!AppConfig.openGuide) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) GuideScreen.open(context);
+    });
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final c = context.mh;
     final tab = ref.watch(shellViewModelProvider);
 
@@ -75,7 +92,7 @@ class _NavBar extends ConsumerWidget {
             if (tab != ShellTab.values.first) const SizedBox(width: MhSpacing.xl),
             _NavItem(
               tab: tab,
-              icon: AppShell._icons[tab]!,
+              icon: _icons[tab]!,
               active: tab == current,
               palette: palette,
               onTap: () => ref.read(shellViewModelProvider.notifier).select(tab),
@@ -106,7 +123,7 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     // 시안: 선택 시 브랜드 블루, 아니면 흐린 회색.
     final color = active ? MhColors.brand : palette.textFaint;
-    return GestureDetector(
+    return MhTap(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../team_detail/widgets/team_detail_screen.dart';
 import '../view_models/stat_view_model.dart';
@@ -27,7 +28,7 @@ class StatTeamTab extends StatelessWidget {
       ),
       itemBuilder: (_, i) {
         final team = state.ranking[i].team;
-        return GestureDetector(
+        return MhTap(
           onTap: () => TeamDetailScreen.open(context, team),
           child: Container(
             padding: const EdgeInsets.all(10),

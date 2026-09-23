@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/team_detail_view_model.dart';
 
 /// 팀 상세 — 소개 탭. 구단 소개 / 기본 정보 / 연혁 / 찾아오시는 길.
@@ -37,7 +38,7 @@ class TeamInfoTab extends ConsumerWidget {
                     height: 1.7),
               ),
               const SizedBox(height: 10),
-              GestureDetector(
+              MhTap(
                 onTap: vm.toggleIntro,
                 child: Text(state.introExpanded ? '접기' : '더보기',
                     style: MhText.custom(

@@ -5,6 +5,7 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
 import '../../shell/view_models/shell_view_model.dart';
@@ -33,7 +34,7 @@ class FavoritePlayersSection extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('관심 선수', style: MhText.sectionTitle(c.text)),
-              GestureDetector(
+              MhTap(
                 onTap: () {
                   ref.read(shellViewModelProvider.notifier).select(ShellTab.stat);
                   ref
@@ -101,7 +102,7 @@ class _FavoriteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: () => showPlayerDetailSheet(context, player),
       child: Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -130,7 +131,7 @@ class _FavoriteRow extends StatelessWidget {
           Text(player.statLine,
               style: MhText.custom(
                   size: 13, weight: FontWeight.w700, color: c.text)),
-          GestureDetector(
+          MhTap(
             behavior: HitTestBehavior.opaque,
             onTap: onRemove,
             child: const SizedBox(

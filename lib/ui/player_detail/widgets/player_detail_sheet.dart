@@ -5,6 +5,7 @@ import '../../../data/repositories/preferences_repository.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 
 /// 선수 요약 시트. 시안 PLAYER SUMMARY.
@@ -113,7 +114,7 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
                   ],
                 ),
               ),
-              GestureDetector(
+              MhTap(
                 onTap: _toggleFavorite,
                 child: Container(
                   width: 44,
@@ -169,7 +170,7 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
               style: MhText.custom(
                   size: 11, weight: FontWeight.w400, color: c.textFaint)),
           const SizedBox(height: 20),
-          GestureDetector(
+          MhTap(
             onTap: _toggleFavorite,
             child: Container(
               height: 48,

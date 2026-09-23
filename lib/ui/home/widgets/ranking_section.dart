@@ -5,6 +5,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/rank_row.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/home_view_model.dart';
 
@@ -75,7 +76,7 @@ class _GenderPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         width: 64,
@@ -98,11 +99,13 @@ class _GenderPill extends StatelessWidget {
   }
 }
 
-/// 시안은 `height:257px` 안에 105px 카드 3장을 절대배치한다.
+/// 시안은 `height:257px` 안에 **105px 고정폭** 카드 3장을 절대배치한다.
 /// 1위가 가장 높고 2·3위가 내려앉는 구조.
 ///
-/// 시안의 `left`/`top` 실제 값은 스크립트가 잘린 쪽에 있어 확인하지 못했다.
-/// 화면 폭에 맞춰 2위 · 1위 · 3위 순으로 배치하고 1·2·3위를 40px 낮춘다.
+/// `left`/`top` 실제 값은 스크립트가 잘린 쪽에 있어 못 읽었지만 치수로
+/// 역산된다. 항목 높이는 랭크 40 + 간격 8 + 카드 149 = 197이고 컨테이너가
+/// 257이므로 **내려앉는 폭은 60**이다 (197 + 60 = 257). 가로는 375 기준
+/// 안쪽 폭 327 = 105×3 + 6×2 이라 카드 사이 간격이 6이다.
 class _Podium extends StatelessWidget {
   const _Podium({required this.rows});
 
@@ -112,7 +115,7 @@ class _Podium extends StatelessWidget {
   Widget build(BuildContext context) {
     if (rows.length < 3) return const SizedBox.shrink();
     final order = [rows[1], rows[0], rows[2]];
-    const drops = [40.0, 0.0, 40.0];
+    const drops = [60.0, 0.0, 60.0];
 
     return SizedBox(
       height: 257,
@@ -142,9 +145,14 @@ class _PodiumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
+    // 시안의 카드는 `width:100%`다. Column의 기본 정렬이 center라 카드가
+    // 팀 이름 길이만큼만 넓어져서, 이름이 짧은 팀(두산)의 칸이 눈에 띄게
+    // 좁아지고 좌우 여백이 어긋나 보였다.
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('${row.rank}위',
+            textAlign: TextAlign.center,
             style: MhText.custom(
               size: 24,
               weight: FontWeight.w700,

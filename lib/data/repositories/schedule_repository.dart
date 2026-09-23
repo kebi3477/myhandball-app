@@ -53,14 +53,23 @@ class ScheduleRepository {
   List<Game>? get cached => _cached;
 
   final _monthCache = <String, List<ScheduleDay>>{};
+  final _seasonCache = <String, List<ScheduleDay>>{};
+  final _seasonMonths = <String, List<DateTime>>{};
 
-  /// 월 단위 일정. 같은 (부, 연월)은 세션 동안 다시 받지 않는다.
+  /// 시즌이 바뀌면(설정 > 시즌) 캐시가 통째로 무효다.
+  ///
+  /// 예전에는 키에 시즌이 없어서 시즌을 바꿔도 이전 시즌 일정이 그대로
+  /// 보였다. 키에 넣어 구분한다.
+  String _key(Gender gender, String season) => '${gender.code}-$season';
+
+  /// 월 단위 일정. 같은 (부, 시즌, 연월)은 세션 동안 다시 받지 않는다.
   Future<List<ScheduleDay>> getMonthlySchedule(
     Gender gender,
+    String season,
     DateTime month, {
     bool forceRefresh = false,
   }) async {
-    final key = '${gender.code}-${month.year}-${month.month}';
+    final key = '${_key(gender, season)}-${month.year}-${month.month}';
     final hit = _monthCache[key];
     if (!forceRefresh && hit != null) return hit;
     try {
@@ -71,6 +80,71 @@ class ScheduleRepository {
       if (hit != null) return hit;
       rethrow;
     }
+  }
+
+  /// 시즌 전체 일정. 월을 빼고 한 번 받는다.
+  ///
+  /// 일정 탭이 시작 달을 고르고 MY 화면이 마이팀 경기를 모으는 데 쓴다.
+  /// 둘 다 "이번 달"만 보면 비시즌에 빈 화면이 된다.
+  Future<List<ScheduleDay>> getSeasonSchedule(
+    Gender gender,
+    String season, {
+    bool forceRefresh = false,
+  }) async {
+    final key = _key(gender, season);
+    final hit = _seasonCache[key];
+    if (!forceRefresh && hit != null) return hit;
+    try {
+      final days = await _service.fetchSeasonSchedule(gender);
+      return _seasonCache[key] = days;
+    } on Exception {
+      if (hit != null) return hit;
+      rethrow;
+    }
+  }
+
+  /// 그 시즌에 **경기가 있는 달**만 이른 순서로.
+  Future<List<DateTime>> getSeasonMonths(Gender gender, String season) async {
+    final key = _key(gender, season);
+    final hit = _seasonMonths[key];
+    if (hit != null) return hit;
+
+    final List<ScheduleDay> days;
+    try {
+      days = await getSeasonSchedule(gender, season);
+    } on Exception {
+      return const [];
+    }
+
+    final months = <DateTime>{};
+    for (final day in days) {
+      if (day.games.isEmpty) continue;
+      final d = day.date;
+      if (d != null) months.add(DateTime(d.year, d.month));
+    }
+    final sorted = months.toList()..sort();
+    return _seasonMonths[key] = sorted;
+  }
+
+  /// 오늘에 가장 가까운, 경기가 있는 달.
+  ///
+  /// 시즌 안이면 그 달, 시즌이 아직이면 개막 달, 끝났으면 마지막 달이다.
+  /// 비시즌에 일정 탭을 열었을 때 빈 달 대신 방금 끝난 시즌의 마지막 달을
+  /// 보여주려는 것이다.
+  Future<DateTime> getFocusMonth(
+    Gender gender,
+    String season, {
+    DateTime? now,
+  }) async {
+    final today = now ?? DateTime.now();
+    final thisMonth = DateTime(today.year, today.month);
+    final months = await getSeasonMonths(gender, season);
+    if (months.isEmpty) return thisMonth;
+    if (months.contains(thisMonth)) return thisMonth;
+
+    final upcoming = months.where((m) => m.isAfter(thisMonth));
+    if (upcoming.isNotEmpty) return upcoming.first;
+    return months.last;
   }
 
   Future<List<Game>> getUpcomingGames({bool forceRefresh = false}) async {

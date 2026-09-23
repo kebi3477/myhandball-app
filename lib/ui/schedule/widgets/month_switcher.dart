@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 
 /// `< 2026년 11월 >` 월 이동 줄. 시안 높이 56, gap 24.
 class MonthSwitcher extends StatelessWidget {
@@ -55,7 +56,7 @@ class _Arrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return MhTap(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(

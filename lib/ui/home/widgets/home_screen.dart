@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../search/widgets/search_screen.dart';
 import '../view_models/home_view_model.dart';
@@ -76,7 +77,7 @@ class _Header extends StatelessWidget {
           children: [
             SvgPicture.asset('assets/design/logo-wordmark.svg',
                 width: 119, height: 26),
-            GestureDetector(
+            MhTap(
               behavior: HitTestBehavior.opaque,
               onTap: () => SearchScreen.open(context),
               child: SizedBox(

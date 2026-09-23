@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../core/ui/team_logo.dart';
 
@@ -21,7 +22,7 @@ class TeamPickerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         height: 80,

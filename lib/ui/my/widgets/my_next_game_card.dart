@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../schedule/view_models/schedule_view_model.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import '../view_models/my_view_model.dart';
@@ -31,7 +32,7 @@ class MyNextGameCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('다음 경기', style: MhText.sectionTitle(c.text)),
-              GestureDetector(
+              MhTap(
                 onTap: () {
                   ref
                       .read(shellViewModelProvider.notifier)

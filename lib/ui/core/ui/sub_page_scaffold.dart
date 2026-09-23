@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../themes/theme.dart';
+import 'mh_tap.dart';
 
 /// 전체화면으로 덮는 하위 페이지의 공통 골격.
 ///
@@ -35,7 +36,7 @@ class SubPageScaffold extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    GestureDetector(
+                    MhTap(
                       behavior: HitTestBehavior.opaque,
                       onTap: () => Navigator.of(context).maybePop(),
                       child: SizedBox(

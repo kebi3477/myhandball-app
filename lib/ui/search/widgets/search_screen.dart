@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
 import '../../team_detail/widgets/team_detail_screen.dart';
@@ -53,7 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 padding: const EdgeInsets.fromLTRB(12, 0, 16, 0),
                 child: Row(
                   children: [
-                    GestureDetector(
+                    MhTap(
                       behavior: HitTestBehavior.opaque,
                       onTap: () => Navigator.of(context).maybePop(),
                       child: SizedBox(
@@ -99,7 +100,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               ),
                             ),
                             if (_controller.text.isNotEmpty)
-                              GestureDetector(
+                              MhTap(
                                 onTap: () {
                                   _controller.clear();
                                   vm.setQuery('');
@@ -171,7 +172,7 @@ class _IdleView extends StatelessWidget {
               Text('최근 검색',
                   style: MhText.custom(
                       size: 14, weight: FontWeight.w700, color: c.text)),
-              GestureDetector(
+              MhTap(
                 onTap: vm.clearRecent,
                 child: Text('전체 삭제', style: MhText.meta(c.textFaint)),
               ),
@@ -193,7 +194,7 @@ class _IdleView extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
+                      MhTap(
                         onTap: () => onUse(q),
                         child: Text(q,
                             style: MhText.custom(
@@ -202,7 +203,7 @@ class _IdleView extends StatelessWidget {
                                 color: c.text)),
                       ),
                       const SizedBox(width: 6),
-                      GestureDetector(
+                      MhTap(
                         onTap: () => vm.removeRecent(q),
                         child: SizedBox(
                           width: 20,
@@ -232,7 +233,7 @@ class _IdleView extends StatelessWidget {
           runSpacing: MhSpacing.xs,
           children: [
             for (final q in state.suggestions)
-              GestureDetector(
+              MhTap(
                 onTap: () => onUse(q),
                 child: Container(
                   height: 32,
@@ -340,7 +341,7 @@ class _ResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(

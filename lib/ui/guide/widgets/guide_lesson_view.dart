@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
 import 'guide_scene_view.dart';
 
@@ -31,7 +32,7 @@ class GuideLessonView extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    GestureDetector(
+                    MhTap(
                       behavior: HitTestBehavior.opaque,
                       onTap: vm.exitLesson,
                       child: SizedBox(
@@ -192,7 +193,7 @@ class _Option extends StatelessWidget {
 
     return Opacity(
       opacity: state == _OptionState.dimmed ? 0.45 : 1,
-      child: GestureDetector(
+      child: MhTap(
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 56),
@@ -317,7 +318,8 @@ class _Cta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    return GestureDetector(
+    return MhTap(
+        haptic: MhHaptic.impact,
       onTap: onTap,
       child: Opacity(
         opacity: enabled ? 1 : 0.4,

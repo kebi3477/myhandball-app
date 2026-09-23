@@ -27,6 +27,12 @@ abstract interface class HandballApiService {
     DateTime month,
   );
 
+  /// `GET /api/schedule?gender=&season=&type=` — **월을 빼면 시즌 전체**가 온다.
+  ///
+  /// 일정 탭이 "경기가 있는 달"로 열려면 시즌의 달 목록을 먼저 알아야 한다.
+  /// 비시즌에 오늘 달을 열면 빈 화면이 되기 때문이다.
+  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender gender);
+
   /// `GET /api/ranking?gender=`
   Future<List<RankRow>> fetchRanking(Gender gender);
 

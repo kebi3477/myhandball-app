@@ -5,6 +5,7 @@ import '../../../config/app_config.dart';
 import '../../../domain/models/season.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../view_models/settings_view_model.dart';
 import 'policy_screen.dart';
@@ -114,7 +115,7 @@ Future<Season?> showSeasonPicker(BuildContext context, Season current) {
                       size: 15, weight: FontWeight.w700, color: c.text)),
             ),
             for (final season in Season.all) ...[
-              GestureDetector(
+              MhTap(
                 onTap: () => Navigator.of(context).pop(season),
                 child: Container(
                   padding: const EdgeInsets.all(12),
@@ -190,7 +191,7 @@ class _SwitchRow extends StatelessWidget {
               style: MhText.custom(
                   size: 15, weight: FontWeight.w600, color: c.text)),
           // 시안은 44x26 트랙에 22px 노브를 쓴다.
-          GestureDetector(
+          MhTap(
             onTap: () => onChanged(!value),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -233,7 +234,7 @@ class _LinkRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(

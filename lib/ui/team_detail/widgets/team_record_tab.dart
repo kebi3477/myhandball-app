@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/team_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/team_detail_view_model.dart';
 
 /// 팀 상세 — 전적 탭. 승·무·패 바, 시즌 추이 그래프, 경기별 결과.
@@ -150,7 +151,7 @@ class TeamRecordTab extends ConsumerWidget {
                     child: Row(
                       children: [
                         for (final mode in TrendMode.values)
-                          GestureDetector(
+                          MhTap(
                             onTap: () => vm.setTrendMode(mode),
                             child: Container(
                               padding: const EdgeInsets.symmetric(

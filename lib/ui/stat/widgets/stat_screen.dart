@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/gender.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../search/widgets/search_screen.dart';
 import '../view_models/stat_view_model.dart';
@@ -79,7 +80,7 @@ class _Header extends StatelessWidget {
             Text('분석',
                 style: MhText.custom(
                     size: 20, weight: FontWeight.w700, color: c.text)),
-            GestureDetector(
+            MhTap(
               behavior: HitTestBehavior.opaque,
               onTap: () => SearchScreen.open(context),
               child: SizedBox(
@@ -119,7 +120,7 @@ class _TabBar extends StatelessWidget {
         children: [
           for (final tab in StatTab.values)
             Expanded(
-              child: GestureDetector(
+              child: MhTap(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => onSelect(tab),
                 child: Container(
@@ -210,7 +211,7 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         height: 32,
@@ -268,7 +269,7 @@ class _ErrorView extends StatelessWidget {
                     weight: FontWeight.w400,
                     color: c.textSub,
                     height: 1.6)),
-            GestureDetector(
+            MhTap(
               onTap: onRetry,
               child: Container(
                 height: 44,

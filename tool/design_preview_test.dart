@@ -7,6 +7,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myhandball/data/repositories/preferences_repository.dart';
@@ -103,6 +105,22 @@ void main() {
       loader.addFont(rootBundle.load('assets/fonts/Pretendard-$weight.otf'));
     }
     await loader.load();
+
+    // Material 아이콘도 마찬가지로 안 올라와서 전부 네모(□)로 찍힌다.
+    // 자물쇠·체크가 깨진 건지 폰트가 없는 건지 구분이 안 되므로 같이 올린다.
+    // SDK 안의 폰트를 직접 읽는다 — 앱 번들에는 없다.
+    // FLUTTER_ROOT는 `flutter test`가 넣어준다.
+    final root = Platform.environment['FLUTTER_ROOT'] ?? '';
+    final icons = File('$root/bin/cache/artifacts/material_fonts'
+        '/MaterialIcons-Regular.otf');
+    if (icons.existsSync()) {
+      final iconLoader = FontLoader('MaterialIcons')
+        ..addFont(Future.value(icons.readAsBytesSync().buffer.asByteData()));
+      await iconLoader.load();
+    } else {
+      // ignore: avoid_print
+      print('MaterialIcons 폰트를 못 찾았다 — 아이콘은 네모로 찍힌다: ${icons.path}');
+    }
   });
 
   testWidgets('home dark', (t) async {

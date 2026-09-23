@@ -20,6 +20,12 @@ abstract final class AppConfig {
   /// `--dart-define=MH_INITIAL_TAB=schedule`
   static const initialTab = String.fromEnvironment('MH_INITIAL_TAB');
 
+  /// 개발용 — 시작하자마자 규칙 가이드를 연다. 홈 배너를 거쳐야만 닿는
+  /// 화면이라 시뮬레이터에서 확인하기 번거로워서 둔다.
+  /// `--dart-define=MH_OPEN_GUIDE=true`
+  static const openGuide =
+      bool.fromEnvironment('MH_OPEN_GUIDE', defaultValue: false);
+
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).
   static const guideLessonCount = 5;
 

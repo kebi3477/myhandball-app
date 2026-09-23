@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/schedule_view_model.dart';
 import 'my_team_calendar_view.dart';
 import 'schedule_list_view.dart';
@@ -114,7 +115,7 @@ class _SegmentTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.mh;
     final fg = selected ? Colors.white : c.textSub;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         height: 30,
@@ -175,7 +176,7 @@ class _ErrorView extends StatelessWidget {
                   height: 1.6),
             ),
             const SizedBox(height: 6),
-            GestureDetector(
+            MhTap(
               onTap: onRetry,
               child: Container(
                 height: 44,

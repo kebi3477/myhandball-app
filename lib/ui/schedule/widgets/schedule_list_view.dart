@@ -6,6 +6,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
 import '../view_models/schedule_view_model.dart';
@@ -61,7 +62,7 @@ class ScheduleListView extends ConsumerWidget {
                     itemCount: games.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: MhSpacing.xs),
-                    itemBuilder: (context, i) => GestureDetector(
+                    itemBuilder: (context, i) => MhTap(
                       onTap: () => GameDetailScreen.open(context, games[i]),
                       child: _ScheduleGameCard(game: games[i]),
                     ),
@@ -87,7 +88,7 @@ class _GenderPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         height: 32,
@@ -131,7 +132,7 @@ class _DayChips extends StatelessWidget {
         itemBuilder: (_, i) {
           final day = state.days[i];
           final selected = state.selectedDayLabel == day.label;
-          return GestureDetector(
+          return MhTap(
             onTap: () => onTap(day.label),
             child: Container(
               padding:

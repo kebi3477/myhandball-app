@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/game_detail_view_model.dart';
 
@@ -150,7 +151,7 @@ class _Option extends StatelessWidget {
 
     return Opacity(
       opacity: enabled || selected ? 1 : 0.5,
-      child: GestureDetector(
+      child: MhTap(
         onTap: enabled ? onTap : null,
         child: Container(
           height: 92,

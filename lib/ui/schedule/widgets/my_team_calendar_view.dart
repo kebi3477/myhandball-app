@@ -5,6 +5,7 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/schedule_day.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
 import '../view_models/schedule_view_model.dart';
@@ -216,7 +217,7 @@ class _DayCell extends StatelessWidget {
       }
     }
 
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.only(top: 4),
@@ -392,7 +393,7 @@ class _SelectedGameCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
+                child: MhTap(
                   onTap: () => GameDetailScreen.open(context, game),
                   child: Container(
                     height: 44,

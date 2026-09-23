@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/player_card.dart';
 import '../../player_compare/widgets/player_compare_screen.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
@@ -53,7 +54,7 @@ class _CompareEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: () => PlayerCompareScreen.open(context, candidates),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

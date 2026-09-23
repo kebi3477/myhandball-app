@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../config/app_config.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../guide/widgets/guide_screen.dart';
 
 /// 규칙 가이드 진입 배너.
@@ -20,7 +21,7 @@ class GuideBanner extends StatelessWidget {
     const total = AppConfig.guideLessonCount;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
-      child: GestureDetector(
+      child: MhTap(
         onTap: () => GuideScreen.open(context),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),

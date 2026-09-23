@@ -91,6 +91,9 @@ class HttpHandballApiService implements HandballApiService {
   ) =>
       _fetchSchedule(g, month: month.month.toString());
 
+  @override
+  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender g) => _fetchSchedule(g);
+
   Future<List<ScheduleDay>> _fetchSchedule(Gender g, {String? month}) async {
     final json = await client.get('/schedule', _query(g, month: month));
     final teamNums = await _teamNumbers(g);

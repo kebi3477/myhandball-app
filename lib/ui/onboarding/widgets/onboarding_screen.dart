@@ -6,6 +6,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../view_models/onboarding_view_model.dart';
 import 'interest_card.dart';
@@ -101,7 +102,7 @@ class _ProgressBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
           children: [
-            GestureDetector(
+            MhTap(
               onTap: onBack,
               behavior: HitTestBehavior.opaque,
               child: const Padding(
@@ -299,7 +300,7 @@ class _GenderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = selected ? Colors.white : const Color(0xFF808080);
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         height: 150,
@@ -341,7 +342,7 @@ class _AgeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         alignment: Alignment.center,
@@ -443,7 +444,7 @@ class _TeamGenderTab extends StatelessWidget {
     final radius = left
         ? const BorderRadius.horizontal(left: Radius.circular(10))
         : const BorderRadius.horizontal(right: Radius.circular(10));
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -504,7 +505,8 @@ class _PrimaryButton extends StatelessWidget {
           MhSpacing.md, MhSpacing.sm, MhSpacing.md, MhSpacing.md),
       child: Opacity(
         opacity: state.canAdvance ? 1 : 0.4,
-        child: GestureDetector(
+        child: MhTap(
+        haptic: MhHaptic.impact,
           onTap: onTap,
           child: Container(
             width: double.infinity,

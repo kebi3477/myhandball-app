@@ -6,6 +6,7 @@ import '../../../config/app_config.dart';
 import '../../../domain/models/guide_lesson.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
 import 'guide_lesson_view.dart';
 
@@ -38,7 +39,7 @@ class GuideScreen extends ConsumerWidget {
               height: 56,
               child: Row(
                 children: [
-                  GestureDetector(
+                  MhTap(
                     behavior: HitTestBehavior.opaque,
                     onTap: () => Navigator.of(context).maybePop(),
                     child: SizedBox(
@@ -180,7 +181,7 @@ class _LessonRow extends StatelessWidget {
 
     return Opacity(
       opacity: unlocked ? 1 : 0.45,
-      child: GestureDetector(
+      child: MhTap(
         onTap: unlocked ? onTap : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

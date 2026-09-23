@@ -6,6 +6,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/team.dart';
 import '../themes/theme.dart';
 import '../themes/tokens.dart';
+import 'mh_tap.dart';
 import 'team_logo.dart';
 
 /// 마이팀 선택 시트.
@@ -71,7 +72,7 @@ class _TeamPickerSheetState extends ConsumerState<_TeamPickerSheet> {
                 Text('마이팀 선택',
                     style: MhText.custom(
                         size: 16, weight: FontWeight.w800, color: c.text)),
-                GestureDetector(
+                MhTap(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
                     width: 32,
@@ -162,7 +163,7 @@ class _GenderPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -198,7 +199,7 @@ class _TeamTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10),

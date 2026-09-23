@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_config.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../guide/widgets/guide_screen.dart';
 
 /// 입문 가이드 수료 배지.
@@ -23,7 +24,7 @@ class MyGuideBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
-      child: GestureDetector(
+      child: MhTap(
         onTap: () => GuideScreen.open(context),
         child: allDone ? const _Earned() : _InProgress(doneCount: doneCount),
       ),

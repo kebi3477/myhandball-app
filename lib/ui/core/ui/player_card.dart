@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/player.dart';
 import '../themes/theme.dart';
 import '../themes/tokens.dart';
+import 'mh_tap.dart';
 
 /// 97x123 선수 카드. 분석 > 선수 탭과 팀 상세 > 선수 탭이 함께 쓴다.
 ///
@@ -31,7 +32,7 @@ class PlayerCard extends StatelessWidget {
       width: width,
       child: Column(
         children: [
-          GestureDetector(
+          MhTap(
             onTap: onTap,
             child: Container(
               width: width,
@@ -89,7 +90,7 @@ class PlayerCard extends StatelessWidget {
                   Positioned(
                     top: -8,
                     right: -8,
-                    child: GestureDetector(
+                    child: MhTap(
                       behavior: HitTestBehavior.opaque,
                       onTap: onToggleFavorite,
                       child: SizedBox(

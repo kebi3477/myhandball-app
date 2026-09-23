@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/game_detail_view_model.dart';
 
@@ -131,7 +132,7 @@ class _CandidateRow extends StatelessWidget {
     final mine = myVote == candidate.id;
     final pct = total == 0 ? 0.0 : candidate.votes / total;
 
-    return GestureDetector(
+    return MhTap(
       onTap: showResult ? null : onTap,
       child: Container(
         clipBehavior: Clip.antiAlias,

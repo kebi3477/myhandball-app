@@ -4,6 +4,7 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 
 /// 홈 상단 "가까운 경기" 카드 한 장.
@@ -27,7 +28,7 @@ class GameCard extends StatelessWidget {
     };
     final scoreColor = game.hasScore ? c.text : c.textFaint;
 
-    return GestureDetector(
+    return MhTap(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(MhSpacing.sm),
