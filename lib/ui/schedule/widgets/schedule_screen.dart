@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
-import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_error_view.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/schedule_view_model.dart';
 import 'my_team_calendar_view.dart';
@@ -33,10 +33,8 @@ class ScheduleScreen extends ConsumerWidget {
           child: async.when(
             skipLoadingOnReload: true,
             loading: () => const ScheduleSkeleton(),
-            error: (e, _) => _ErrorView(
-              message: mhErrorMessage(e),
-              onRetry: vm.refresh,
-            ),
+            error: (e, _) =>
+                Center(child: MhErrorView(error: e, onRetry: vm.refresh)),
             data: (state) => switch (state.view) {
               ScheduleView.list => ScheduleListView(state: state),
               ScheduleView.calendar => MyTeamCalendarView(state: state),
@@ -139,65 +137,3 @@ class _SegmentTab extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.mh;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-            MhSpacing.gutter, MhSpacing.xl, MhSpacing.gutter, 60),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-              alignment: Alignment.center,
-              child: Icon(Icons.cloud_off_rounded, size: 32, color: c.textSub),
-            ),
-            const SizedBox(height: 14),
-            Text('일정을 불러오지 못했어요',
-                style: MhText.custom(
-                    size: 17, weight: FontWeight.w700, color: c.text)),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: MhText.custom(
-                  size: 13,
-                  weight: FontWeight.w400,
-                  color: c.textSub,
-                  height: 1.6),
-            ),
-            const SizedBox(height: 6),
-            MhTap(
-              onTap: onRetry,
-              child: Container(
-                height: 44,
-                margin: const EdgeInsets.only(top: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: MhColors.brand,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Text('다시 시도',
-                    style: MhText.custom(
-                        size: 14,
-                        weight: FontWeight.w700,
-                        color: Colors.white)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

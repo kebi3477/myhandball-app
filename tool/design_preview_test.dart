@@ -13,24 +13,30 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myhandball/data/repositories/preferences_repository.dart';
 import 'package:myhandball/data/repositories/schedule_repository.dart';
+import 'package:myhandball/data/services/api_client.dart';
+import 'package:myhandball/data/services/mock_handball_api_service.dart' as mock;
 import 'package:myhandball/data/services/mock_handball_api_service.dart';
+import 'package:myhandball/domain/models/game.dart';
+import 'package:myhandball/domain/models/gender.dart';
+import 'package:myhandball/domain/models/guide_lesson.dart';
+import 'package:myhandball/domain/models/player_stat.dart';
 import 'package:myhandball/ui/core/themes/theme.dart';
 import 'package:myhandball/ui/core/themes/tokens.dart';
-import 'package:myhandball/data/services/mock_handball_api_service.dart' as mock;
-import 'package:myhandball/domain/models/game.dart';
+import 'package:myhandball/ui/core/ui/mh_error_view.dart';
 import 'package:myhandball/ui/game_detail/view_models/game_detail_view_model.dart';
 import 'package:myhandball/ui/game_detail/widgets/game_detail_screen.dart';
 import 'package:myhandball/ui/guide/view_models/guide_view_model.dart';
-import 'package:myhandball/domain/models/guide_lesson.dart';
 import 'package:myhandball/ui/guide/widgets/guide_scene_view.dart';
 import 'package:myhandball/ui/guide/widgets/guide_screen.dart';
+import 'package:myhandball/ui/home/view_models/home_view_model.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
-import 'package:myhandball/ui/search/widgets/search_screen.dart';
+import 'package:myhandball/ui/home/widgets/offseason_card.dart';
 import 'package:myhandball/ui/my/widgets/my_screen.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
 import 'package:myhandball/ui/schedule/widgets/schedule_screen.dart';
+import 'package:myhandball/ui/search/widgets/search_screen.dart';
 import 'package:myhandball/ui/stat/view_models/stat_view_model.dart';
 import 'package:myhandball/ui/stat/widgets/stat_screen.dart';
 import 'package:myhandball/ui/team_detail/view_models/team_detail_view_model.dart';
@@ -280,6 +286,61 @@ void main() {
       tap: (tester) async {
         await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));
       },
+    );
+  });
+
+  // 시안 데모 상태: 오프라인 / 서버 오류 / 비시즌
+  testWidgets('states', (t) async {
+    t.view.physicalSize = const Size(390, 1100);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+
+    const offseason = HomeState(
+      games: [],
+      ranking: [],
+      topPlayers: [],
+      gender: Gender.men,
+      category: StatCategory.goals,
+    );
+    final opening = HomeState(
+      games: const [],
+      ranking: const [],
+      topPlayers: const [],
+      gender: Gender.men,
+      category: StatCategory.goals,
+      nextSeasonOpensAt: DateTime.now().add(const Duration(days: 53)),
+    );
+
+    await t.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: buildMhTheme(MhPalette.dark),
+      home: Scaffold(
+        backgroundColor: MhPalette.dark.bg,
+        body: ListView(
+          children: [
+            const MhErrorView(
+              error: ApiException('서버에 연결하지 못했어요'),
+            ),
+            const Divider(height: 1),
+            MhErrorView(
+              error: const ApiException('요청에 실패했어요 (500)',
+                  statusCode: 500),
+              onRetry: () {},
+            ),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            OffseasonCard(state: opening, onSeeSchedule: () {}),
+            const SizedBox(height: 16),
+            OffseasonCard(state: offseason, onSeeSchedule: () {}),
+          ],
+        ),
+      ),
+    ));
+    await t.pump(const Duration(milliseconds: 100));
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('preview/states.png'),
     );
   });
 

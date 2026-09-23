@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
-import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_error_view.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../guide/view_models/guide_progress.dart';
@@ -37,7 +37,12 @@ class HomeScreen extends ConsumerWidget {
             // 이전 값이 있으면 그걸 계속 보여준다 (성별 전환 시 화면이 안 비게).
             skipLoadingOnReload: true,
             loading: () => const HomeSkeleton(),
-            error: (e, _) => _ErrorView(message: mhErrorMessage(e)),
+            error: (e, _) => Center(
+              child: MhErrorView(
+                error: e,
+                onRetry: ref.read(homeViewModelProvider.notifier).refresh,
+              ),
+            ),
             data: (state) => RefreshIndicator(
               color: MhColors.brand,
               backgroundColor: c.card,
@@ -46,7 +51,7 @@ class HomeScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: MhSpacing.xl),
                 children: [
-                  NearbyGamesSection(games: state.games),
+                  NearbyGamesSection(state: state),
                   const SizedBox(height: MhSpacing.md),
                   GuideBanner(doneCount: ref.watch(guideDoneCountProvider)),
                   const SizedBox(height: MhSpacing.md),
@@ -102,45 +107,3 @@ class _Header extends StatelessWidget {
 }
 
 /// 시안의 에러 상태 — 72px 원형 + 제목 + 설명.
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.mh;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-            MhSpacing.md, MhSpacing.xl, MhSpacing.md, 60),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-              alignment: Alignment.center,
-              child: Icon(Icons.cloud_off_rounded, size: 32, color: c.textSub),
-            ),
-            const SizedBox(height: 14),
-            Text('경기 정보를 불러오지 못했어요',
-                style: MhText.sectionTitle(c.text)),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: MhText.custom(
-                size: 13,
-                weight: FontWeight.w400,
-                color: c.textSub,
-                height: 1.6,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

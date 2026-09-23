@@ -7,14 +7,18 @@ import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
 import '../../shell/view_models/shell_view_model.dart';
+import '../view_models/home_view_model.dart';
 import 'game_card.dart';
+import 'offseason_card.dart';
 import 'section_header.dart';
 
 /// "가까운 경기" — 가로 스와이프 카드 + 페이지 도트.
 class NearbyGamesSection extends ConsumerStatefulWidget {
-  const NearbyGamesSection({super.key, required this.games});
+  const NearbyGamesSection({super.key, required this.state});
 
-  final List<Game> games;
+  final HomeState state;
+
+  List<Game> get games => state.games;
 
   @override
   ConsumerState<NearbyGamesSection> createState() =>
@@ -53,6 +57,16 @@ class _NearbyGamesSectionState extends ConsumerState<NearbyGamesSection> {
           ),
         ),
         const SizedBox(height: 12),
+        // 비시즌에는 지난 경기 대신 개막 카운트다운을 보여준다 (시안).
+        if (widget.state.isOffseason) ...[
+          OffseasonCard(
+            state: widget.state,
+            onSeeSchedule: () => ref
+                .read(shellViewModelProvider.notifier)
+                .select(ShellTab.schedule),
+          ),
+          const SizedBox(height: 12),
+        ],
         SizedBox(
           height: GameCard.height,
           child: PageView.builder(
