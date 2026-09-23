@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repositories/preferences_repository.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/team_logo.dart';
+import '../../core/ui/team_picker_sheet.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import '../view_models/my_view_model.dart';
 
@@ -28,7 +30,18 @@ class MyTeamCard extends ConsumerWidget {
             children: [
               Text('MY 팀', style: MhText.sectionTitle(c.text)),
               GestureDetector(
-                onTap: () {}, // TODO: 팀 선택 모달 (시안 TEAM PICKER MODAL)
+                onTap: () async {
+                  final prefs = ref.read(preferencesRepositoryProvider);
+                  final picked = await showTeamPickerSheet(
+                    context,
+                    initialGender: prefs.preferredGender,
+                    selected: team,
+                  );
+                  if (picked == null) return;
+                  await prefs.setMyTeam(picked);
+                  await prefs.setPreferredGender(picked.gender);
+                  ref.invalidate(myViewModelProvider);
+                },
                 child: Text('팀변경 >', style: MhText.meta(c.textFaint)),
               ),
             ],

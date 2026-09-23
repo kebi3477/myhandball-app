@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
 import 'my_guide_badge.dart';
@@ -100,7 +101,9 @@ class _Header extends StatelessWidget {
                     size: 20, weight: FontWeight.w700, color: c.text)),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () {}, // TODO: 설정 화면 (시안 SETTINGS PAGE 섹션)
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+              ),
               child: SizedBox(
                 width: 32,
                 height: 32,

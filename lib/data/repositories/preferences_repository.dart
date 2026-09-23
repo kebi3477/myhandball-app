@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/app_config.dart';
 import '../../domain/models/gender.dart';
+import '../../domain/models/season.dart';
 import '../../domain/models/team.dart';
 import '../services/mock_handball_api_service.dart';
 
@@ -28,6 +29,11 @@ class PreferencesRepository {
 
   /// 시안 `mh_fav_players`
   final _favoritePlayerIds = <String>{};
+
+  Season _season = Season.latest;
+
+  /// 시안 설정의 알림 토글 (`notifOn`).
+  bool _notificationsOn = true;
 
   /// 영구 저장소에서 한 번에 읽어온다. 지금은 할 일이 없다.
   Future<void> load() async {}
@@ -64,6 +70,20 @@ class PreferencesRepository {
 
   Future<void> setPreferredGender(Gender gender) async {
     _preferredGender = gender;
+    await _persist();
+  }
+
+  Season get season => _season;
+
+  Future<void> setSeason(Season value) async {
+    _season = value;
+    await _persist();
+  }
+
+  bool get notificationsOn => _notificationsOn;
+
+  Future<void> setNotificationsOn({required bool value}) async {
+    _notificationsOn = value;
     await _persist();
   }
 
