@@ -157,7 +157,7 @@ class _TeamCheerTabState extends ConsumerState<TeamCheerTab> {
           for (final post in state.cheers) ...[
             _CheerCard(
               post: post,
-              liked: state.likedCheerIds.contains(post.id),
+              liked: post.liked,
               onLike: () => vm.toggleCheerLike(post.id),
               onDelete: () => vm.deleteCheer(post.id),
             ),

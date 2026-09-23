@@ -22,6 +22,7 @@ class CheerPost {
     required this.dateLabel,
     required this.likes,
     this.isMine = false,
+    this.liked = false,
   });
 
   final String id;
@@ -31,15 +32,19 @@ class CheerPost {
   final int likes;
   final bool isMine;
 
+  /// 내가 좋아요를 눌렀는지. 서버가 기기 ID로 판정해 준다.
+  final bool liked;
+
   String get initial => author.isEmpty ? '?' : author.characters.first;
 
-  CheerPost copyWith({int? likes}) => CheerPost(
+  CheerPost copyWith({int? likes, bool? liked}) => CheerPost(
         id: id,
         author: author,
         text: text,
         dateLabel: dateLabel,
         likes: likes ?? this.likes,
         isMine: isMine,
+        liked: liked ?? this.liked,
       );
 }
 

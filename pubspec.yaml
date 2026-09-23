@@ -21,6 +21,13 @@ dependencies:
   # 상태 관리 (현재는 테마/온보딩 등 화면 상태만 사용)
   flutter_riverpod: ^2.5.1
 
+  # API 연동 (myhandball-api). dart:io HttpClient 대신 쓰는 이유는
+  # 웹/테스트에서도 같은 코드로 돌리고 MockClient를 끼울 수 있어서다.
+  http: ^1.2.2
+
+  # 기기 설정 영구 저장. 익명 기기 ID(X-Device-Id)도 여기 남는다.
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -7,6 +7,7 @@ import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
 import '../../domain/models/team_detail.dart';
+import 'api_client.dart';
 import 'handball_api_service.dart';
 
 /// 디자인 확인용 고정 데이터.
@@ -526,5 +527,144 @@ class MockHandballApiService implements HandballApiService {
       rankTrend: trend,
       results: results,
     );
+  }
+
+  // --- 사용자 콘텐츠 ---
+  //
+  // 서버 연동판은 DB에 쌓지만, 목업은 앱을 켜 둔 동안만 기억한다.
+  // `const` 생성자를 유지하려고 static에 둔다.
+
+  static final _predictions = <String, PredictionPick>{};
+  static final _mvpVotes = <String, String>{};
+  static final _cheers = <String, List<CheerPost>>{};
+
+  @override
+  Future<PredictionTally> fetchPrediction(Game game) async {
+    await _delay();
+    return _tallyFor(game);
+  }
+
+  @override
+  Future<PredictionTally> submitPrediction(Game game, PredictionPick pick) async {
+    await _delay();
+    if (game.status != GameStatus.pre) {
+      throw const ApiException('경기가 시작돼 예측을 바꿀 수 없어요', statusCode: 409);
+    }
+    _predictions[game.id] = pick;
+    return _tallyFor(game);
+  }
+
+  /// 혼자 쓰면 분포가 100%만 나와 시안 막대를 볼 수 없어서, 경기 id로
+  /// 고정 시드를 만들어 다른 사람 표가 있는 것처럼 꾸민다.
+  PredictionTally _tallyFor(Game game) {
+    final seed = game.id.codeUnits.fold<int>(11, (a, b) => (a * 31 + b) % 9973);
+    final home = 40 + seed % 60;
+    final draw = 5 + seed % 15;
+    final away = 30 + (seed ~/ 7) % 55;
+    final mine = _predictions[game.id];
+    return PredictionTally(
+      total: home + draw + away + (mine == null ? 0 : 1),
+      home: home + (mine == PredictionPick.home ? 1 : 0),
+      draw: draw + (mine == PredictionPick.draw ? 1 : 0),
+      away: away + (mine == PredictionPick.away ? 1 : 0),
+      open: game.status == GameStatus.pre,
+      myPick: mine,
+    );
+  }
+
+  @override
+  Future<MvpBoard> fetchMvp(Game game) async {
+    await _delay();
+    return _boardFor(game, (await fetchGameDetail(game)).mvpCandidates);
+  }
+
+  @override
+  Future<MvpBoard> submitMvpVote(Game game, MvpCandidate candidate) async {
+    await _delay();
+    if (game.status != GameStatus.finished) {
+      throw const ApiException('경기가 끝나야 투표할 수 있어요', statusCode: 409);
+    }
+    if (_mvpVotes.containsKey(game.id)) {
+      throw const ApiException('이미 투표했어요', statusCode: 409);
+    }
+    _mvpVotes[game.id] = candidate.id;
+    return _boardFor(game, (await fetchGameDetail(game)).mvpCandidates);
+  }
+
+  MvpBoard _boardFor(Game game, List<MvpCandidate> candidates) {
+    final mine = _mvpVotes[game.id];
+    final voted = [
+      for (final c in candidates)
+        if (c.id == mine)
+          MvpCandidate(
+            id: c.id,
+            name: c.name,
+            teamName: c.teamName,
+            statLine: c.statLine,
+            votes: c.votes + 1,
+            teamLogoUrl: c.teamLogoUrl,
+            playerSeq: c.playerSeq,
+            number: c.number,
+            isHome: c.isHome,
+          )
+        else
+          c,
+    ]..sort((a, b) => b.votes.compareTo(a.votes));
+
+    return MvpBoard(
+      candidates: voted,
+      total: voted.fold<int>(0, (a, c) => a + c.votes),
+      open: game.status == GameStatus.finished,
+      myVoteId: mine,
+    );
+  }
+
+  @override
+  Future<List<CheerPost>> fetchCheers(Team team, {int page = 1}) async {
+    await _delay();
+    return List.unmodifiable(_cheers[team.name] ?? const <CheerPost>[]);
+  }
+
+  @override
+  Future<List<CheerPost>> submitCheer(Team team, String text) async {
+    await _delay();
+    if (text.length > 200) {
+      throw const ApiException('200자까지 쓸 수 있어요', statusCode: 400);
+    }
+    final now = DateTime.now();
+    (_cheers[team.name] ??= []).insert(
+      0,
+      CheerPost(
+        id: 'cheer-${now.microsecondsSinceEpoch}',
+        author: '나',
+        text: text.trim(),
+        dateLabel: '${now.month}.${now.day}',
+        likes: 0,
+        isMine: true,
+      ),
+    );
+    return fetchCheers(team);
+  }
+
+  @override
+  Future<List<CheerPost>> deleteCheer(Team team, String cheerId) async {
+    await _delay();
+    _cheers[team.name]?.removeWhere((p) => p.id == cheerId);
+    return fetchCheers(team);
+  }
+
+  @override
+  Future<List<CheerPost>> toggleCheerLike(Team team, String cheerId) async {
+    await _delay();
+    final list = _cheers[team.name];
+    final i = list?.indexWhere((p) => p.id == cheerId) ?? -1;
+    if (list != null && i >= 0) {
+      final post = list[i];
+      list[i] = post.copyWith(
+        liked: !post.liked,
+        likes: post.likes + (post.liked ? -1 : 1),
+      );
+    }
+    return fetchCheers(team);
   }
 }

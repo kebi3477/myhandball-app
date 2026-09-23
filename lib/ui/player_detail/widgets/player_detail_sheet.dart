@@ -44,11 +44,12 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
     final c = context.mh;
     final p = widget.player;
 
-    // 실제 기록 API가 없어 statLine에서 뽑을 수 있는 값만 보여준다.
+    // 선수 상세(`GET /api/player/:playerSeq`)는 통산·시즌별 기록까지 주지만
+    // 이 시트는 목록에서 받은 요약만 보여준다.
     final summary = <(String, String)>[
       ('기록', p.statLine.split(' · ').first),
-      ('포지션', p.position),
-      ('등번호', '${p.number}'),
+      ('포지션', p.positionText),
+      ('등번호', p.numberText),
       ('소속', p.teamName),
     ];
 
@@ -92,7 +93,7 @@ class _PlayerDetailSheetState extends ConsumerState<_PlayerDetailSheet> {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('No.${p.number}',
+                        Text('No.${p.numberText}',
                             style: MhText.custom(
                                 size: 28,
                                 weight: FontWeight.w800,

@@ -10,9 +10,13 @@ import '../../domain/models/team_detail.dart';
 
 /// 외부 데이터 소스 래퍼. 상태를 갖지 않는다.
 ///
-/// 구현체는 현재 [MockHandballApiService] 하나뿐이다. 실제 연동 시
-/// `/api/schedule`, `/api/ranking`, `/api/team`을 치는 구현을 추가하고
-/// repository가 보는 타입은 그대로 둔다.
+/// 구현체가 둘이다.
+///
+/// - [MockHandballApiService] — 목업. `API_BASE_URL`이 비어 있을 때 쓴다
+/// - [HttpHandballApiService] — `myhandball-api` 연동
+///
+/// 어느 쪽을 쓸지는 `schedule_repository.dart`의
+/// `handballApiServiceProvider`가 고른다.
 abstract interface class HandballApiService {
   /// `GET /api/schedule` — 홈 상단에 띄울 가까운 경기들.
   Future<List<Game>> fetchUpcomingGames();
@@ -29,16 +33,53 @@ abstract interface class HandballApiService {
   /// `GET /api/team?gender=`
   Future<List<Team>> fetchTeams(Gender gender);
 
-  /// **대응 엔드포인트 없음.** 선수 기록은 API 신규 작업이 필요하다.
+  /// `GET /api/player/ranking?gender=&category=`
   Future<List<PlayerStat>> fetchTopPlayers(Gender gender, StatCategory category);
 
-  /// **대응 엔드포인트 없음.** 선수 명단도 마찬가지다.
+  /// `GET /api/player?gender=`
   Future<List<Player>> fetchPlayers(Gender gender);
 
-  /// **대응 엔드포인트 없음.** 문자중계·팀 기록·맞대결·MVP 후보가 모두
-  /// 신규 작업이다.
+  /// `GET /api/game/:matchSeq` + `GET /api/game/:matchSeq/live`
+  ///
+  /// 맞대결 기록은 대응 엔드포인트가 없어서 일정에서 계산한다.
   Future<GameDetail> fetchGameDetail(Game game);
 
-  /// `/api/team`이 팀 목록만 주므로 소개·연혁·전적 추이는 신규 작업이다.
+  /// `GET /api/team/:teamNum`
   Future<TeamDetail> fetchTeamDetail(Team team);
+
+  // --- 사용자 콘텐츠 (서버 집계) ---
+  //
+  // 예전에는 기기에만 쌓였다. 시안이 "다른 사람 예측 분포"와 "득표율"을
+  // 보여주도록 그려져 있어서 서버로 올렸다.
+  // `../myhandball-api/docs/api-tasks/05-사용자-콘텐츠.md`
+
+  /// `GET /api/game/:matchSeq/prediction`
+  Future<PredictionTally> fetchPrediction(Game game);
+
+  /// `POST /api/game/:matchSeq/prediction`
+  ///
+  /// 경기가 시작됐으면 `409`. 시작 전이면 몇 번이든 덮어쓸 수 있다.
+  Future<PredictionTally> submitPrediction(Game game, PredictionPick pick);
+
+  /// `GET /api/game/:matchSeq/mvp`
+  Future<MvpBoard> fetchMvp(Game game);
+
+  /// `POST /api/game/:matchSeq/mvp`
+  ///
+  /// 경기가 끝나기 전이거나 이미 투표했으면 `409`.
+  Future<MvpBoard> submitMvpVote(Game game, MvpCandidate candidate);
+
+  /// `GET /api/team/:teamNum/cheer`
+  Future<List<CheerPost>> fetchCheers(Team team, {int page});
+
+  /// `POST /api/team/:teamNum/cheer`
+  ///
+  /// 200자를 넘으면 `400`, 팀별 하루 5개를 넘으면 `429`.
+  Future<List<CheerPost>> submitCheer(Team team, String text);
+
+  /// `DELETE /api/team/:teamNum/cheer/:cheerId` — 내가 쓴 글만.
+  Future<List<CheerPost>> deleteCheer(Team team, String cheerId);
+
+  /// `POST /api/team/:teamNum/cheer/:cheerId/like` — 토글.
+  Future<List<CheerPost>> toggleCheerLike(Team team, String cheerId);
 }

@@ -31,6 +31,16 @@ class GameDetailScreen extends ConsumerWidget {
     final async = ref.watch(gameDetailViewModelProvider(game));
     final vm = ref.read(gameDetailViewModelProvider(game).notifier);
 
+    // 서버가 쓰기를 거절했을 때(마감·중복 투표·요청 제한) 이유를 알려준다.
+    ref.listen(gameDetailViewModelProvider(game), (_, next) {
+      final notice = next.valueOrNull?.notice;
+      if (notice == null || !context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(notice)));
+      vm.clearNotice();
+    });
+
     return SubPageScaffold(
       title: '경기 상세',
       child: async.when(

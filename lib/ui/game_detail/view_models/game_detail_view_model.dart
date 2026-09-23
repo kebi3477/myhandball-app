@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
+import '../../../data/services/api_client.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/game_detail.dart';
 
@@ -22,19 +23,38 @@ class GameDetailState {
     required this.detail,
     required this.tab,
     required this.attended,
-    this.prediction,
-    this.mvpVote,
+    required this.tally,
+    required this.mvp,
+    this.notice,
   });
 
   final GameDetail detail;
   final GameDetailTab tab;
+
+  /// 직관 기록. 개인 기록이라 서버로 보내지 않는다.
   final bool attended;
-  final PredictionPick? prediction;
-  final String? mvpVote;
+
+  /// 서버가 집계한 예측 분포.
+  final PredictionTally tally;
+
+  /// 서버가 집계한 MVP 투표.
+  final MvpBoard mvp;
+
+  /// 쓰기가 거절됐을 때 띄울 문구 (마감·중복 투표·요청 제한).
+  final String? notice;
 
   Game get game => detail.game;
 
-  bool get hasVotedMvp => mvpVote != null;
+  PredictionPick? get prediction => tally.myPick;
+
+  String? get mvpVote => mvp.myVoteId;
+
+  bool get hasVotedMvp => mvp.hasVoted;
+
+  /// 마감 판정은 서버가 `startsAt`으로 한다. 기기 시계를 믿지 않는다.
+  bool get predictionOpen => tally.open;
+
+  bool get mvpOpen => mvp.open;
 
   /// 직관 기록은 이미 치러진 경기에만 남길 수 있다.
   bool get canAttend => game.status != GameStatus.pre;
@@ -55,15 +75,17 @@ class GameDetailState {
     GameDetail? detail,
     GameDetailTab? tab,
     bool? attended,
-    PredictionPick? prediction,
-    String? mvpVote,
+    PredictionTally? tally,
+    MvpBoard? mvp,
+    String? notice,
   }) =>
       GameDetailState(
         detail: detail ?? this.detail,
         tab: tab ?? this.tab,
         attended: attended ?? this.attended,
-        prediction: prediction ?? this.prediction,
-        mvpVote: mvpVote ?? this.mvpVote,
+        tally: tally ?? this.tally,
+        mvp: mvp ?? this.mvp,
+        notice: notice,
       );
 }
 
@@ -72,8 +94,16 @@ class GameDetailViewModel
   @override
   Future<GameDetailState> build(Game game) async {
     final prefs = ref.read(preferencesRepositoryProvider);
-    final detail =
-        await ref.read(handballApiServiceProvider).fetchGameDetail(game);
+    final api = ref.read(handballApiServiceProvider);
+
+    final detail = await api.fetchGameDetail(game);
+
+    // 집계는 상세와 독립이다. 실패해도 기록·중계는 보여준다.
+    final results = await Future.wait([
+      _or(() => api.fetchPrediction(detail.game),
+          PredictionTally.empty(open: detail.predictionOpen)),
+      _or(() => api.fetchMvp(detail.game), const MvpBoard.empty()),
+    ]);
 
     return GameDetailState(
       detail: detail,
@@ -82,15 +112,30 @@ class GameDetailViewModel
           ? GameDetailTab.predict
           : GameDetailTab.live,
       attended: prefs.didAttend(game.id),
-      prediction: prefs.predictionFor(game.id),
-      mvpVote: prefs.mvpVoteFor(game.id),
+      tally: results[0] as PredictionTally,
+      mvp: results[1] as MvpBoard,
     );
+  }
+
+  Future<T> _or<T>(Future<T> Function() run, T fallback) async {
+    try {
+      return await run();
+    } on ApiException {
+      return fallback;
+    }
   }
 
   void selectTab(GameDetailTab tab) {
     final current = state.valueOrNull;
     if (current == null || current.tab == tab) return;
     state = AsyncData(current.copyWith(tab: tab));
+  }
+
+  /// 안내 문구를 한 번 읽고 지운다. 스낵바가 두 번 뜨는 걸 막는다.
+  void clearNotice() {
+    final current = state.valueOrNull;
+    if (current?.notice == null) return;
+    state = AsyncData(current!.copyWith());
   }
 
   /// 시안 `toggleAttend`.
@@ -103,23 +148,51 @@ class GameDetailViewModel
   }
 
   /// 시안 `pickPred` — 경기 시작 전까지만 바꿀 수 있다.
+  ///
+  /// 마감 판정은 서버가 하므로, 여기서 막지 않고 `409`를 문구로 바꾼다.
   Future<void> pick(PredictionPick pick) async {
     final current = state.valueOrNull;
-    if (current == null || !current.detail.predictionOpen) return;
-    await ref
-        .read(preferencesRepositoryProvider)
-        .setPrediction(current.game.id, pick);
-    state = AsyncData(current.copyWith(prediction: pick));
+    if (current == null) return;
+    try {
+      final tally = await ref
+          .read(handballApiServiceProvider)
+          .submitPrediction(current.game, pick);
+      // MY 화면이 "내가 예측한 경기"를 한 번에 보여주려면 목록이 필요한데
+      // 서버에 그런 엔드포인트가 없다. 서버가 받아들인 뒤 로컬에도 적어 둔다.
+      await ref
+          .read(preferencesRepositoryProvider)
+          .setPrediction(current.game.id, pick);
+      state = AsyncData(current.copyWith(tally: tally));
+    } on ApiException catch (e) {
+      state = AsyncData(current.copyWith(notice: _message(e, '예측을 저장하지 못했어요')));
+    }
   }
 
   /// 시안 `voteMvp` — 한 번 뽑으면 바꿀 수 없다.
   Future<void> voteMvp(String candidateId) async {
     final current = state.valueOrNull;
     if (current == null || current.hasVotedMvp) return;
-    await ref
-        .read(preferencesRepositoryProvider)
-        .voteMvp(current.game.id, candidateId);
-    state = AsyncData(current.copyWith(mvpVote: candidateId));
+
+    final candidate = current.mvp.candidates
+        .where((c) => c.id == candidateId)
+        .firstOrNull;
+    if (candidate == null) return;
+
+    try {
+      final board = await ref
+          .read(handballApiServiceProvider)
+          .submitMvpVote(current.game, candidate);
+      state = AsyncData(current.copyWith(mvp: board));
+    } on ApiException catch (e) {
+      state = AsyncData(current.copyWith(notice: _message(e, '투표하지 못했어요')));
+    }
+  }
+
+  String _message(ApiException e, String fallback) {
+    if (e.isRateLimited) return '요청이 너무 잦아요. 잠시 뒤에 다시 시도해 주세요';
+    // 409는 서버가 이유를 문구로 준다 (마감·중복 투표).
+    if (e.isConflict || e.isBadRequest) return e.message;
+    return e.isOffline ? e.message : fallback;
   }
 }
 

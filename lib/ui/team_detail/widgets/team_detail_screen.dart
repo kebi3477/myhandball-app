@@ -29,6 +29,16 @@ class TeamDetailScreen extends ConsumerWidget {
     final async = ref.watch(teamDetailViewModelProvider(team));
     final vm = ref.read(teamDetailViewModelProvider(team).notifier);
 
+    // 서버가 쓰기를 거절했을 때(마감·중복 투표·요청 제한) 이유를 알려준다.
+    ref.listen(teamDetailViewModelProvider(team), (_, next) {
+      final notice = next.valueOrNull?.notice;
+      if (notice == null || !context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(notice)));
+      vm.clearNotice();
+    });
+
     return SubPageScaffold(
       title: team.name,
       child: async.when(

@@ -17,7 +17,8 @@ class GamePredictTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
     final vm = ref.read(gameDetailViewModelProvider(state.game).notifier);
-    final open = state.detail.predictionOpen;
+    final open = state.predictionOpen;
+    final tally = state.tally;
     final hit = state.predictionHit;
 
     return Padding(
@@ -67,6 +68,11 @@ class GamePredictTab extends ConsumerWidget {
                     ],
                   ],
                 ),
+                // 서버 집계가 생기기 전에는 그릴 수 없던 시안의 분포 막대.
+                if (tally.total > 0) ...[
+                  const SizedBox(height: 14),
+                  _Distribution(tally: tally),
+                ],
               ],
             ),
           ),
@@ -192,6 +198,67 @@ class _Option extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 예측 분포. `GET /api/game/:matchSeq/prediction`의 집계를 그린다.
+class _Distribution extends StatelessWidget {
+  const _Distribution({required this.tally});
+
+  final PredictionTally tally;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            height: 8,
+            child: Row(
+              children: [
+                for (final pick in PredictionPick.values)
+                  if (tally.votesFor(pick) > 0)
+                    Expanded(
+                      flex: tally.votesFor(pick),
+                      child: ColoredBox(
+                        color: switch (pick) {
+                          PredictionPick.home => MhColors.brand,
+                          PredictionPick.draw => c.textFaint,
+                          PredictionPick.away =>
+                            MhColors.brand.withValues(alpha: 0.45),
+                        },
+                      ),
+                    ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (final pick in PredictionPick.values)
+              Text(
+                '${pick.label} ${tally.percentFor(pick)}%',
+                style: MhText.custom(
+                  size: 11,
+                  weight:
+                      tally.myPick == pick ? FontWeight.w800 : FontWeight.w400,
+                  color: tally.myPick == pick ? MhColors.brand : c.textFaint,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text('${tally.total}명이 예측했어요',
+            textAlign: TextAlign.center,
+            style: MhText.custom(
+                size: 11, weight: FontWeight.w400, color: c.textFaint)),
+      ],
     );
   }
 }

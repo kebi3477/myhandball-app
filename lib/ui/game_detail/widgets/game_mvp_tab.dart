@@ -17,7 +17,7 @@ class GameMvpTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
 
-    if (!state.detail.mvpOpen) {
+    if (!state.mvpOpen) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(
             MhSpacing.gutter, MhSpacing.sm, MhSpacing.gutter, MhSpacing.xl),
@@ -52,10 +52,9 @@ class GameMvpTab extends ConsumerWidget {
     }
 
     final vm = ref.read(gameDetailViewModelProvider(state.game).notifier);
-    final candidates = [...state.detail.mvpCandidates]
-      ..sort((a, b) => b.votes.compareTo(a.votes));
-    final total = candidates.fold<int>(0, (sum, m) => sum + m.votes) +
-        (state.hasVotedMvp ? 1 : 0);
+    // 서버가 득표 내림차순으로 주고, 내 표도 이미 반영돼 있다.
+    final candidates = state.mvp.candidates;
+    final total = state.mvp.total;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -130,8 +129,7 @@ class _CandidateRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.mh;
     final mine = myVote == candidate.id;
-    final votes = candidate.votes + (mine ? 1 : 0);
-    final pct = total == 0 ? 0.0 : votes / total;
+    final pct = total == 0 ? 0.0 : candidate.votes / total;
 
     return GestureDetector(
       onTap: showResult ? null : onTap,

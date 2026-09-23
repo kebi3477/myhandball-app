@@ -26,8 +26,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 규칙 가이드 (레슨 5개 + 퀴즈) | 완료 |
 | 검색 · 선수 상세 · 선수 비교 | 완료 |
 | 설정 · 시즌 선택 · 팀 선택 · 정책/약관 | 완료 |
-| 데이터 계층 (repository + service) | 골격 완료 — 구현체가 `MockHandballApiService` 하나 |
-| **실제 API 연동** | **미착수** — `HandballApiService`의 HTTP 구현만 추가하면 된다 |
+| 데이터 계층 (repository + service) | 완료 — 목업 / HTTP 두 구현체 |
+| **실제 API 연동** | **완료** — `API_BASE_URL`이 있으면 `HttpHandballApiService` |
 
 ### 시안 대비 단순화한 것
 
@@ -108,18 +108,25 @@ lib/
 
 프롬프트를 준 뒤에는 API 쪽 작업이 끝나 배포될 때까지 앱에서 해당 기능을 목업/스텁으로 둔다.
 
-### 지금 API 작업이 필요한 것
+### API 연동 상태 — 끝났다
 
-- **선수 기록(시즌 TOP5)** — 대응 엔드포인트가 없다. `lib/domain/models/player_stat.dart` 참조
-- **선수 명단** — 분석 탭 선수 카드가 쓰는 데이터. 역시 엔드포인트가 없어
-  `lib/domain/models/player.dart`의 목업이 이름까지 지어내고 있다
-- **경기 상세** — 문자중계·팀 기록·맞대결·MVP 후보가 전부 신규다
-- **팀 상세** — `/api/team`은 팀 목록만 준다. 소개·연혁·주소가 필요하다
-- **응원글** — 기기 저장뿐이라 다른 사용자와 공유되지 않는다
-- **순위 상세 필드** — `/api/ranking`은 승·무·패·득실을 이미 준다. 분석 탭의
-  순위·기록 표는 그 값을 그대로 쓰면 되므로 API 작업이 필요 없다
-- **경기 상태(pre/live/finished) 판정** — 현재 `scoreText` 문자열과 시작 시각만 오고, v1 웹이 클라이언트에서 계산했다. 위젯·라이브 액티비티까지 가려면 서버가 줘야 한다
-- **실시간 스코어 + 득점 이벤트 푸시** — 위젯 LIVE 상태의 전제
+`../myhandball-api/docs/api-tasks/`의 00~06이 전부 구현돼 있고, 앱도 붙어 있다.
+**새로 API 작업이 필요한 건 아래 두 개뿐이다.**
+
+- **내 예측 목록** — 서버는 경기별 집계만 준다. MY 화면이 "내가 예측한 경기"를
+  모아 보여주려면 목록이 필요한데, 지금은 내 선택만 기기에 캐시해 대신하고 있다
+  (`PreferencesRepository._predictions`)
+- **응원글 신고·차단** — `cheers.hidden`을 DB에서 손으로 켜는 것뿐이다.
+  스토어 심사에서 UGC 신고 수단을 요구할 수 있다 (API 07 B-1)
+
+남은 후속 과제는 앱이 아니라 서버 쪽이고 `../myhandball-api/docs/api-tasks/07-후속-작업.md`에 있다.
+그중 **앱에 직접 영향 있는 것**:
+
+- **경기 중 PBP가 실시간으로 갱신되는지 아직 확인 못 했다** (조사 시점이 비시즌).
+  틀리면 LIVE 뱃지·중계 탭·득점 푸시가 조용히 안 나온다. 개막(11월) 첫 경기에
+  확인이 필요하다
+- 서버는 `myhandball.kro.kr` 인증서를 수동 갱신한다. **앱은 만료되면 통째로
+  먹통이 된다** (아래 "서버 상태")
 
 ## 커밋
 
@@ -157,6 +164,16 @@ API 베이스 URL은 컴파일 타임에 주입한다. 웹 v1은 미지정 시 `
 
 ```bash
 flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr
+flutter run --dart-define=API_BASE_URL=http://localhost:3000   # 로컬 API
+```
+
+**비어 있으면 목업으로 떨어진다** (`handballApiServiceProvider`). 서버가 죽어도
+디자인은 확인할 수 있게 남겨 둔 갈림길이고, 지운 적 없다고 착각하기 쉬우니
+"데이터가 이상하다" 싶으면 이 값부터 확인한다.
+
+```bash
+# 실제 서버에 붙여 전 엔드포인트 점검 (네트워크 필요, CI는 안 돌린다)
+flutter test tool/api_smoke_test.dart --dart-define=API_BASE_URL=http://localhost:3000
 ```
 
 **Android는 아직 빌드 불가** — `flutter doctor`가 cmdline-tools 누락을 보고한다. Android Studio에서 SDK Command-line Tools 설치 후 `flutter doctor --android-licenses` 필요.
@@ -171,7 +188,27 @@ flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr
 | `GET /api/schedule/ics/my-team` | `gender`, `season`, `type`, `teamName`(필수) | `text/calendar` ICS 본문 |
 | `GET /api/ranking` | `gender`(`W`/`M`), `season`, `type` | `RankingResponse` — `items[]` |
 | `GET /api/team` | `gender` | `TeamListResponse` — `teams[]` |
+| `GET /api/game/:matchSeq` | — | `GameDetailResponse` — 전·후반, 팀 기록, 선수별 기록 |
+| `GET /api/game/:matchSeq/live` | — | `GameLiveResponse` — 중계 이벤트, 경기 상태 |
+| `GET /api/game/:matchSeq/prediction` | — | 예측 분포 + 내 선택 |
+| `POST /api/game/:matchSeq/prediction` | `{ pick }` | 시작 후면 `409` |
+| `GET/POST /api/game/:matchSeq/mvp` | `{ playerSeq, playerName }` | 종료 전·재투표면 `409` |
+| `GET /api/player` | `gender`, `season`, `type` | 선수 목록 + 시즌 기록 |
+| `GET /api/player/:playerSeq` | — | 프로필 + 통산·시즌별 기록 |
+| `GET /api/player/ranking` | `+ category` | 카테고리별 TOP5 |
+| `GET /api/team/:teamNum` | `gender`, `season`, `type` | 구단 소개·코칭스태프·명단·전적 |
+| `GET/POST/DELETE /api/team/:teamNum/cheer` | `gender`, `page` | 응원글. 하루 5개 초과 `429` |
+| `GET /api/widget/my-team` | `teamNum`, `gender` | 위젯용 경량 응답 (네이티브 위젯이 쓴다) |
+| `POST /api/push/register` | `{ token, platform, teamNum, gender }` | FCM 토큰 등록 |
 | `POST /api/welcome/submissions` | — | 온보딩 선택값을 Postgres에 기록 |
+
+쓰기 엔드포인트는 **인증이 없고 익명 기기 UUID를 `X-Device-Id` 헤더로** 받는다
+(영문·숫자·하이픈 8~64자). `PreferencesRepository.deviceId`가 한 번 만들어
+저장하고, `ApiClient`가 모든 요청에 붙인다. 앱을 지웠다 깔면 새 값이 된다 —
+서버도 그렇게 본다.
+
+문서와 실제 응답이 다른 부분은 `../myhandball-api/docs/api-tasks/07-후속-작업.md`
+**C절**에 표로 정리돼 있다. 매핑을 고칠 때 먼저 읽는다.
 
 `season`은 **시작 연도 문자열**이다: `"2025"` = 25-26 시즌. `type`은 리그 구분(`"1"`, `"2"`).
 
@@ -188,9 +225,27 @@ flutter run --dart-define=API_BASE_URL=https://myhandball.kro.kr
 형식이다. 목업의 팀 번호는 연맹 사이트의 팀 소개 페이지
 (`/introduce/team_men.php`, `/introduce/team_women.php`)에서 확인한 실제 값이다.
 
-### 실시간 스코어는 없다
+### 경기 상태와 중계
 
-API에 이벤트 스트림도 푸시도 없다. v2 시안의 LIVE 위젯·라이브 액티비티·경기 상세 라이브 피드는 **백엔드 신규 작업이 선행돼야** 한다. 해당 기능을 건드리게 되면 먼저 API 작업 프롬프트를 사용자에게 준다 (위 "작업 경계" 참조).
+`GameItem.status`(`pre`/`live`/`finished`)를 **서버가 판정해서 준다.** v1 웹이
+클라이언트에서 시각으로 추정하던 걸 서버로 올린 결과다. 앱은 값이 없을 때만
+`startsAt`으로 추정한다 (`HttpHandballApiService._status`).
+
+중계는 연맹의 PBP(`playbyplay.php`)를 서버가 60초마다 폴링해 쌓은 것이다.
+`GameLiveResponse.source`가 `polling`이면 경기 중 수집분, `final`이면 종료 후
+확정 기록이다.
+
+**단, 경기 중에 PBP가 실제로 갱신되는지는 아직 검증되지 않았다.** 개막 후
+첫 경기에서 확인해야 하고, 안 되면 LIVE 관련 기능을 줄여야 한다 (API 07 A-1).
+
+### 팀 이름이 엔드포인트마다 다르다
+
+`/api/team`은 `상무피닉스`, `/api/schedule`·`/api/ranking`은 `상무 피닉스`다
+(원본 페이지가 달라서다). `Team`은 **이름으로 같은 팀인지 판단**하므로 그냥 두면
+마이팀이 상무인 사용자는 달력과 다음 경기가 조용히 빈다.
+
+`HttpHandballApiService`가 공백을 지운 키로 맞춰 **팀 목록의 이름으로 통일**한다.
+서버가 이름을 통일해 주면 이 보정은 지워도 된다.
 
 ## 디자인 원본
 
@@ -252,9 +307,18 @@ v1(화면 7개)보다 훨씬 크다. 시안 기준:
 시안이 쓰는 `localStorage` 키를 `shared_preferences`에서 그대로 이어받는다:
 
 ```
-mh_onboarded  mh_preds  mh_mvp  mh_guide  mh_attended
-mh_recent_search  mh_cheer  mh_fav_players
+mh_onboarded  mh_guide  mh_attended  mh_recent_search  mh_fav_players
+mh_theme  mh_gender  mh_season  mh_notif  mh_my_team
+mh_preds      # 내 예측만. 집계는 서버가 갖는다
+mh_device_id  # 익명 기기 UUID (X-Device-Id)
 ```
+
+**`mh_mvp`·`mh_cheer`는 없어졌다.** MVP 투표와 응원글은 서버로 갔다. 예측도
+집계는 서버가 갖고, `mh_preds`는 MY 화면이 "내가 예측한 경기"를 모으려고 두는
+캐시일 뿐이다 (서버에 그 목록 엔드포인트가 없다).
+
+기기에 쌓여 있던 예측·투표·응원글은 **서버로 옮기지 않는다.** 그때는 기기 ID가
+없었기 때문이다 (API 05 문서).
 
 v1 웹이 쓰던 키는 별개다: `themePreference`, 마이팀/시즌/튜토리얼 상태(`src/state/` 참조). 웹과 앱은 저장소를 공유하지 않으므로 마이그레이션 대상이 아니다.
 

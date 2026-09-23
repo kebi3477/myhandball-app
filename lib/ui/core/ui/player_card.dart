@@ -67,7 +67,7 @@ class PlayerCard extends StatelessWidget {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                '${player.number}',
+                                player.numberText,
                                 style: MhText.custom(
                                   size: 44,
                                   weight: FontWeight.w800,
@@ -77,7 +77,7 @@ class PlayerCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Text(player.position,
+                          Text(player.positionText,
                               style: MhText.custom(
                                   size: 11,
                                   weight: FontWeight.w700,

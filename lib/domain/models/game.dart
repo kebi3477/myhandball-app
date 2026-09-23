@@ -27,6 +27,8 @@ class Game {
     this.scoreAway,
     this.venue,
     this.canBook = false,
+    this.matchSeq,
+    this.startsAt,
   });
 
   final String id;
@@ -46,6 +48,18 @@ class Game {
 
   /// 예매 링크를 띄울지.
   final bool canBook;
+
+  /// 연맹 사이트의 경기 번호. 경기 상세·예측·MVP·중계가 전부 이걸로 걸린다.
+  ///
+  /// 일정에 상세 링크가 없는 경기는 `null`이고, 그런 경기는 상세를 열 수
+  /// 없다 (`../myhandball-api/docs/api-tasks/07-후속-작업.md` A-2).
+  final int? matchSeq;
+
+  /// 경기 시작 시각. API가 `startsAt`(ISO 8601, `+09:00`)으로 준다.
+  final DateTime? startsAt;
+
+  /// 서버 기능(예측·MVP·중계)을 걸 수 있는 경기인지.
+  bool get hasDetail => matchSeq != null;
 
   bool get hasScore => status != GameStatus.pre;
 

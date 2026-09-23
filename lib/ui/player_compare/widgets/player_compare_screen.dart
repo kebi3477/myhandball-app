@@ -155,7 +155,7 @@ class _PlayerCompareScreenState extends ConsumerState<PlayerCompareScreen> {
       (goals / maxGoals).clamp(0.05, 1.0),
       (assists / maxAssists).clamp(0.05, 1.0),
       // 출전·성공률·수비는 실제 값이 없어 등번호·포지션에서 만든 근사치다.
-      ((p.number % 20) / 20).clamp(0.2, 1.0),
+      (((p.number ?? 0) % 20) / 20).clamp(0.2, 1.0),
       ((goals + assists) % 40 / 40).clamp(0.2, 1.0),
       (p.position == 'GK' ? 1.0 : (p.position == 'PV' ? 0.8 : 0.45)),
     ];
@@ -238,13 +238,13 @@ class _Slot extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${player!.number}',
+                      Text(player!.numberText,
                           style: MhText.custom(
                               size: 34,
                               weight: FontWeight.w800,
                               color: color,
                               height: 1)),
-                      Text(player!.position,
+                      Text(player!.positionText,
                           style: MhText.custom(
                               size: 11,
                               weight: FontWeight.w700,

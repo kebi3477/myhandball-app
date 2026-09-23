@@ -1,14 +1,41 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/app_config.dart';
 import '../../domain/models/game.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/schedule_day.dart';
+import '../services/api_client.dart';
 import '../services/handball_api_service.dart';
+import '../services/http_handball_api_service.dart';
 import '../services/mock_handball_api_service.dart';
+import 'preferences_repository.dart';
 
-final handballApiServiceProvider = Provider<HandballApiService>(
-  (_) => const MockHandballApiService(),
-);
+/// 데이터 소스. `API_BASE_URL`이 주입돼 있으면 실제 API를 친다.
+///
+/// ```
+/// flutter run --dart-define=API_BASE_URL=http://localhost:3000
+/// ```
+///
+/// 비어 있으면 목업으로 떨어진다. 디자인만 확인할 때와 서버가 죽었을 때
+/// 앱을 열어 볼 수 있어야 해서 이 갈림길을 남겨 둔다.
+final handballApiServiceProvider = Provider<HandballApiService>((ref) {
+  if (AppConfig.apiBaseUrl.isEmpty) return const MockHandballApiService();
+
+  final prefs = ref.watch(preferencesRepositoryProvider);
+  final client = ApiClient(
+    baseUrl: AppConfig.apiBaseUrl,
+    deviceId: prefs.deviceId,
+  );
+  ref.onDispose(client.close);
+
+  return HttpHandballApiService(
+    client: client,
+    // 설정에서 바뀌면 다음 호출부터 반영된다. 화면이 새로 요청할 때
+    // 현재 값을 읽도록 콜백으로 넘긴다.
+    gender: () => prefs.preferredGender,
+    season: () => prefs.season.year,
+  );
+});
 
 /// 경기 일정의 source of truth.
 ///

@@ -122,6 +122,9 @@ class MvpCandidate {
     required this.statLine,
     required this.votes,
     this.teamLogoUrl,
+    this.playerSeq,
+    this.number,
+    this.isHome,
   });
 
   final String id;
@@ -130,6 +133,22 @@ class MvpCandidate {
   final String statLine;
   final int votes;
   final String? teamLogoUrl;
+
+  /// 연맹 선수 번호. 경기 기록에는 `player_seq`가 없어서 서버가 로스터에서
+  /// 찾아 붙인다. 못 찾으면 `null`이고 그때는 이름으로 투표한다
+  /// (`../myhandball-api/docs/api-tasks/07-후속-작업.md` C절).
+  final int? playerSeq;
+
+  final int? number;
+
+  /// 홈 팀 선수인지. 서버 `side`.
+  final bool? isHome;
+
+  /// 서버 응답에서 후보를 식별하는 키.
+  ///
+  /// `playerSeq`가 없을 수 있으므로 이름으로도 만들 수 있게 해 둔다.
+  static String idFor(int? playerSeq, String playerName) =>
+      playerSeq != null ? 'p$playerSeq' : 'n:$playerName';
 }
 
 /// 경기 상세 한 덩어리.
@@ -141,7 +160,7 @@ class GameDetail {
     required this.events,
     required this.stats,
     required this.headToHead,
-    required this.mvpCandidates,
+    this.mvpCandidates = const [],
   });
 
   final Game game;
@@ -150,15 +169,18 @@ class GameDetail {
   final List<GameEvent> events;
   final List<TeamStatLine> stats;
   final HeadToHead headToHead;
+  /// MVP 후보. **연동판에서는 비어 있다** — 후보와 득표는
+  /// `GET /api/game/:matchSeq/mvp`가 [MvpBoard]로 따로 준다.
+  /// 목업이 화면을 채우려고 쓰는 자리다.
   final List<MvpCandidate> mvpCandidates;
 
   int get secondHalfHome => (game.scoreHome ?? 0) - firstHalfHome;
   int get secondHalfAway => (game.scoreAway ?? 0) - firstHalfAway;
 
-  /// MVP 투표는 경기가 끝나야 열린다.
-  bool get mvpOpen => game.status == GameStatus.finished;
-
-  /// 예측은 경기 시작 전까지만 바꿀 수 있다.
+  /// 예측이 아직 열려 있을지에 대한 추정.
+  ///
+  /// 실제 마감 판정은 서버가 `startsAt`으로 한다 ([PredictionTally.open]).
+  /// 집계를 받아오기 전 초기값으로만 쓴다.
   bool get predictionOpen => game.status == GameStatus.pre;
 }
 
@@ -171,4 +193,89 @@ enum PredictionPick {
   const PredictionPick(this.label);
 
   final String label;
+
+  /// API가 쓰는 값 (`{ pick: "home" | "draw" | "away" }`).
+  String get code => name;
+
+  static PredictionPick? fromCode(String? code) => switch (code) {
+        'home' => PredictionPick.home,
+        'draw' => PredictionPick.draw,
+        'away' => PredictionPick.away,
+        _ => null,
+      };
+}
+
+/// 서버가 집계한 예측 분포. `GET /api/game/:matchSeq/prediction`.
+///
+/// 기기에만 있던 값이 서버로 올라오면서 생겼다. 다른 사람 예측을 보여주려면
+/// 집계가 있어야 한다.
+class PredictionTally {
+  const PredictionTally({
+    required this.total,
+    required this.home,
+    required this.draw,
+    required this.away,
+    required this.open,
+    this.myPick,
+  });
+
+  const PredictionTally.empty({this.open = false})
+      : total = 0,
+        home = 0,
+        draw = 0,
+        away = 0,
+        myPick = null;
+
+  final int total;
+  final int home;
+  final int draw;
+  final int away;
+
+  /// 경기 시작 전까지만 true. 서버가 `startsAt`으로 판정한다.
+  final bool open;
+
+  final PredictionPick? myPick;
+
+  int votesFor(PredictionPick pick) => switch (pick) {
+        PredictionPick.home => home,
+        PredictionPick.draw => draw,
+        PredictionPick.away => away,
+      };
+
+  /// 0~1. 아무도 안 찍었으면 0.
+  double ratioFor(PredictionPick pick) =>
+      total == 0 ? 0 : votesFor(pick) / total;
+
+  int percentFor(PredictionPick pick) => (ratioFor(pick) * 100).round();
+}
+
+/// 서버가 집계한 MVP 투표. `GET /api/game/:matchSeq/mvp`.
+class MvpBoard {
+  const MvpBoard({
+    required this.candidates,
+    required this.total,
+    required this.open,
+    this.myVoteId,
+  });
+
+  const MvpBoard.empty()
+      : candidates = const [],
+        total = 0,
+        open = false,
+        myVoteId = null;
+
+  /// 득표 내림차순.
+  final List<MvpCandidate> candidates;
+
+  final int total;
+
+  /// 경기가 끝나야 열린다. 서버가 경기 상태로 판정한다.
+  final bool open;
+
+  /// 내가 뽑은 후보의 [MvpCandidate.id].
+  final String? myVoteId;
+
+  bool get hasVoted => myVoteId != null;
+
+  double ratioFor(MvpCandidate c) => total == 0 ? 0 : c.votes / total;
 }

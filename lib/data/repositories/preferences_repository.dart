@@ -1,20 +1,27 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_config.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/season.dart';
-import '../../domain/models/team_detail.dart';
 import '../../domain/models/team.dart';
 import '../services/mock_handball_api_service.dart';
 
 /// 기기에 남는 사용자 설정의 source of truth.
 ///
-/// 아직 메모리에만 들고 있다. [load]/[_persist]가 `shared_preferences`를
-/// 붙일 자리이고, 키 이름은 시안이 쓰던 `localStorage` 키를 그대로 이어받는다
-/// — `mh_onboarded`, `mh_guide`, `mh_preds`, `mh_mvp`, `mh_attended`,
-/// `mh_recent_search`, `mh_cheer`, `mh_fav_players`.
+/// `shared_preferences`에 저장하고, 키 이름은 시안이 쓰던 `localStorage`
+/// 키를 그대로 이어받는다 — `mh_onboarded`, `mh_guide`, `mh_attended`,
+/// `mh_recent_search`, `mh_fav_players`.
+///
+/// **승부 예측·MVP 투표·응원글은 여기 없다.** 서버로 올라갔다
+/// (`/api/game/:matchSeq/{prediction,mvp}`, `/api/team/:teamNum/cheer`).
+/// 기기에 쌓여 있던 기존 값은 그때 기기 ID가 없었으므로 옮기지 않는다
+/// (`../myhandball-api/docs/api-tasks/05-사용자-콘텐츠.md`).
 ///
 /// 값을 동기로 읽을 수 있게 둔 건, 앱 시작 시 테마가 한 프레임 깜빡이는 걸
 /// 막기 위해서다. [load]를 `runApp` 전에 한 번 await 한다.
@@ -32,20 +39,16 @@ class PreferencesRepository {
   /// 시안 `mh_fav_players`
   final _favoritePlayerIds = <String>{};
 
-  /// 시안 `mh_preds` — 경기 id → 내 예측
+  /// 시안 `mh_preds` — 경기 id → 내 예측.
+  ///
+  /// **집계의 source of truth는 서버다.** 이건 MY 화면이 "내가 예측한
+  /// 경기들"을 한 번에 보여주려고 두는 로컬 캐시다. 서버에 그런 목록
+  /// 엔드포인트가 없어서, 경기마다 요청하는 대신 내가 고른 값만 적어 둔다.
+  /// 서버가 받아들인 뒤에만 쓴다.
   final _predictions = <String, PredictionPick>{};
 
   /// 시안 `mh_attended` — 직관한 경기 id
   final _attendedGameIds = <String>{};
-
-  /// 시안 `mh_mvp` — 경기 id → 내가 뽑은 후보 id
-  final _mvpVotes = <String, String>{};
-
-  /// 시안 `mh_cheer` — 팀명 → 내가 쓴 응원글
-  final _cheersByTeam = <String, List<CheerPost>>{};
-
-  /// 내가 좋아요 누른 응원글 id
-  final _likedCheerIds = <String>{};
 
   /// 시안 `mh_recent_search`
   final _recentSearches = <String>[];
@@ -55,10 +58,139 @@ class PreferencesRepository {
   /// 시안 설정의 알림 토글 (`notifOn`).
   bool _notificationsOn = true;
 
-  /// 영구 저장소에서 한 번에 읽어온다. 지금은 할 일이 없다.
-  Future<void> load() async {}
+  /// 서버 쓰기 요청에 붙이는 익명 기기 ID (`X-Device-Id`).
+  ///
+  /// 회원가입이 없는 앱이라 이걸로 **중복 투표만 막는다.** 개인정보가 아닌
+  /// 난수 UUID v4이고, 앱을 지웠다 깔면 새 값이 된다 (서버도 그렇게 본다).
+  String _deviceId = '';
 
-  Future<void> _persist() async {}
+  String get deviceId => _deviceId;
+
+  SharedPreferences? _prefs;
+
+  /// 영구 저장소에서 한 번에 읽어온다.
+  ///
+  /// 테마가 첫 프레임에 깜빡이지 않도록 `runApp` 전에 한 번 await 한다.
+  /// 저장소를 열지 못해도 앱은 기본값으로 떠야 하므로 예외를 삼킨다.
+  Future<void> load() async {
+    try {
+      _prefs = await SharedPreferences.getInstance();
+    } on Exception {
+      _deviceId = _newDeviceId();
+      return;
+    }
+    final prefs = _prefs!;
+
+    _deviceId = prefs.getString(_kDeviceId) ?? '';
+    if (!_isValidDeviceId(_deviceId)) {
+      _deviceId = _newDeviceId();
+      await prefs.setString(_kDeviceId, _deviceId);
+    }
+
+    // 개발용 dart-define이 켜져 있으면 저장값보다 우선한다.
+    _onboarded = AppConfig.skipOnboarding
+        ? true
+        : prefs.getBool(_kOnboarded) ?? false;
+
+    if (AppConfig.initialTheme.isEmpty) {
+      _themeMode =
+          prefs.getString(_kTheme) == 'light' ? ThemeMode.light : ThemeMode.dark;
+    }
+
+    _preferredGender = Gender.fromCode(prefs.getString(_kGender));
+    _guideDoneCount =
+        (prefs.getInt(_kGuide) ?? 0).clamp(0, AppConfig.guideLessonCount);
+    _notificationsOn = prefs.getBool(_kNotifications) ?? true;
+    _season = Season.fromYear(prefs.getString(_kSeason) ?? Season.latest.year);
+
+    for (final entry in prefs.getStringList(_kPredictions) ?? const []) {
+      final sep = entry.lastIndexOf(':');
+      if (sep <= 0) continue;
+      final pick = PredictionPick.fromCode(entry.substring(sep + 1));
+      if (pick != null) _predictions[entry.substring(0, sep)] = pick;
+    }
+
+    _favoritePlayerIds.addAll(prefs.getStringList(_kFavPlayers) ?? const []);
+    _attendedGameIds.addAll(prefs.getStringList(_kAttended) ?? const []);
+    _recentSearches.addAll(prefs.getStringList(_kRecentSearch) ?? const []);
+
+    final team = prefs.getString(_kMyTeam);
+    if (team != null) _myTeam = _decodeTeam(team) ?? _myTeam;
+  }
+
+  Future<void> _persist() async {
+    final prefs = _prefs;
+    if (prefs == null) return;
+    await Future.wait([
+      prefs.setBool(_kOnboarded, _onboarded),
+      prefs.setString(_kTheme, _themeMode == ThemeMode.light ? 'light' : 'dark'),
+      prefs.setString(_kGender, _preferredGender.code),
+      prefs.setInt(_kGuide, _guideDoneCount),
+      prefs.setBool(_kNotifications, _notificationsOn),
+      prefs.setString(_kSeason, _season.year),
+      prefs.setStringList(_kFavPlayers, _favoritePlayerIds.toList()),
+      prefs.setStringList(_kPredictions,
+          [for (final e in _predictions.entries) '${e.key}:${e.value.code}']),
+      prefs.setStringList(_kAttended, _attendedGameIds.toList()),
+      prefs.setStringList(_kRecentSearch, _recentSearches),
+      if (_myTeam case final team?)
+        prefs.setString(_kMyTeam, _encodeTeam(team))
+      else
+        prefs.remove(_kMyTeam),
+    ]);
+  }
+
+  static String _encodeTeam(Team team) => jsonEncode({
+        'name': team.name,
+        'gender': team.gender.code,
+        'teamNum': team.teamNum,
+        'logoUrl': team.logoUrl,
+      });
+
+  static Team? _decodeTeam(String raw) {
+    try {
+      final map = jsonDecode(raw);
+      if (map is! Map || map['name'] is! String) return null;
+      return Team(
+        name: map['name'] as String,
+        gender: Gender.fromCode(map['gender'] as String?),
+        teamNum: map['teamNum'] as int?,
+        logoUrl: map['logoUrl'] as String?,
+      );
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// 서버는 영문·숫자·하이픈 8~64자만 받는다.
+  static bool _isValidDeviceId(String value) =>
+      RegExp(r'^[A-Za-z0-9-]{8,64}$').hasMatch(value);
+
+  /// UUID v4. 이것 하나 때문에 uuid 패키지를 들이지 않는다.
+  static String _newDeviceId() {
+    final rnd = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    String hex(int start, int end) => bytes
+        .sublist(start, end)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
+    return '${hex(0, 4)}-${hex(4, 6)}-${hex(6, 8)}-${hex(8, 10)}-${hex(10, 16)}';
+  }
+
+  static const _kDeviceId = 'mh_device_id';
+  static const _kOnboarded = 'mh_onboarded';
+  static const _kTheme = 'mh_theme';
+  static const _kGender = 'mh_gender';
+  static const _kGuide = 'mh_guide';
+  static const _kNotifications = 'mh_notif';
+  static const _kSeason = 'mh_season';
+  static const _kMyTeam = 'mh_my_team';
+  static const _kFavPlayers = 'mh_fav_players';
+  static const _kAttended = 'mh_attended';
+  static const _kRecentSearch = 'mh_recent_search';
+  static const _kPredictions = 'mh_preds';
 
   /// 시안 `mh_onboarded`
   bool get onboarded => _onboarded;
@@ -108,35 +240,6 @@ class PreferencesRepository {
 
   Future<void> toggleAttended(String gameId) async {
     if (!_attendedGameIds.remove(gameId)) _attendedGameIds.add(gameId);
-    await _persist();
-  }
-
-  String? mvpVoteFor(String gameId) => _mvpVotes[gameId];
-
-  /// MVP는 한 번 투표하면 바꿀 수 없다 (시안 `voteMvp`).
-  Future<void> voteMvp(String gameId, String candidateId) async {
-    if (_mvpVotes.containsKey(gameId)) return;
-    _mvpVotes[gameId] = candidateId;
-    await _persist();
-  }
-
-  List<CheerPost> cheersFor(String teamName) =>
-      List.unmodifiable(_cheersByTeam[teamName] ?? const []);
-
-  Future<void> addCheer(String teamName, CheerPost post) async {
-    (_cheersByTeam[teamName] ??= []).insert(0, post);
-    await _persist();
-  }
-
-  Future<void> removeCheer(String teamName, String postId) async {
-    _cheersByTeam[teamName]?.removeWhere((p) => p.id == postId);
-    await _persist();
-  }
-
-  bool isCheerLiked(String postId) => _likedCheerIds.contains(postId);
-
-  Future<void> toggleCheerLike(String postId) async {
-    if (!_likedCheerIds.remove(postId)) _likedCheerIds.add(postId);
     await _persist();
   }
 
