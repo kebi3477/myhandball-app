@@ -49,3 +49,7 @@ app.*.map.json
 
 # 디자인 프리뷰 산출물 (tool/design_preview_test.dart)
 tool/preview/
+
+# Xcode가 만드는 SwiftPM 상태 파일
+ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+ios/Runner.xcworkspace/xcshareddata/swiftpm/
