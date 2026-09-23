@@ -18,6 +18,8 @@ import 'package:myhandball/data/services/mock_handball_api_service.dart' as mock
 import 'package:myhandball/domain/models/game.dart';
 import 'package:myhandball/ui/game_detail/view_models/game_detail_view_model.dart';
 import 'package:myhandball/ui/game_detail/widgets/game_detail_screen.dart';
+import 'package:myhandball/ui/guide/view_models/guide_view_model.dart';
+import 'package:myhandball/ui/guide/widgets/guide_screen.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
 import 'package:myhandball/ui/my/widgets/my_screen.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
@@ -186,6 +188,41 @@ void main() {
       );
     });
   }
+
+  testWidgets('guide path', (t) async {
+    await _shoot(t, 'guide-path', const GuideScreen(), MhPalette.dark,
+        size: const Size(390, 900));
+  });
+
+  testWidgets('guide lesson', (t) async {
+    await _shoot(
+      t,
+      'guide-lesson',
+      const GuideScreen(),
+      MhPalette.dark,
+      size: const Size(390, 900),
+      after: (container) =>
+          container.read(guideViewModelProvider.notifier).openLesson(0),
+    );
+  });
+
+  testWidgets('guide quiz', (t) async {
+    await _shoot(
+      t,
+      'guide-quiz',
+      const GuideScreen(),
+      MhPalette.dark,
+      size: const Size(390, 900),
+      after: (container) {
+        final vm = container.read(guideViewModelProvider.notifier);
+        vm.openLesson(0);
+        vm.next();
+        vm.next();
+        vm.next();
+        vm.pick(1);
+      },
+    );
+  });
 
   testWidgets('onboarding', (t) async {
     await _shoot(t, 'onboarding', const OnboardingScreen(), MhPalette.dark,

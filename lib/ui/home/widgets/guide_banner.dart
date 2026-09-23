@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../config/app_config.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../guide/widgets/guide_screen.dart';
 
 /// 규칙 가이드 진입 배너.
 ///
@@ -20,7 +21,7 @@ class GuideBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
       child: GestureDetector(
-        onTap: () {}, // TODO: 규칙 가이드 화면 (시안 HANDBALL GUIDE 섹션)
+        onTap: () => GuideScreen.open(context),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(

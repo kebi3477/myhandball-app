@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/player_card.dart';
+import '../../player_compare/widgets/player_compare_screen.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
 import '../view_models/stat_view_model.dart';
 
@@ -22,7 +24,7 @@ class StatPlayerTab extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(
           MhSpacing.gutter, MhSpacing.xs, MhSpacing.gutter, MhSpacing.xl),
       children: [
-        const _CompareEntry(),
+        _CompareEntry(candidates: players),
         const SizedBox(height: MhSpacing.sm),
         Wrap(
           spacing: 18,
@@ -44,13 +46,15 @@ class StatPlayerTab extends ConsumerWidget {
 
 /// 시안의 "선수 비교" 진입 카드.
 class _CompareEntry extends StatelessWidget {
-  const _CompareEntry();
+  const _CompareEntry({required this.candidates});
+
+  final List<Player> candidates;
 
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
     return GestureDetector(
-      onTap: () {}, // TODO: 선수 비교 화면 (시안 PLAYER COMPARE 섹션)
+      onTap: () => PlayerCompareScreen.open(context, candidates),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
