@@ -76,7 +76,8 @@ class ScheduleRepository {
     final hit = _monthCache[key];
     if (!forceRefresh && hit != null) return hit;
     try {
-      final days = await _service.fetchMonthlySchedule(gender, month);
+      final days =
+          await _service.fetchMonthlySchedule(gender, month, season: season);
       _monthCache[key] = days;
       return days;
     } on Exception {
@@ -98,7 +99,7 @@ class ScheduleRepository {
     final hit = _seasonCache[key];
     if (!forceRefresh && hit != null) return hit;
     try {
-      final days = await _service.fetchSeasonSchedule(gender);
+      final days = await _service.fetchSeasonSchedule(gender, season: season);
       return _seasonCache[key] = days;
     } on Exception {
       if (hit != null) return hit;

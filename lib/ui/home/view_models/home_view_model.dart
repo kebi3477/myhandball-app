@@ -63,6 +63,16 @@ class HomeState {
     return days < 0 ? null : days;
   }
 
+  /// 다음 시즌 이름. `26-27`
+  ///
+  /// 개막일을 모를 때 큰 자리에 대신 넣는다.
+  String get nextSeasonName {
+    final opens = nextSeasonOpensAt;
+    return opens == null
+        ? Season.ofYear(Season.current.startYear + 1).label
+        : Season.at(opens).label;
+  }
+
   /// `26-27 시즌 개막까지`
   String get nextSeasonLabel {
     final opens = nextSeasonOpensAt;

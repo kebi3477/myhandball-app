@@ -50,9 +50,9 @@ class HttpHandballApiService implements HandballApiService {
   /// 그냥 빈다. 한 줄짜리 안전망이라 남겨 둔다.
   static String _key(String name) => name.replaceAll(RegExp(r'\s+'), '');
 
-  Map<String, String?> _query(Gender g, {String? month}) => {
+  Map<String, String?> _query(Gender g, {String? month, String? season}) => {
         'gender': g.code,
-        'season': season(),
+        'season': season ?? this.season(),
         'type': _leagueType,
         // 비어 있으면 _uri가 알아서 뺀다. 월을 빼면 시즌 전체가 온다.
         'month': month,
@@ -87,15 +87,19 @@ class HttpHandballApiService implements HandballApiService {
   @override
   Future<List<ScheduleDay>> fetchMonthlySchedule(
     Gender g,
-    DateTime month,
-  ) =>
-      _fetchSchedule(g, month: month.month.toString());
+    DateTime month, {
+    String? season,
+  }) =>
+      _fetchSchedule(g, month: month.month.toString(), season: season);
 
   @override
-  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender g) => _fetchSchedule(g);
+  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender g, {String? season}) =>
+      _fetchSchedule(g, season: season);
 
-  Future<List<ScheduleDay>> _fetchSchedule(Gender g, {String? month}) async {
-    final json = await client.get('/schedule', _query(g, month: month));
+  Future<List<ScheduleDay>> _fetchSchedule(Gender g,
+      {String? month, String? season}) async {
+    final json =
+        await client.get('/schedule', _query(g, month: month, season: season));
     final teamNums = await _teamNumbers(g);
     final days = _list(_map(json)['days']);
     return [

@@ -20,6 +20,7 @@ import 'package:myhandball/domain/models/game.dart';
 import 'package:myhandball/domain/models/gender.dart';
 import 'package:myhandball/domain/models/guide_lesson.dart';
 import 'package:myhandball/domain/models/player_stat.dart';
+import 'package:myhandball/domain/models/season.dart';
 import 'package:myhandball/ui/core/themes/theme.dart';
 import 'package:myhandball/ui/core/themes/tokens.dart';
 import 'package:myhandball/ui/core/ui/mh_error_view.dart';
@@ -37,6 +38,7 @@ import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
 import 'package:myhandball/ui/schedule/widgets/schedule_screen.dart';
 import 'package:myhandball/ui/search/widgets/search_screen.dart';
+import 'package:myhandball/ui/settings/widgets/settings_screen.dart';
 import 'package:myhandball/ui/stat/view_models/stat_view_model.dart';
 import 'package:myhandball/ui/stat/widgets/stat_screen.dart';
 import 'package:myhandball/ui/team_detail/view_models/team_detail_view_model.dart';
@@ -346,6 +348,37 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('preview/states.png'),
+    );
+  });
+
+  testWidgets('season picker', (t) async {
+    t.view.physicalSize = const Size(390, 640);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+
+    await t.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: buildMhTheme(MhPalette.dark),
+      home: Builder(builder: (context) {
+        return Scaffold(
+          backgroundColor: MhPalette.dark.bg,
+          body: Center(
+            child: TextButton(
+              onPressed: () => showSeasonPicker(context, Season.current),
+              child: const Text('열기'),
+            ),
+          ),
+        );
+      }),
+    ));
+    await t.tap(find.text('열기'));
+    for (var i = 0; i < 6; i++) {
+      await t.pump(const Duration(milliseconds: 80));
+    }
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('preview/season-picker.png'),
     );
   });
 

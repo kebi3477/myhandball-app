@@ -86,8 +86,13 @@ Future<Season?> showSeasonPicker(BuildContext context, Season current) {
   return showDialog<Season>(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.5),
+    // Material 조상이 없으면 Flutter 기본 텍스트 스타일이 남아 글자가
+    // 노란 이중밑줄로 그려진다. showDialog는 Material을 자동으로 주지 않는다
+    // (AlertDialog·Dialog를 쓸 때만 붙는다).
     builder: (_) => Center(
-      child: Container(
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
         width: 280,
         padding: const EdgeInsets.all(MhSpacing.sm),
         decoration: BoxDecoration(
@@ -104,7 +109,9 @@ Future<Season?> showSeasonPicker(BuildContext context, Season current) {
                   style: MhText.custom(
                       size: 15, weight: FontWeight.w700, color: c.text)),
             ),
-            for (final season in Season.all) ...[
+            // 시안은 `gap:8`이라 마지막 항목 뒤에는 여백이 없다.
+            for (final (i, season) in Season.all.indexed) ...[
+              if (i > 0) const SizedBox(height: MhSpacing.xs),
               MhTap(
                 onTap: () => Navigator.of(context).pop(season),
                 child: Container(
@@ -123,9 +130,9 @@ Future<Season?> showSeasonPicker(BuildContext context, Season current) {
                   ),
                 ),
               ),
-              const SizedBox(height: MhSpacing.xs),
             ],
           ],
+        ),
         ),
       ),
     ),

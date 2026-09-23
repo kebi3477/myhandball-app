@@ -106,6 +106,20 @@ void main() {
       expect(q['month'], '11');
     });
 
+    test('시즌을 지정하면 그 시즌을 조회한다', () async {
+      // 저장소는 시즌별로 캐시하는데 서비스가 설정 값만 보면, 다른 시즌을
+      // 물어도 같은 답이 온다. 홈의 "다음 시즌 개막일"이 이것 때문에
+      // 현재 시즌 첫 경기를 집어 들고 있었다.
+      final seen = <http.Request>[];
+      final api = build({'/api/schedule': _fixture('schedule')}, seen: seen);
+
+      await api.fetchSeasonSchedule(Gender.men, season: '2026');
+
+      final q = seen.firstWhere((r) => r.url.path == '/api/schedule').url
+          .queryParameters;
+      expect(q['season'], '2026');
+    });
+
     test('월을 빼면 month 파라미터가 나가지 않는다 (시즌 전체)', () async {
       final seen = <http.Request>[];
       final api = build({

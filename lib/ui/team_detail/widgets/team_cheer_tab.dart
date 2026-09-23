@@ -137,7 +137,10 @@ class _TeamCheerTabState extends ConsumerState<TeamCheerTab> {
               Text('응원글 ${state.cheers.length}',
                   style: MhText.custom(
                       size: 13, weight: FontWeight.w700, color: c.text)),
-              Text('내 글은 이 기기에서만 보여요',
+              // 시안 원문. 로그인이 없어서 서버가 익명 기기 ID로 "내 글"을
+              // 가린다 — 지우는 건 쓴 기기에서만 된다. 글 자체는 모두에게
+              // 보이므로 "보여요"라고 쓰면 거짓말이 된다.
+              Text('내 글은 이 기기에서만 삭제할 수 있어요',
                   style: MhText.custom(
                       size: 11,
                       weight: FontWeight.w400,

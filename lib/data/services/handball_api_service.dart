@@ -22,16 +22,20 @@ abstract interface class HandballApiService {
   Future<List<Game>> fetchUpcomingGames();
 
   /// `GET /api/schedule?gender=&season=&type=&month=` — 월 단위 일정.
+  ///
+  /// [season]을 주면 그 시즌을, 안 주면 설정의 조회 시즌을 본다.
   Future<List<ScheduleDay>> fetchMonthlySchedule(
     Gender gender,
-    DateTime month,
-  );
+    DateTime month, {
+    String? season,
+  });
 
   /// `GET /api/schedule?gender=&season=&type=` — **월을 빼면 시즌 전체**가 온다.
   ///
-  /// 일정 탭이 "경기가 있는 달"로 열려면 시즌의 달 목록을 먼저 알아야 한다.
-  /// 비시즌에 오늘 달을 열면 빈 화면이 되기 때문이다.
-  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender gender);
+  /// 일정 탭이 "경기가 있는 달"로 열려면 시즌의 달 목록을 먼저 알아야 하고,
+  /// 홈은 다음 시즌 개막일을 보려고 **다른 시즌**을 묻는다. 그래서 시즌을
+  /// 인자로 받는다 — 설정 값만 보면 무엇을 물어도 같은 답이 온다.
+  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender gender, {String? season});
 
   /// `GET /api/ranking?gender=`
   Future<List<RankRow>> fetchRanking(Gender gender);

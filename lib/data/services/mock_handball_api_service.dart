@@ -147,7 +147,8 @@ class MockHandballApiService implements HandballApiService {
   /// 목업은 어느 달이든 경기를 만들어내므로 "시즌 전체"도 이번 달로 대신한다.
   /// 일정 탭이 시작 달을 고르는 데만 쓰는 값이다.
   @override
-  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender gender) {
+  Future<List<ScheduleDay>> fetchSeasonSchedule(Gender gender,
+      {String? season}) {
     final now = DateTime.now();
     return fetchMonthlySchedule(gender, DateTime(now.year, now.month));
   }
@@ -155,8 +156,9 @@ class MockHandballApiService implements HandballApiService {
   @override
   Future<List<ScheduleDay>> fetchMonthlySchedule(
     Gender gender,
-    DateTime month,
-  ) async {
+    DateTime month, {
+    String? season,
+  }) async {
     await _delay();
 
     final teams = gender == Gender.women ? _womensTeams : _mensTeams;
