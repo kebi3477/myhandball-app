@@ -16,7 +16,8 @@ import '../../domain/models/team.dart';
 /// 막기 위해서다. [load]를 `runApp` 전에 한 번 await 한다.
 class PreferencesRepository {
   bool _onboarded = AppConfig.skipOnboarding;
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode =
+      AppConfig.initialTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
   Team? _myTeam;
   Gender _preferredGender = Gender.men;
   int _guideDoneCount = 0;

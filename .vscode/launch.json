@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "마이핸드볼 (온보딩부터)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "마이핸드볼 (온보딩 건너뛰기)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=MH_SKIP_ONBOARDING=true"]
+    },
+    {
+      "name": "마이핸드볼 (라이트 테마로 시작)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=MH_SKIP_ONBOARDING=true",
+        "--dart-define=MH_INITIAL_THEME=light"
+      ]
+    },
+    {
+      "name": "마이핸드볼 (프로파일 — 성능 확인)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "profile",
+      "args": ["--dart-define=MH_SKIP_ONBOARDING=true"]
+    }
+  ]
+}

@@ -11,6 +11,11 @@ abstract final class AppConfig {
   static const skipOnboarding =
       bool.fromEnvironment('MH_SKIP_ONBOARDING', defaultValue: false);
 
+  /// 개발용 — 시작 테마를 고정한다. `light` / `dark`.
+  /// 시안 기본은 다크라 비워두면 다크로 시작한다.
+  /// `--dart-define=MH_INITIAL_THEME=light`
+  static const initialTheme = String.fromEnvironment('MH_INITIAL_THEME');
+
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).
   static const guideLessonCount = 5;
 
