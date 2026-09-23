@@ -159,6 +159,34 @@ lib/
   `/api/player/:playerSeq`는 시즌 단위만 준다. 경기별은 `/api/game/:matchSeq`를
   경기마다 받아야 해서 시트에 넣기엔 무겁다. 아직 구현하지 않았다
 
+### 푸시 (마이팀 경기)
+
+`firebase_messaging`으로 FCM 토큰을 받아 `POST /api/push/register`에 등록한다.
+받는 알림은 **경기 시작 10분 전 · 득점(120초로 묶임) · 경기 종료** 세 가지다.
+
+**"내 팀만"은 서버가 한다.** 서버가 `teamNum: In([홈, 원정])`으로 대상을 고르므로
+앱은 **마이팀 번호를 정확히 등록하고 바뀌면 다시 등록**하면 된다. 구독을 맞추는
+자리는 `syncPushSubscription`(`ui/core/ui/push_sync.dart`) 하나이고, 세 곳에서 부른다:
+
+| 시점 | 동작 |
+|---|---|
+| 셸 진입(온보딩 후) | 권한 요청 → 토큰 등록 |
+| 마이팀 변경 | 재등록 — 안 하면 이전 팀 알림이 계속 온다 |
+| 알림 토글 끔 | `DELETE /push/register` — 서버에서 토큰을 지운다 |
+
+마이팀이 없거나 권한이 거부되면 등록하지 않고 해제한다.
+알림을 누르면 payload의 `data.matchSeq`로 경기를 찾아 상세를 연다.
+
+**Firebase 설정 파일이 없으면 조용히 꺼진다.** `Firebase.initializeApp()` 실패를
+잡아 `PushService.available = false`로 두고 전부 no-op 한다 — 푸시 때문에 앱이
+안 뜨면 안 된다. 실제로 알림을 받으려면:
+
+1. Firebase 프로젝트 → `GoogleService-Info.plist`(iOS) · `google-services.json`(Android)
+2. Android: `google-services` Gradle 플러그인 추가
+3. iOS: Push Notifications + Background Modes(Remote notifications) capability,
+   **APNs 인증 키(.p8)를 Firebase 콘솔에 등록**
+4. 서버 `.env`의 `FCM_*` — 없으면 서버가 드라이런(로그만)이다
+
 ### 외부로 나가는 동작
 
 `url_launcher`(링크)와 `share_plus`(.ics 공유)를 쓴다. **눌렀는데 아무 일도
@@ -169,15 +197,16 @@ lib/
 |---|---|
 | 중계 보기 | 경기별 네이버 중계 링크(`liveLinks`), 없으면 `AppConfig.broadcastUrl` |
 | 예매하기 | `AppConfig.ticketUrl` (티켓링크) |
-| 개인정보 처리방침 | `GET /api/policy/privacy/page` (API가 서빙) |
+| 개인정보 처리방침 · 이용약관 | `https://myhandball.lab241.com/privacy` · `/terms` |
 | 캘린더에 추가 · 내보내기 | 앱에서 만든 `.ics` (`domain/ics.dart`) |
 
 **정책 문구는 앱에 넣지 않는다.** 고칠 때마다 심사를 다시 받아야 해서 서버로
-뺐다. API가 같은 원본으로 JSON(`/api/policy/privacy`)과 웹페이지
-(`/api/policy/privacy/page`)를 준다. 앱은 웹페이지를 연다.
+뺐다. API가 같은 원본으로 JSON(`/api/policy/{privacy,terms}`)과 웹페이지
+(`.../page`)를 주고, **짧은 주소 `/privacy`·`/terms`는 Caddy가 rewrite** 한다.
 
-**서비스 이용약관은 아직 문서가 없다.** `MH_TERMS_URL`이 비어 있으면 설정에서
-그 줄을 숨긴다 — 눌러서 404를 보여주느니 없는 편이 낫다.
+그래서 이 두 URL은 `apiBaseUrl`에서 파생시키지 않는다 — NestJS 직통
+(로컬 `:3000`)에는 짧은 주소가 없어서 404다. 로컬 API로 개발할 때도 정책
+링크는 운영 페이지를 연다.
 
 `.ics`는 서버에도 `/api/schedule/ics/my-team`이 있지만 **시즌 전체만** 준다.
 경기 하나만 넣는 버튼과 경로를 하나로 두려고 앱에서 만든다. `test/ics_test.dart`가
