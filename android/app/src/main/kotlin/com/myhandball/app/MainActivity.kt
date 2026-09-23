@@ -1,4 +1,4 @@
-package com.kebi.myhandball
+package com.myhandball.app
 
 import io.flutter.embedding.android.FlutterActivity
 

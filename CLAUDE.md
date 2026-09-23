@@ -474,7 +474,8 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 | 지원 기기 | iPhone + iPad (`TARGETED_DEVICE_FAMILY = "1,2"`) |
 | 방향 | **세로 고정** — Info.plist·AndroidManifest·`SystemChrome` 세 곳 |
 | iOS 최소 버전 | 15.0 (배포본은 26.0이었으나 잘못된 설정으로 판단해 낮춤) |
-| Android applicationId | **미확인.** 현재 `com.kebi.myhandball`. Play Console 실제 값과 대조 필요 |
+| Android applicationId | `com.myhandball.app` (Play Console 실제 값, 2026-09-23 확인). `namespace`·`MainActivity` 패키지도 같은 값 |
+| iOS 번들 ID | `com.kebi.myhandball-ios` (App Store 실제 값). 두 플랫폼의 ID가 다른 건 기존 배포본 그대로라서다. 바꾸면 새 앱이 된다 |
 
 앱 아이콘과 런치 스크린도 배포본에서 가져왔다 — 런치 스크린은 `#0068FF`
 바탕에 흰 로고(`LaunchImage`), 아이콘은 배포본 1024px 원본에서 리사이즈.
@@ -496,9 +497,8 @@ Flutter에서는 `upgrader` 패키지나 원격 설정으로 대체하는 게 �
 - **Android 빌드가 안 된다.** `~/Library/Android/sdk`에 `cmdline-tools`가 없다.
   Android Studio에서 SDK Command-line Tools를 설치하고
   `flutter doctor --android-licenses`를 돌려야 한다 (여기서는 설치할 수 없다)
-- **Android `applicationId`가 `com.kebi.myhandball`인데 Play Console 실제 값과
-  대조하지 못했다.** 다르면 업데이트가 아니라 새 앱으로 올라간다
-- 개인정보 처리방침·이용약관 **웹 페이지를 실제로 올려야 한다.** 링크만 걸려 있다
+- 개인정보 처리방침·이용약관 웹 페이지는 API 저장소가 제공한다 (`/privacy`, `/terms` → Caddy → API).
+  미니 PC 서버에 배포되면 링크가 살아난다
 - 실기기 테스트가 끝나면 `NSAllowsLocalNetworking`·`NSLocalNetworkUsageDescription`
   제거를 검토한다
 
