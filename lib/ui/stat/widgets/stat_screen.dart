@@ -5,6 +5,7 @@ import '../../../domain/models/gender.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/nav_icons.dart';
+import '../../search/widgets/search_screen.dart';
 import '../view_models/stat_view_model.dart';
 import 'stat_player_tab.dart';
 import 'stat_rank_tab.dart';
@@ -80,7 +81,7 @@ class _Header extends StatelessWidget {
                     size: 20, weight: FontWeight.w700, color: c.text)),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () {}, // TODO: 검색 화면
+              onTap: () => SearchScreen.open(context),
               child: SizedBox(
                 width: 40,
                 height: 40,

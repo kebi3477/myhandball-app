@@ -47,6 +47,9 @@ class PreferencesRepository {
   /// 내가 좋아요 누른 응원글 id
   final _likedCheerIds = <String>{};
 
+  /// 시안 `mh_recent_search`
+  final _recentSearches = <String>[];
+
   Season _season = Season.latest;
 
   /// 시안 설정의 알림 토글 (`notifOn`).
@@ -134,6 +137,27 @@ class PreferencesRepository {
 
   Future<void> toggleCheerLike(String postId) async {
     if (!_likedCheerIds.remove(postId)) _likedCheerIds.add(postId);
+    await _persist();
+  }
+
+  List<String> get recentSearches => List.unmodifiable(_recentSearches);
+
+  Future<void> addRecentSearch(String query) async {
+    _recentSearches
+      ..remove(query)
+      ..insert(0, query);
+    // 시안과 같이 최근 것만 남긴다.
+    if (_recentSearches.length > 10) _recentSearches.removeLast();
+    await _persist();
+  }
+
+  Future<void> removeRecentSearch(String query) async {
+    _recentSearches.remove(query);
+    await _persist();
+  }
+
+  Future<void> clearRecentSearches() async {
+    _recentSearches.clear();
     await _persist();
   }
 

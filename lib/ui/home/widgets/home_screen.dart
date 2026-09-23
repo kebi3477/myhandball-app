@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/nav_icons.dart';
+import '../../search/widgets/search_screen.dart';
 import '../view_models/home_view_model.dart';
 import 'guide_banner.dart';
 import 'home_skeleton.dart';
@@ -77,7 +78,7 @@ class _Header extends StatelessWidget {
                 width: 119, height: 26),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () {}, // TODO: 검색 화면 (시안 SEARCH 섹션)
+              onTap: () => SearchScreen.open(context),
               child: SizedBox(
                 width: 40,
                 height: 40,
