@@ -46,7 +46,7 @@ class GuideScreen extends ConsumerWidget {
                     child: SizedBox(
                       width: 48,
                       height: 36,
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                      child: MhIcon(MhIcons.chevLeft,
                           size: 18, color: c.text),
                     ),
                   ),
@@ -271,8 +271,7 @@ class _GraduationCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.emoji_events_rounded,
-              size: 44, color: Color(0xFFFFC800)),
+          const MhMedal(size: 44),
           const SizedBox(height: MhSpacing.xs),
           // 문구·색은 시안 그대로.
           Text('핸드볼 입문 수료',

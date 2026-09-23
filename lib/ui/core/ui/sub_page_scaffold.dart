@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../themes/theme.dart';
+import 'mh_icons.dart';
 import 'mh_tap.dart';
 
 /// 전체화면으로 덮는 하위 페이지의 공통 골격.
@@ -42,7 +43,7 @@ class SubPageScaffold extends StatelessWidget {
                       child: SizedBox(
                         width: 32,
                         height: 32,
-                        child: Icon(Icons.arrow_back_ios_new_rounded,
+                        child: MhIcon(MhIcons.chevLeft,
                             size: 18, color: c.text),
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../view_models/my_view_model.dart';
 
 /// 통계 3칸 + 본문으로 이루어진 카드. 직관 기록과 승부 예측이 같은 꼴이다.
@@ -95,8 +96,7 @@ class MyAttendanceCard extends StatelessWidget {
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.place_outlined,
-                      size: 16, color: MhColors.brand),
+                  const MhIcon(MhIcons.pin, size: 16, color: MhColors.brand),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -156,7 +156,7 @@ class MyPredictionCard extends StatelessWidget {
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.how_to_vote_outlined,
+                  const MhIcon(MhIcons.checkCircle,
                       size: 16, color: MhColors.brand),
                   const SizedBox(width: 10),
                   Expanded(

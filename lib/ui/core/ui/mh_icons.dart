@@ -62,6 +62,26 @@ abstract final class MhIcons {
   static const shield =
       '<path d="M12 3l8.5 6.2-3.2 10H6.7L3.5 9.2z" stroke="#000" stroke-width="2" stroke-linejoin="round"></path><path d="M12 8l4 3-1.5 4.5h-5L8 11z" fill="#000"></path>';
 
+
+  /// 검색 (입력창 안, stroke 2)
+  static const searchSmall =
+      '<circle cx="11" cy="11" r="7" stroke="#000" stroke-width="2"></circle>'
+      '<path d="M16.5 16.5L21 21" stroke="#000" stroke-width="2" '
+      'stroke-linecap="round"></path>';
+
+  /// 검색 결과 없음 — 돋보기 안에 빼기.
+  static const searchOff =
+      '<circle cx="11" cy="11" r="7" stroke="#000" stroke-width="1.7"></circle>'
+      '<path d="M16.5 16.5L21 21M8.5 11h5" stroke="#000" stroke-width="1.7" '
+      'stroke-linecap="round"></path>';
+
+  /// 승부 예측 안내. **시안에 대응 아이콘이 없다** — 직관 안내(핀)와 짝을
+  /// 맞추려고 시안의 획 문법으로 그렸다.
+  static const checkCircle =
+      '<circle cx="12" cy="12" r="9" stroke="#000" stroke-width="1.8"></circle>'
+      '<path d="M8.2 12.2l2.6 2.6 5-5.4" stroke="#000" stroke-width="2" '
+      'stroke-linecap="round" stroke-linejoin="round"></path>';
+
   /// 서버 오류. 시안의 `errIconPath`는 잘린 스크립트에 있어 확인하지 못했다.
   /// 시안과 같은 획 문법(24x24, stroke 1.7~2, round cap)으로 맞춰 그린다.
   static const alert =
@@ -99,6 +119,34 @@ class MhIcon extends StatelessWidget {
       width: size,
       height: size,
       colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    );
+  }
+}
+
+/// 가이드 수료 메달. 시안 60x72 SVG를 그대로 쓴다.
+///
+/// 색이 여러 개라 [MhIcon]처럼 한 색으로 칠할 수 없어 따로 둔다.
+class MhMedal extends StatelessWidget {
+  const MhMedal({super.key, this.size = 44});
+
+  final double size;
+
+  static const _svg =
+      '<path d="M18 40 L10 70 L22 64 L28 72 L32 44 Z" fill="#0050C8"/>'
+      '<path d="M42 40 L50 70 L38 64 L32 72 L28 44 Z" fill="#0068FF"/>'
+      '<circle cx="30" cy="28" r="26" fill="#FFC800" stroke="#D9A400" stroke-width="3"/>'
+      '<circle cx="30" cy="28" r="19" fill="#FFD43B"/>'
+      '<path d="M13 25 C22 31, 38 31, 47 25" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
+      '<path d="M30 9 C24 18, 24 38, 30 47" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
+      '<path d="M30 17 l3.2 6.6 7.2.9-5.3 5 1.4 7.1-6.5-3.6-6.5 3.6 1.4-7.1-5.3-5 7.2-.9z" fill="#fff" stroke="#D9A400" stroke-width="1.2" stroke-linejoin="round"/>';
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.string(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="$size" '
+      'height="${size * 72 / 60}" viewBox="0 0 60 72">$_svg</svg>',
+      width: size,
+      height: size * 72 / 60,
     );
   }
 }

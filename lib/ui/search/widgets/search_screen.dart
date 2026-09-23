@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
@@ -61,7 +62,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       child: SizedBox(
                         width: 36,
                         height: 36,
-                        child: Icon(Icons.arrow_back_ios_new_rounded,
+                        child: MhIcon(MhIcons.chevLeft,
                             size: 18, color: c.text),
                       ),
                     ),
@@ -76,7 +77,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.search_rounded,
+                            MhIcon(MhIcons.searchSmall,
                                 size: 16, color: c.textSub),
                             const SizedBox(width: 8),
                             Expanded(
@@ -279,7 +280,7 @@ class _ResultsView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded, size: 32, color: c.textSub),
+              MhIcon(MhIcons.searchOff, size: 28, color: c.textSub),
               const SizedBox(height: 10),
               Text("'${state.query}' 검색 결과가 없어요",
                   style: MhText.custom(

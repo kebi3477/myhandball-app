@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/game_detail_view_model.dart';
@@ -35,8 +36,7 @@ class GameMvpTab extends ConsumerWidget {
                 height: 56,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(color: c.bg, shape: BoxShape.circle),
-                child: Icon(Icons.emoji_events_outlined,
-                    size: 26, color: c.textSub),
+                child: MhIcon(MhIcons.star, size: 26, color: c.textSub),
               ),
               const SizedBox(height: MhSpacing.xs),
               Text('아직 투표 전이에요',

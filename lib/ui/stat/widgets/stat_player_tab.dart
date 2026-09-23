@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/player.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/player_card.dart';
 import '../../player_compare/widgets/player_compare_screen.dart';
@@ -78,7 +79,7 @@ class _CompareEntry extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: MhColors.brand.withValues(alpha: 0.14),
               ),
-              child: const Icon(Icons.compare_arrows_rounded,
+              child: const MhIcon(MhIcons.shield,
                   size: 18, color: MhColors.brand),
             ),
             const SizedBox(width: 12),
