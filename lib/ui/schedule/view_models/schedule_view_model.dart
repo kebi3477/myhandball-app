@@ -4,6 +4,7 @@ import '../../../data/repositories/preferences_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/gender.dart';
+import '../../../domain/models/season.dart';
 import '../../../domain/models/schedule_day.dart';
 import '../../../domain/models/team.dart';
 
@@ -16,6 +17,8 @@ class ScheduleState {
     required this.gender,
     required this.month,
     required this.days,
+    required this.season,
+    required this.monthsWithGames,
     this.myTeam,
     this.selectedDayLabel,
     this.selectedDate,
@@ -28,6 +31,13 @@ class ScheduleState {
   final DateTime month;
 
   final List<ScheduleDay> days;
+
+  /// 지금 조회 중인 시즌(시작 연도). 연·월 선택이 이걸 같이 바꾼다.
+  final String season;
+
+  /// [season]에서 경기가 있는 달. 연·월 선택기가 흐리게 표시하는 데 쓴다.
+  final Set<DateTime> monthsWithGames;
+
   final Team? myTeam;
 
   /// 목록 뷰의 날짜 칩 선택. null이면 그 달 전체.
@@ -119,6 +129,8 @@ class ScheduleState {
     Gender? gender,
     DateTime? month,
     List<ScheduleDay>? days,
+    String? season,
+    Set<DateTime>? monthsWithGames,
     Team? myTeam,
     String? selectedDayLabel,
     bool clearSelectedDay = false,
@@ -130,6 +142,8 @@ class ScheduleState {
         gender: gender ?? this.gender,
         month: month ?? this.month,
         days: days ?? this.days,
+        season: season ?? this.season,
+        monthsWithGames: monthsWithGames ?? this.monthsWithGames,
         myTeam: myTeam ?? this.myTeam,
         selectedDayLabel:
             clearSelectedDay ? null : (selectedDayLabel ?? this.selectedDayLabel),
@@ -150,12 +164,15 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
     // 가장 가까운, 경기가 있는 달을 고른다.
     final month = await repo.getFocusMonth(gender, season);
     final days = await repo.getMonthlySchedule(gender, season, month);
+    final months = await repo.getSeasonMonths(gender, season);
 
     return ScheduleState(
       view: ScheduleView.list,
       gender: gender,
       month: month,
       days: days,
+      season: season,
+      monthsWithGames: months.toSet(),
       myTeam: prefs.myTeam,
     );
   }
@@ -163,11 +180,15 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
   Future<void> _reload(ScheduleState next) async {
     state = const AsyncLoading<ScheduleState>().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
+      final repo = ref.read(scheduleRepositoryProvider);
       final season = ref.read(preferencesRepositoryProvider).season.year;
-      final days = await ref
-          .read(scheduleRepositoryProvider)
-          .getMonthlySchedule(next.gender, season, next.month);
-      return next.copyWith(days: days);
+      final days = await repo.getMonthlySchedule(next.gender, season, next.month);
+      final months = await repo.getSeasonMonths(next.gender, season);
+      return next.copyWith(
+        days: days,
+        season: season,
+        monthsWithGames: months.toSet(),
+      );
     });
   }
 
@@ -202,6 +223,45 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
     if (current == null) return;
     final month =
         DateTime(current.month.year, current.month.month + delta);
+    await _reload(current.copyWith(
+      month: month,
+      clearSelectedDay: true,
+      clearSelectedDate: true,
+    ));
+  }
+
+  /// 시안 `setYm` — 연·월을 직접 고른다.
+  ///
+  /// **시즌도 같이 바뀐다.** API의 `month`는 "시즌 안의 월"이라 연도만
+  /// 바꾸면 엉뚱한 시즌을 조회하게 된다. 2024년 12월은 24-25 시즌이고
+  /// 2026년 4월은 25-26 시즌이다 (`Season.at`).
+  Future<void> setYearMonth(int year, int month) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final season = Season.at(DateTime(year, month));
+    await ref.read(preferencesRepositoryProvider).setSeason(season);
+    await _reload(current.copyWith(
+      month: DateTime(year, month),
+      clearSelectedDay: true,
+      clearSelectedDate: true,
+    ));
+  }
+
+  /// 시안 `ymToday` — 기본 달로 돌아간다.
+  ///
+  /// 비시즌에는 오늘 달이 비어 있으므로 시즌 안에서 오늘에 가장 가까운,
+  /// 경기가 있는 달로 간다 ([ScheduleRepository.getFocusMonth]).
+  Future<void> resetMonth() async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final prefs = ref.read(preferencesRepositoryProvider);
+    await prefs.setSeason(Season.current);
+    final month = await ref
+        .read(scheduleRepositoryProvider)
+        .getFocusMonth(current.gender, Season.current.year);
+
     await _reload(current.copyWith(
       month: month,
       clearSelectedDay: true,

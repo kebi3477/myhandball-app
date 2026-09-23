@@ -47,11 +47,6 @@ class AppViewModel extends Notifier<AppState> {
     await _prefs.setOnboarded(value: true);
   }
 
-  /// 시안 `restartOnboarding` — MY 탭에서 온보딩 다시 보기.
-  Future<void> restartOnboarding() async {
-    state = state.copyWith(onboarded: false);
-    await _prefs.setOnboarded(value: false);
-  }
 }
 
 final appViewModelProvider =

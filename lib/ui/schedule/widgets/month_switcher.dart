@@ -4,18 +4,23 @@ import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
 
-/// `< 2026년 11월 >` 월 이동 줄. 시안 높이 56, gap 24.
+/// `< 2026년 11월 ∨ >` 월 이동 줄. 시안 높이 56, gap 24.
+///
+/// 가운데 라벨은 **눌러서 연·월을 직접 고르는 칩**이다
+/// (시안 `openYmPicker`).
 class MonthSwitcher extends StatelessWidget {
   const MonthSwitcher({
     super.key,
     required this.label,
     required this.onPrev,
     required this.onNext,
+    required this.onPickYearMonth,
   });
 
   final String label;
   final VoidCallback onPrev;
   final VoidCallback onNext;
+  final VoidCallback onPickYearMonth;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +39,32 @@ class MonthSwitcher extends StatelessWidget {
         children: [
           _Arrow(glyph: '<', style: style, onTap: onPrev),
           const SizedBox(width: MhSpacing.md),
-          Text(label, style: style),
+          MhTap(
+            onTap: onPickYearMonth,
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: c.card,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label,
+                      style: MhText.custom(
+                        size: 16,
+                        weight: FontWeight.w700,
+                        color: c.text,
+                        height: 24 / 16,
+                      )),
+                  const SizedBox(width: 6),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      size: 16, color: c.textNeutral),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(width: MhSpacing.md),
           _Arrow(glyph: '>', style: style, onTap: onNext),
         ],

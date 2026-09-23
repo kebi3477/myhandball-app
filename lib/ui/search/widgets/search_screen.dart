@@ -83,6 +83,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 controller: _controller,
                                 autofocus: true,
                                 onChanged: vm.setQuery,
+                                // 시안 `onSearchKey` — 엔터에서 남긴다.
+                                // 결과를 눌러야만 남기면 검색해 놓고 그냥
+                                // 나간 경우가 기록되지 않는다.
+                                onSubmitted: vm.remember,
                                 textInputAction: TextInputAction.search,
                                 style: MhText.custom(
                                     size: 15,
@@ -208,13 +212,8 @@ class _IdleView extends StatelessWidget {
                         child: SizedBox(
                           width: 20,
                           height: 20,
-                          child: Center(
-                            child: Text('✕',
-                                style: MhText.custom(
-                                    size: 10,
-                                    weight: FontWeight.w400,
-                                    color: c.textFaint)),
-                          ),
+                          child: Icon(Icons.close_rounded,
+                              size: 12, color: c.textFaint),
                         ),
                       ),
                     ],
@@ -235,17 +234,21 @@ class _IdleView extends StatelessWidget {
             for (final q in state.suggestions)
               MhTap(
                 onTap: () => onUse(q),
+                // alignment를 주면 Container가 제약만큼 넓어져 칩이 한 줄을
+                // 다 차지한다. 시안처럼 글자 폭에 맞춰야 하므로 쓰지 않는다.
                 child: Container(
                   height: 32,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: c.card,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(q,
-                      style: MhText.custom(
-                          size: 13, weight: FontWeight.w400, color: c.text)),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(q,
+                        style: MhText.custom(
+                            size: 13, weight: FontWeight.w400, color: c.text)),
+                  ),
                 ),
               ),
           ],

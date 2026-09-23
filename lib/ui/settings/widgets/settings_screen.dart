@@ -51,17 +51,6 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: MhSpacing.sm),
           _Group(children: [
             _LinkRow(
-              label: '튜토리얼 다시 보기',
-              trailing: '>',
-              onTap: () {
-                Navigator.of(context).pop();
-                vm.restartOnboarding();
-              },
-            ),
-          ]),
-          const SizedBox(height: MhSpacing.sm),
-          _Group(children: [
-            _LinkRow(
               label: '개인정보 처리방침',
               trailing: '>',
               onTap: () => Navigator.of(context).push(

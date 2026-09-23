@@ -25,6 +25,7 @@ import 'package:myhandball/domain/models/guide_lesson.dart';
 import 'package:myhandball/ui/guide/widgets/guide_scene_view.dart';
 import 'package:myhandball/ui/guide/widgets/guide_screen.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
+import 'package:myhandball/ui/search/widgets/search_screen.dart';
 import 'package:myhandball/ui/my/widgets/my_screen.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
@@ -42,6 +43,7 @@ Future<void> _shoot(
   MhPalette palette, {
   Size size = const Size(390, 1400),
   void Function(ProviderContainer container)? after,
+  Future<void> Function(WidgetTester tester)? tap,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -82,6 +84,13 @@ Future<void> _shoot(
     // PageView 전환(500ms) 같은 애니메이션이 끝날 때까지 여러 프레임 돌린다.
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 120));
+    }
+  }
+
+  if (tap != null) {
+    await tap(tester);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 80));
     }
   }
 
@@ -258,6 +267,26 @@ void main() {
     );
     });
   }
+
+  // 연·월 선택 바텀시트. 월 칩을 실제로 눌러서 띄운다.
+  testWidgets('schedule year-month picker', (t) async {
+    await _shoot(
+      t,
+      'schedule-ym-picker',
+      const ScheduleScreen(),
+      MhPalette.dark,
+      size: const Size(390, 780),
+      after: (_) {},
+      tap: (tester) async {
+        await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));
+      },
+    );
+  });
+
+  testWidgets('search idle', (t) async {
+    await _shoot(t, 'search-idle', const SearchScreen(), MhPalette.dark,
+        size: const Size(390, 700));
+  });
 
   testWidgets('guide path', (t) async {
     await _shoot(t, 'guide-path', const GuideScreen(), MhPalette.dark,

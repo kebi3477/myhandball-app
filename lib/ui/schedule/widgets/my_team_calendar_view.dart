@@ -10,6 +10,7 @@ import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
 import '../view_models/schedule_view_model.dart';
 import 'month_switcher.dart';
+import 'year_month_picker.dart';
 
 /// 일정 — MY팀 달력 뷰.
 class MyTeamCalendarView extends ConsumerWidget {
@@ -32,6 +33,7 @@ class MyTeamCalendarView extends ConsumerWidget {
           label: state.monthLabel,
           onPrev: () => vm.shiftMonth(-1),
           onNext: () => vm.shiftMonth(1),
+          onPickYearMonth: () => pickYearMonth(context, state, vm),
         ),
         Expanded(
           child: ListView(

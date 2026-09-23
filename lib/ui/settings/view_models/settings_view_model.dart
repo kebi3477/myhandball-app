@@ -56,9 +56,6 @@ class SettingsViewModel extends Notifier<SettingsState> {
     await _prefs.setNotificationsOn(value: next);
   }
 
-  /// 시안 `restartOnboarding` — 온보딩을 처음부터 다시 본다.
-  Future<void> restartOnboarding() =>
-      ref.read(appViewModelProvider.notifier).restartOnboarding();
 }
 
 final settingsViewModelProvider =
