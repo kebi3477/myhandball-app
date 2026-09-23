@@ -1,5 +1,6 @@
 import '../../domain/models/game.dart';
 import '../../domain/models/gender.dart';
+import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
@@ -207,20 +208,20 @@ class MockHandballApiService implements HandballApiService {
   Future<List<RankRow>> fetchRanking(Gender gender) async {
     await _delay();
     const mens = [
-      RankRow(rank: 1, team: skHawks, points: 34),
-      RankRow(rank: 2, team: doosan, points: 31),
-      RankRow(rank: 3, team: incheon, points: 27),
-      RankRow(rank: 4, team: chungnam, points: 22),
-      RankRow(rank: 5, team: sangmu, points: 18),
-      RankRow(rank: 6, team: hanam, points: 13),
+      RankRow(rank: 1, team: skHawks, points: 34, played: 20, wins: 16, draws: 2, losses: 2, goalsFor: 612, goalsAgainst: 524),
+      RankRow(rank: 2, team: doosan, points: 31, played: 20, wins: 15, draws: 1, losses: 4, goalsFor: 598, goalsAgainst: 541),
+      RankRow(rank: 3, team: incheon, points: 27, played: 20, wins: 13, draws: 1, losses: 6, goalsFor: 574, goalsAgainst: 552),
+      RankRow(rank: 4, team: chungnam, points: 22, played: 20, wins: 10, draws: 2, losses: 8, goalsFor: 551, goalsAgainst: 563),
+      RankRow(rank: 5, team: sangmu, points: 18, played: 20, wins: 8, draws: 2, losses: 10, goalsFor: 529, goalsAgainst: 574),
+      RankRow(rank: 6, team: hanam, points: 13, played: 20, wins: 6, draws: 1, losses: 13, goalsFor: 498, goalsAgainst: 608),
     ];
     const womens = [
-      RankRow(rank: 1, team: skSugar, points: 36),
-      RankRow(rank: 2, team: seoul, points: 30),
-      RankRow(rank: 3, team: busan, points: 28),
-      RankRow(rank: 4, team: samcheok, points: 21),
-      RankRow(rank: 5, team: gyeongnam, points: 17),
-      RankRow(rank: 6, team: incheonW, points: 12),
+      RankRow(rank: 1, team: skSugar, points: 36, played: 21, wins: 17, draws: 2, losses: 2, goalsFor: 604, goalsAgainst: 498),
+      RankRow(rank: 2, team: seoul, points: 30, played: 21, wins: 14, draws: 2, losses: 5, goalsFor: 571, goalsAgainst: 520),
+      RankRow(rank: 3, team: busan, points: 28, played: 21, wins: 13, draws: 2, losses: 6, goalsFor: 559, goalsAgainst: 533),
+      RankRow(rank: 4, team: samcheok, points: 21, played: 21, wins: 10, draws: 1, losses: 10, goalsFor: 538, goalsAgainst: 548),
+      RankRow(rank: 5, team: gyeongnam, points: 17, played: 21, wins: 8, draws: 1, losses: 12, goalsFor: 512, goalsAgainst: 566),
+      RankRow(rank: 6, team: incheonW, points: 12, played: 21, wins: 5, draws: 2, losses: 14, goalsFor: 487, goalsAgainst: 601),
     ];
     return gender == Gender.women ? womens : mens;
   }
@@ -290,5 +291,40 @@ class MockHandballApiService implements HandballApiService {
               rank: 3, name: '오세준', teamName: '상무피닉스', position: 'GK', value: '151'),
         ],
     };
+  }
+
+  @override
+  Future<List<Player>> fetchPlayers(Gender gender) async {
+    await _delay();
+    final teams = gender == Gender.women ? _womensTeams : _mensTeams;
+
+    // 실명이 아니라 자리만 채우는 값이다. 실제 명단은 API 작업이 필요하다.
+    const positions = ['LW', 'LB', 'CB', 'RB', 'RW', 'PV', 'GK'];
+    const surnames = ['김', '이', '박', '정', '최', '강', '조', '윤', '장', '임'];
+    const givenNames = [
+      '민준', '서연', '도윤', '하은', '지후', '예린', '주원', '수아', '시우', '유진',
+    ];
+
+    final players = <Player>[];
+    for (var t = 0; t < teams.length; t++) {
+      final team = teams[t];
+      for (var i = 0; i < 4; i++) {
+        final seed = t * 7 + i * 3;
+        final pos = positions[seed % positions.length];
+        final goals = 40 + (seed * 13) % 110;
+        final assists = 10 + (seed * 7) % 60;
+        players.add(Player(
+          id: 'p-${team.teamNum}-$i',
+          name: '${surnames[seed % surnames.length]}'
+              '${givenNames[(seed * 3) % givenNames.length]}',
+          teamName: team.name,
+          teamLogoUrl: team.logoUrl,
+          number: 1 + (seed * 5) % 40,
+          position: pos,
+          statLine: pos == 'GK' ? '선방 ${120 + seed % 90}' : '$goals골 · ${assists}AS',
+        ));
+      }
+    }
+    return players;
   }
 }

@@ -17,6 +17,8 @@ import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart'
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
 import 'package:myhandball/ui/schedule/widgets/schedule_screen.dart';
+import 'package:myhandball/ui/stat/view_models/stat_view_model.dart';
+import 'package:myhandball/ui/stat/widgets/stat_screen.dart';
 
 Future<void> _shoot(
   WidgetTester tester,
@@ -91,6 +93,19 @@ void main() {
           .setView(ScheduleView.calendar),
     );
   });
+
+  for (final tab in StatTab.values) {
+    testWidgets('stat ${tab.name}', (t) async {
+      await _shoot(
+        t,
+        'stat-${tab.name}',
+        const StatScreen(),
+        MhPalette.dark,
+        after: (container) =>
+            container.read(statViewModelProvider.notifier).selectTab(tab),
+      );
+    });
+  }
 
   testWidgets('onboarding', (t) async {
     await _shoot(t, 'onboarding', const OnboardingScreen(), MhPalette.dark,

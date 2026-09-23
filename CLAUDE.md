@@ -21,8 +21,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 홈 탭 | 완료 (가까운 경기 / 가이드 배너 / 팀순위 / 시즌 TOP5) |
 | 하단 4탭 셸 | 완료 |
 | 일정 탭 | 완료 (목록 / MY팀 달력) |
-| 분석 · MY 탭 | **자리표시만** (`ComingSoon`) |
-| 경기 상세, 규칙 가이드, 검색, 팀 선택 모달, 설정, 선수 카드, 팀 비교 | 미착수 |
+| 분석 탭 | 4개 서브탭(순위/기록/팀/선수) 완료 |
+| MY 탭 | **자리표시만** (`ComingSoon`) |
+| 팀 상세, 선수 상세, 선수 비교 | 미착수 — 분석 탭에서 진입만 막아둔 상태 |
+| 경기 상세, 규칙 가이드, 검색, 팀 선택 모달, 설정 | 미착수 |
 | 데이터 계층 (repository + service) | 골격 완료 — 구현체가 `MockHandballApiService` 하나 |
 | 실제 API 연동 | 미착수 — `HandballApiService`의 HTTP 구현만 추가하면 된다 |
 
@@ -89,6 +91,10 @@ lib/
 ### 지금 API 작업이 필요한 것
 
 - **선수 기록(시즌 TOP5)** — 대응 엔드포인트가 없다. `lib/domain/models/player_stat.dart` 참조
+- **선수 명단** — 분석 탭 선수 카드가 쓰는 데이터. 역시 엔드포인트가 없어
+  `lib/domain/models/player.dart`의 목업이 이름까지 지어내고 있다
+- **순위 상세 필드** — `/api/ranking`은 승·무·패·득실을 이미 준다. 분석 탭의
+  순위·기록 표는 그 값을 그대로 쓰면 되므로 API 작업이 필요 없다
 - **경기 상태(pre/live/finished) 판정** — 현재 `scoreText` 문자열과 시작 시각만 오고, v1 웹이 클라이언트에서 계산했다. 위젯·라이브 액티비티까지 가려면 서버가 줘야 한다
 - **실시간 스코어 + 득점 이벤트 푸시** — 위젯 LIVE 상태의 전제
 
@@ -113,7 +119,7 @@ flutter build ios --no-codesign --debug  # iOS 빌드 검증 (서명 없이)
 # 개발용 플래그 (lib/config/app_config.dart)
 flutter run \
   --dart-define=MH_SKIP_ONBOARDING=true \  # 온보딩 건너뛰기 (마이팀도 자동 지정)
-  --dart-define=MH_INITIAL_TAB=schedule \  # home / schedule / stat / my
+  --dart-define=MH_INITIAL_TAB=stat \      # home / schedule / stat / my
   --dart-define=MH_INITIAL_THEME=light     # 기본은 시안대로 dark
 
 # 화면 전체를 PNG로 떠서 레이아웃 확인 (tool/preview/*.png, gitignore됨)

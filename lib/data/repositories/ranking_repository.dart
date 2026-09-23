@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/gender.dart';
+import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../services/handball_api_service.dart';
@@ -50,6 +51,33 @@ class RankingRepository {
     }
   }
 }
+
+/// 선수 명단. 순위와 성격이 달라 저장소를 나눈다.
+class PlayerRepository {
+  PlayerRepository(this._service);
+
+  final HandballApiService _service;
+
+  final _cache = <Gender, List<Player>>{};
+
+  Future<List<Player>> getPlayers(Gender gender,
+      {bool forceRefresh = false}) async {
+    final hit = _cache[gender];
+    if (!forceRefresh && hit != null) return hit;
+    try {
+      final players = await _service.fetchPlayers(gender);
+      _cache[gender] = players;
+      return players;
+    } on Exception {
+      if (hit != null) return hit;
+      rethrow;
+    }
+  }
+}
+
+final playerRepositoryProvider = Provider<PlayerRepository>(
+  (ref) => PlayerRepository(ref.watch(handballApiServiceProvider)),
+);
 
 final rankingRepositoryProvider = Provider<RankingRepository>(
   (ref) => RankingRepository(ref.watch(handballApiServiceProvider)),

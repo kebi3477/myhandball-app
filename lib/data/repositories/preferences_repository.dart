@@ -26,6 +26,9 @@ class PreferencesRepository {
   Gender _preferredGender = Gender.men;
   int _guideDoneCount = 0;
 
+  /// 시안 `mh_fav_players`
+  final _favoritePlayerIds = <String>{};
+
   /// 영구 저장소에서 한 번에 읽어온다. 지금은 할 일이 없다.
   Future<void> load() async {}
 
@@ -61,6 +64,15 @@ class PreferencesRepository {
 
   Future<void> setPreferredGender(Gender gender) async {
     _preferredGender = gender;
+    await _persist();
+  }
+
+  Set<String> get favoritePlayerIds => Set.unmodifiable(_favoritePlayerIds);
+
+  bool isFavoritePlayer(String id) => _favoritePlayerIds.contains(id);
+
+  Future<void> toggleFavoritePlayer(String id) async {
+    if (!_favoritePlayerIds.remove(id)) _favoritePlayerIds.add(id);
     await _persist();
   }
 

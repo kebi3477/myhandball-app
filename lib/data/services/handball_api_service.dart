@@ -1,5 +1,6 @@
 import '../../domain/models/game.dart';
 import '../../domain/models/gender.dart';
+import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
@@ -26,6 +27,9 @@ abstract interface class HandballApiService {
   /// `GET /api/team?gender=`
   Future<List<Team>> fetchTeams(Gender gender);
 
-  /// 대응 엔드포인트 없음 — `docs/api-requests/` 참조.
+  /// **대응 엔드포인트 없음.** 선수 기록은 API 신규 작업이 필요하다.
   Future<List<PlayerStat>> fetchTopPlayers(Gender gender, StatCategory category);
+
+  /// **대응 엔드포인트 없음.** 선수 명단도 마찬가지다.
+  Future<List<Player>> fetchPlayers(Gender gender);
 }
