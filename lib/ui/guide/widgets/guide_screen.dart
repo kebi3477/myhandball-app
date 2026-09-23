@@ -273,13 +273,14 @@ class _GraduationCard extends StatelessWidget {
           const Icon(Icons.emoji_events_rounded,
               size: 44, color: Color(0xFFFFC800)),
           const SizedBox(height: MhSpacing.xs),
-          Text('핸드볼 입문 수료!',
+          // 문구·색은 시안 그대로.
+          Text('핸드볼 입문 수료',
               style: MhText.custom(
-                  size: 17,
+                  size: 15,
                   weight: FontWeight.w900,
-                  color: const Color(0xFF6B4500))),
-          const SizedBox(height: 4),
-          Text('이제 경기를 훨씬 재밌게 볼 수 있어요',
+                  color: const Color(0xFF8A5A00))),
+          const SizedBox(height: MhSpacing.xs),
+          Text('이제 경기 보러 갈 준비 끝이에요',
               textAlign: TextAlign.center,
               style: MhText.custom(
                   size: 12,

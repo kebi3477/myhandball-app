@@ -32,10 +32,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 시안 대비 단순화한 것
 
 **규칙 가이드의 삽화.** 시안은 씬마다 320x180 인라인 SVG에 `@keyframes`
-26개를 걸어 둔다. `lib/ui/guide/widgets/guide_scene_view.dart`가 같은 타이밍과
-같은 움직임을 `CustomPainter`로 다시 그리지만 **벡터 아트 자체는 단순화했다.**
-원본 그대로 쓰려면 씬별 SVG를 디자인 파일에서 추출해 `flutter_svg` +
-애니메이션으로 바꿔야 한다.
+26개를 걸어 둔다. `lib/ui/guide/widgets/guide_scene_view.dart`가 **원본 SVG의
+좌표·색·글자 크기를 그대로 옮겨** `CustomPainter`로 그리고, 같은 키프레임을
+다시 계산한다 (2026-09-23에 시안과 대조해 다시 맞췄다).
+
+씬을 고칠 때는 원본 SVG를 먼저 뽑아 좌표를 확인한다:
+
+```python
+# /tmp/v2.html 을 받아둔 뒤
+import re
+pat = re.compile(r'<sc-if value="\{\{ sc\.(\w+) \}\}"[^>]*>(<svg.*?</svg>)', re.S)
+```
+
+컨트롤러가 둘이다. `_loop`는 `infinite` 애니메이션용이고, `_entrance`는
+`ghPop`·`ghCard`처럼 **한 번만 재생되고 그 자리에 멈추는**(CSS `fill-mode: both`)
+등장용이다. 하나로 합쳐 반복시키면 등장이 주기마다 다시 튀어나온다.
 
 **규칙 가이드 5번 레슨 문구.** 디자인 파일이 256KiB 상한에서 잘려 원문을 보지
 못했다. 남아 있던 씬 이름(`cards`, `twomin`)에 맞춰 내용을 채웠으므로
@@ -83,6 +94,10 @@ lib/
   `ChangeNotifier`를 쓰지만 이 프로젝트는 Riverpod을 쓰므로 역할만 같게 맞춘다
 - **빈 ViewModel은 만들지 않는다.** 화면에 실제 상태가 생길 때 같이 만든다.
   지금 `schedule` / `stat` / `my` 탭에 `view_models/`가 없는 이유다
+- **`GestureDetector`를 직접 쓰지 않는다. `MhTap`을 쓴다** —
+  모든 탭에 진동을 걸어 두었고, 한 곳(`lib/ui/core/ui/mh_tap.dart`)에서
+  정책을 바꾼다. 주요 확정 버튼은 `haptic: MhHaptic.impact`.
+  `test/haptics_test.dart`가 `GestureDetector` 직접 사용을 막는다
 - `routing/`은 아직 없다. 화면 전환이 4탭 `IndexedStack` + 조건부 `home`뿐이라
   라우터가 필요 없다. 경기 상세·가이드처럼 전체화면이 붙을 때 go_router를 넣는다
 
@@ -150,7 +165,8 @@ flutter build ios --no-codesign --debug  # iOS 빌드 검증 (서명 없이)
 flutter run \
   --dart-define=MH_SKIP_ONBOARDING=true \  # 온보딩 건너뛰기 (마이팀도 자동 지정)
   --dart-define=MH_INITIAL_TAB=stat \      # home / schedule / stat / my
-  --dart-define=MH_INITIAL_THEME=light     # 기본은 시안대로 dark
+  --dart-define=MH_INITIAL_THEME=light \   # 기본은 시안대로 dark
+  --dart-define=MH_OPEN_GUIDE=true         # 규칙 가이드를 바로 연다
 
 # 화면 전체를 PNG로 떠서 레이아웃 확인 (tool/preview/*.png, gitignore됨)
 flutter test --update-goldens tool/design_preview_test.dart
@@ -267,6 +283,24 @@ flutter run -d <기기> \
 
 **단, 경기 중에 PBP가 실제로 갱신되는지는 아직 검증되지 않았다.** 개막 후
 첫 경기에서 확인해야 하고, 안 되면 LIVE 관련 기능을 줄여야 한다 (API 07 A-1).
+
+### 시즌은 날짜로 정해진다
+
+**H리그는 11월에 개막한다**(여자부는 1월). 그래서 시즌은 11월에 넘어간다:
+
+| 시점 | 시즌 |
+|---|---|
+| 2025.11 ~ 2026.10 | `2025` (25-26) |
+| 2024.11 ~ 2025.10 | `2024` (24-25) |
+
+비시즌(5~10월)에는 **직전에 끝난 시즌**을 본다. 개막 전에 빈 화면을 주는
+것보다 방금 끝난 시즌을 보여주는 쪽이 맞다. `Season.current`가 이걸 계산하고
+`test/season_test.dart`가 경계를 고정한다.
+
+**일정 탭은 오늘 달을 그냥 열지 않는다.** 비시즌이면 빈 달이 되므로,
+`ScheduleRepository.getFocusMonth`가 시즌에서 **경기가 있는 달** 중 오늘에
+가장 가까운 달을 고른다. 남자부 11월 / 여자부 1월로 개막이 달라서, 부를
+바꿀 때도 시작 달을 다시 고른다.
 
 ### 팀 이름 — 서버가 통일한다
 

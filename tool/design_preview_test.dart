@@ -21,6 +21,8 @@ import 'package:myhandball/domain/models/game.dart';
 import 'package:myhandball/ui/game_detail/view_models/game_detail_view_model.dart';
 import 'package:myhandball/ui/game_detail/widgets/game_detail_screen.dart';
 import 'package:myhandball/ui/guide/view_models/guide_view_model.dart';
+import 'package:myhandball/domain/models/guide_lesson.dart';
+import 'package:myhandball/ui/guide/widgets/guide_scene_view.dart';
 import 'package:myhandball/ui/guide/widgets/guide_screen.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
 import 'package:myhandball/ui/my/widgets/my_screen.dart';
@@ -204,6 +206,56 @@ void main() {
                 .notifier)
             .selectTab(tab),
       );
+    });
+  }
+
+  // 규칙 가이드 삽화 11개를 한 장에. 시안 SVG와 나란히 놓고 비교하려고 둔다.
+  //
+  // 등장 애니메이션이 끝나고(최대 2.8초) **반복 애니메이션이 중간쯤 온**
+  // 시점에 찍는다. 딱 주기의 0초에 찍으면 아직 안 나타난 요소가 많아
+  // 씬이 비어 보인다.
+  for (final (name, scenes) in [
+    ('guide-scenes-1', GuideScene.values.take(6).toList()),
+    ('guide-scenes-2', GuideScene.values.skip(6).toList()),
+  ]) {
+    testWidgets(name, (t) async {
+    t.view.physicalSize = const Size(390, 1500);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+
+    await t.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: buildMhTheme(MhPalette.dark),
+      home: Scaffold(
+        backgroundColor: MhPalette.dark.bg,
+        body: ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            for (final scene in scenes) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(scene.name,
+                    style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 11,
+                        color: Colors.white70)),
+              ),
+              GuideSceneView(scene: scene),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ),
+      ),
+    ));
+
+    for (var i = 0; i < 44; i++) {
+      await t.pump(const Duration(milliseconds: 100));
+    }
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('preview/$name.png'),
+    );
     });
   }
 

@@ -35,16 +35,13 @@ class GuideLessonView extends ConsumerWidget {
                     MhTap(
                       behavior: HitTestBehavior.opaque,
                       onTap: vm.exitLesson,
+                      // 시안은 글자 '✕'를 쓰지만 Pretendard에 그 글리프가
+                      // 없어 네모로 깨진다. 같은 모양의 아이콘으로 그린다.
                       child: SizedBox(
                         width: 28,
                         height: 28,
-                        child: Center(
-                          child: Text('✕',
-                              style: MhText.custom(
-                                  size: 20,
-                                  weight: FontWeight.w700,
-                                  color: c.textFaint)),
-                        ),
+                        child: Icon(Icons.close_rounded,
+                            size: 22, color: c.textFaint),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -298,9 +295,12 @@ class _Footer extends StatelessWidget {
       );
     }
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.fromLTRB(
-          MhSpacing.gutter, MhSpacing.xs, MhSpacing.gutter, 24),
+          MhSpacing.gutter, 12, MhSpacing.gutter, 24),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: c.borderSubtle, width: 2)),
+      ),
       child: _Cta(
         label: state.isQuizPage ? '보기를 골라주세요' : '다음',
         onTap: state.isQuizPage ? null : vm.next,
@@ -324,7 +324,7 @@ class _Cta extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1 : 0.4,
         child: Container(
-          height: 54,
+          height: 52,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: MhColors.brand,
