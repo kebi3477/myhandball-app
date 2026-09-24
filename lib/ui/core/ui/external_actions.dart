@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../data/repositories/schedule_repository.dart' show apiClientProvider;
 import '../../../domain/ics.dart';
 import '../../../domain/models/game.dart';
 
@@ -76,3 +78,13 @@ void _notify(BuildContext context, String message) {
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(message)));
 }
+
+/// 오프라인에서 직관 기록을 건드렸을 때의 안내 (시안 `copy.md`).
+///
+/// **기록 자체는 성공이다.** 기기에 적혔고 연결되면 [UserRecordsRepository]가
+/// 대기열을 비운다. 그래서 실패 문구가 아니라 안내 문구를 쓴다.
+void showAttendanceOfflineToast(BuildContext context, WidgetRef ref) {
+  if (!ref.read(apiClientProvider).offline.value) return;
+  showMhToast(context, '기기에 저장했어요. 연결되면 자동으로 동기화돼요.');
+}
+

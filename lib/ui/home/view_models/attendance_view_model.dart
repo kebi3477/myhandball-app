@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 import '../../../data/repositories/ranking_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../domain/models/attendance.dart';
@@ -206,7 +207,10 @@ class AttendanceViewModel extends AsyncNotifier<AttendanceState> {
 
   /// 기록 추가 시트에서 경기를 고르거나, 일지에서 다시 눌러 뺄 때.
   Future<void> toggle(String gameId) async {
-    await ref.read(preferencesRepositoryProvider).toggleAttended(gameId);
+    final prefs = ref.read(preferencesRepositoryProvider);
+    await ref
+        .read(userRecordsRepositoryProvider)
+        .setAttended(gameId, on: !prefs.didAttend(gameId));
     state = await AsyncValue.guard(build);
     // MY의 직관 요약과 "승리 요정" 배지가 같은 기록을 읽는다. 다시 만들어
     // 두지 않으면 도장을 찍어도 MY는 그대로다.

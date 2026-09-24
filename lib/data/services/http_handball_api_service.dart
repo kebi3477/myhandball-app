@@ -6,6 +6,7 @@ import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/prediction.dart';
 import '../../domain/models/rank_row.dart';
+import '../../domain/models/sync_models.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
 import '../../domain/models/team_detail.dart';
@@ -1063,4 +1064,74 @@ class HttpHandballApiService implements HandballApiService {
     final s = _str(v);
     return s == null ? null : DateTime.tryParse(s);
   }
+
+  // --- 기기 대신 서버에 두는 내 기록 ---
+
+  @override
+  Future<List<int>> fetchAttendance() async {
+    final j = _map(await client.get('/attendance', {'season': season()}));
+    return [
+      for (final raw in _list(j['items']))
+        ?_int(_map(raw)['matchSeq']),
+    ];
+  }
+
+  @override
+  Future<void> addAttendance(int matchSeq) =>
+      client.put('/attendance/$matchSeq');
+
+  @override
+  Future<void> removeAttendance(int matchSeq) =>
+      client.delete('/attendance/$matchSeq');
+
+  @override
+  Future<GuideProgress> fetchGuideProgress() async =>
+      _guide(await client.get('/progress/guide'));
+
+  @override
+  Future<GuideProgress> saveGuideProgress(int doneCount) async =>
+      _guide(await client.put('/progress/guide', body: {
+        // 서버가 정수만 받는다. 문자열 "5"도 400이다.
+        'doneCount': doneCount,
+      }));
+
+  GuideProgress _guide(Object? json) {
+    final j = _map(json);
+    return GuideProgress(
+      doneCount: _int(j['doneCount']) ?? 0,
+      completedAt: _date(j['completedAt']),
+    );
+  }
+
+  @override
+  Future<List<int>> fetchFavoritePlayers() async {
+    final j = _map(await client.get('/favorites/players'));
+    return [
+      for (final raw in _list(j['items']))
+        ?_int(_map(raw)['playerSeq']),
+    ];
+  }
+
+  @override
+  Future<void> addFavoritePlayer(int playerSeq) =>
+      client.put('/favorites/players/$playerSeq');
+
+  @override
+  Future<void> removeFavoritePlayer(int playerSeq) =>
+      client.delete('/favorites/players/$playerSeq');
+
+  @override
+  Future<SeasonStatus> fetchSeasonStatus(Gender gender) async {
+    final j = _map(await client.get('/season', {'gender': gender.code}));
+    return SeasonStatus(
+      season: _str(j['season']) ?? season(),
+      gender: Gender.fromCode(_str(j['gender'])),
+      isOffseason: j['isOffseason'] == true,
+      opensAt: _date(j['opensAt']),
+      closesAt: _date(j['closesAt']),
+      nextSeason: _str(j['nextSeason']),
+      nextOpensAt: _date(j['nextOpensAt']),
+    );
+  }
+
 }

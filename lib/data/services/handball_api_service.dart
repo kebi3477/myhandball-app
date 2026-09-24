@@ -5,6 +5,7 @@ import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
+import '../../domain/models/sync_models.dart';
 import '../../domain/models/team.dart';
 import '../../domain/models/prediction.dart';
 import '../../domain/models/team_detail.dart';
@@ -140,4 +141,34 @@ abstract interface class HandballApiService {
 
   /// 내 예측 집계와 최근 목록.
   Future<MyPredictions> fetchMyPredictions({int limit});
+
+  // --- 기기 대신 서버에 두는 내 기록 ---
+  //
+  // 전부 `X-Device-Id` 기준이다. 앱을 지웠다 깔아도 iOS는 Keychain 덕에
+  // 같은 사람으로 남아 이 값들이 돌아온다.
+
+  /// 직관한 경기의 `matchSeq` 목록.
+  Future<List<int>> fetchAttendance();
+
+  /// 직관 기록. 이미 기록했어도 성공으로 본다(멱등).
+  /// 앞으로 할 경기는 `400`, 없는 경기는 `404`.
+  Future<void> addAttendance(int matchSeq);
+
+  Future<void> removeAttendance(int matchSeq);
+
+  /// 가이드 진행도. `completedAt`은 수료한 적 없으면 `null`.
+  Future<GuideProgress> fetchGuideProgress();
+
+  /// **서버가 더 큰 값을 갖고 있으면 그대로 둔다.** 진행도는 줄지 않는다.
+  Future<GuideProgress> saveGuideProgress(int doneCount);
+
+  /// 관심 선수의 `playerSeq` 목록.
+  Future<List<int>> fetchFavoritePlayers();
+
+  Future<void> addFavoritePlayer(int playerSeq);
+
+  Future<void> removeFavoritePlayer(int playerSeq);
+
+  /// 시즌 상태. 개막·종료 시각과 다음 시즌 개막일을 서버가 판정해서 준다.
+  Future<SeasonStatus> fetchSeasonStatus(Gender gender);
 }

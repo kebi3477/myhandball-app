@@ -5,6 +5,7 @@ import '../../../data/repositories/preferences_repository.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/attendance_view_model.dart';
 
@@ -87,9 +88,14 @@ class AttendancePickerSheet extends ConsumerWidget {
                   checked: ref
                       .watch(preferencesRepositoryProvider)
                       .didAttend(pool[i].id),
-                  onTap: () => ref
-                      .read(attendanceViewModelProvider.notifier)
-                      .toggle(pool[i].id),
+                  onTap: () async {
+                    await ref
+                        .read(attendanceViewModelProvider.notifier)
+                        .toggle(pool[i].id);
+                    if (context.mounted) {
+                      showAttendanceOfflineToast(context, ref);
+                    }
+                  },
                 ),
               ),
             ),

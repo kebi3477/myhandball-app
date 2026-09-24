@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/handball_api_service.dart';
@@ -247,7 +248,9 @@ class TeamDetailViewModel
     final c = state.valueOrNull;
     if (c == null) return;
     final prefs = ref.read(preferencesRepositoryProvider);
-    await prefs.toggleFavoritePlayer(playerId);
+    await ref
+        .read(userRecordsRepositoryProvider)
+        .setFavoritePlayer(playerId, on: !prefs.isFavoritePlayer(playerId));
     state = AsyncData(c.copyWith(favoritePlayerIds: prefs.favoritePlayerIds));
   }
 }

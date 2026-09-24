@@ -36,7 +36,7 @@ class StatScreen extends ConsumerWidget {
       children: [
         const _Header(),
         _TabBar(current: tab, onSelect: vm.selectTab),
-        const _OffseasonBanner(),
+        _OffseasonBanner(tab: tab),
         Expanded(
           child: async.when(
             skipLoadingOnReload: true,
@@ -72,13 +72,19 @@ class StatScreen extends ConsumerWidget {
 
 /// 시안 `statOffseason` — 시즌이 끝난 뒤 보는 기록이라는 걸 알려 준다.
 ///
-/// 비시즌에 순위표만 덩그러니 있으면 지금 진행 중인 시즌으로 읽힌다.
+/// **순위 탭에만 둔다.** 비시즌에 순위표만 덩그러니 있으면 지금 진행 중인
+/// 시즌으로 읽히지만, 기록·팀·선수는 애초에 시즌 합계라 오해할 여지가
+/// 없다. 네 탭 모두에 띄우면 같은 문장이 탭을 옮길 때마다 따라다니며
+/// 목록 자리만 먹는다 (2026-09-24에 사용자가 정했다).
 class _OffseasonBanner extends ConsumerWidget {
-  const _OffseasonBanner();
+  const _OffseasonBanner({required this.tab});
+
+  final StatTab tab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
+    if (tab != StatTab.rank) return const SizedBox.shrink();
     final offseason = ref.watch(offseasonProvider).valueOrNull ?? false;
     if (!offseason) return const SizedBox.shrink();
 

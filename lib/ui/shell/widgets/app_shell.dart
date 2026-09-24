@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/app_config.dart';
 import '../../../data/repositories/preferences_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 import '../../../data/services/push_service.dart';
 import '../../../domain/models/schedule_day.dart';
 import '../../core/themes/theme.dart';
@@ -15,8 +16,11 @@ import '../../core/ui/push_sync.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
 import '../../app/view_models/app_update_view_model.dart';
 import '../../app/widgets/update_prompt.dart';
+import '../../guide/view_models/guide_progress.dart';
 import '../../guide/widgets/guide_screen.dart';
+import '../../home/view_models/attendance_view_model.dart';
 import '../../home/widgets/home_screen.dart';
+import '../../my/view_models/my_view_model.dart';
 import '../../my/widgets/my_screen.dart';
 import '../../schedule/widgets/schedule_screen.dart';
 import '../../stat/widgets/stat_screen.dart';
@@ -50,7 +54,21 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (AppConfig.openGuide) GuideScreen.open(context);
       _startPush();
       _checkUpdate();
+      _syncRecords();
     });
+  }
+
+  /// 직관 기록·관심 선수·가이드 진행도를 서버와 맞춘다.
+  ///
+  /// 기기를 바꾸거나 앱을 지웠다 깔았을 때 이 한 번이 기록을 되찾아 온다.
+  /// 화면은 기기 값을 읽으므로, 끝난 뒤에 관련 화면만 다시 만들어 준다.
+  Future<void> _syncRecords() async {
+    await ref.read(userRecordsRepositoryProvider).sync();
+    if (!mounted) return;
+    ref
+      ..invalidate(myViewModelProvider)
+      ..invalidate(attendanceViewModelProvider)
+      ..invalidate(guideDoneCountProvider);
   }
 
   /// 스토어에 새 버전이 있으면 안내를 띄운다.

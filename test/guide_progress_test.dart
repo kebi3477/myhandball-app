@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myhandball/config/app_config.dart';
 import 'package:myhandball/data/repositories/preferences_repository.dart';
+import 'package:myhandball/data/repositories/schedule_repository.dart';
+import 'package:myhandball/data/services/mock_handball_api_service.dart';
 import 'package:myhandball/ui/guide/view_models/guide_progress.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,14 +12,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 예전에는 두 화면이 `build()` 때 `prefs.guideDoneCount`를 복사해 들고
 /// 있어서, 레슨을 끝내도 화면을 새로 고치기 전까지 `0/5`로 남았다.
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    // 목업의 진행도는 static이라 앞 테스트가 올려 둔 값이 남는다.
+    MockHandballApiService.resetUserContent();
+  });
 
   Future<ProviderContainer> makeContainer() async {
     final prefs = PreferencesRepository();
     await prefs.load();
-    final container = ProviderContainer(
-      overrides: [preferencesRepositoryProvider.overrideWithValue(prefs)],
-    );
+    final container = ProviderContainer(overrides: [
+      preferencesRepositoryProvider.overrideWithValue(prefs),
+      // 진행도는 이제 서버에도 올라간다. 목업을 끼우지 않으면 실제 서버로
+      // 요청이 나간다.
+      handballApiServiceProvider
+          .overrideWithValue(const MockHandballApiService(latency: Duration.zero)),
+    ]);
     addTearDown(container.dispose);
     return container;
   }

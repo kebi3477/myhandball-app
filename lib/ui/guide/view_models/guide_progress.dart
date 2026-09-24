@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_config.dart';
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 
 /// 규칙 가이드 진행도(완료한 레슨 수).
 ///
@@ -19,7 +20,7 @@ class GuideDoneCount extends Notifier<int> {
 
   Future<void> set(int value) async {
     final prefs = ref.read(preferencesRepositoryProvider);
-    await prefs.setGuideDoneCount(value);
+    await ref.read(userRecordsRepositoryProvider).setGuideDone(value);
     // 저장소가 0~5로 잘라내므로 그 결과를 다시 읽는다.
     state = prefs.guideDoneCount;
   }

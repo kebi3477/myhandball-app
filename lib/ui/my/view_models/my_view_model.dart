@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 import '../../../data/repositories/ranking_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../domain/models/attendance.dart';
@@ -332,9 +333,10 @@ class MyViewModel extends AsyncNotifier<MyState> {
   Future<void> removeFavorite(String playerId) async {
     final current = state.valueOrNull;
     if (current == null) return;
+    // 이 화면에서는 빼기만 한다 (목록의 하트를 누르는 자리다).
     await ref
-        .read(preferencesRepositoryProvider)
-        .toggleFavoritePlayer(playerId);
+        .read(userRecordsRepositoryProvider)
+        .setFavoritePlayer(playerId, on: false);
     state = AsyncData(
       MyState(
         team: current.team,

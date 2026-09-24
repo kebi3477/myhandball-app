@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 import '../../../data/repositories/ranking_repository.dart';
 import '../../../domain/models/gender.dart';
 import '../../../domain/models/player.dart';
@@ -118,7 +119,9 @@ class StatViewModel extends AsyncNotifier<StatState> {
     final current = state.valueOrNull;
     if (current == null) return;
     final prefs = ref.read(preferencesRepositoryProvider);
-    await prefs.toggleFavoritePlayer(playerId);
+    await ref
+        .read(userRecordsRepositoryProvider)
+        .setFavoritePlayer(playerId, on: !prefs.isFavoritePlayer(playerId));
     state = AsyncData(
       current.copyWith(favoritePlayerIds: prefs.favoritePlayerIds),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/user_records_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../domain/models/game.dart';
@@ -180,7 +181,10 @@ class GameDetailViewModel
     final current = state.valueOrNull;
     if (current == null || !current.canAttend) return;
     final prefs = ref.read(preferencesRepositoryProvider);
-    await prefs.toggleAttended(current.game.id);
+    await ref.read(userRecordsRepositoryProvider).setAttended(
+          current.game.id,
+          on: !prefs.didAttend(current.game.id),
+        );
     state = AsyncData(current.copyWith(attended: !current.attended));
     // 직관 탭·MY가 같은 값을 읽는다. 새로 만들어 두지 않으면 돌아갔을 때
     // 방금 찍은 도장이 없다 — 새로고침해야 나타난다.

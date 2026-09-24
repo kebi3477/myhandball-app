@@ -91,6 +91,18 @@ class PreferencesRepository {
   /// 서버가 받아들인 뒤에만 쓴다.
   final _predictions = <String, PredictionPick>{};
 
+  /// 서버와 아직 못 맞춘 변경. `a+5490` / `a-5490` / `f+69` / `g5` 꼴.
+  ///
+  /// **오프라인에서 찍은 도장을 잃지 않으려고 둔다.** 다음에 연결되면
+  /// [UserRecordsRepository]가 순서대로 다시 보낸다.
+  final _pendingSync = <String>[];
+
+  /// 서버와 한 번이라도 맞춰 봤는지.
+  ///
+  /// 처음 한 번은 기기 값과 서버 값을 **합친다**(어느 쪽도 버리지 않는다).
+  /// 그 뒤로는 서버가 정본이다.
+  bool _syncedOnce = false;
+
   /// 시안 `mh_attended` — 직관한 경기 id
   final _attendedGameIds = <String>{};
 
@@ -174,6 +186,8 @@ class PreferencesRepository {
 
     _favoritePlayerIds.addAll(prefs.getStringList(_kFavPlayers) ?? const []);
     _attendedGameIds.addAll(prefs.getStringList(_kAttended) ?? const []);
+    _pendingSync.addAll(prefs.getStringList(_kPendingSync) ?? const []);
+    _syncedOnce = prefs.getBool(_kSyncedOnce) ?? false;
     _recentSearches.addAll(prefs.getStringList(_kRecentSearch) ?? const []);
 
     final team = prefs.getString(_kMyTeam);
@@ -210,6 +224,8 @@ class PreferencesRepository {
       prefs.setStringList(_kPredictions,
           [for (final e in _predictions.entries) '${e.key}:${e.value.code}']),
       prefs.setStringList(_kAttended, _attendedGameIds.toList()),
+      prefs.setStringList(_kPendingSync, _pendingSync),
+      prefs.setBool(_kSyncedOnce, _syncedOnce),
       prefs.setStringList(_kRecentSearch, _recentSearches),
       if (_myTeam case final team?)
         prefs.setString(_kMyTeam, _encodeTeam(team))
@@ -276,6 +292,8 @@ class PreferencesRepository {
   static const _kMyTeam = 'mh_my_team';
   static const _kFavPlayers = 'mh_fav_players';
   static const _kAttended = 'mh_attended';
+  static const _kPendingSync = 'mh_sync_pending';
+  static const _kSyncedOnce = 'mh_synced';
   static const _kRecentSearch = 'mh_recent_search';
   static const _kPredictions = 'mh_preds';
   static const _kNickname = 'mh_nick';
@@ -329,7 +347,79 @@ class PreferencesRepository {
 
   Set<String> get attendedGameIds => Set.unmodifiable(_attendedGameIds);
 
+  // --- 서버 동기화용 ---
+
+  bool get syncedOnce => _syncedOnce;
+
+  List<String> get pendingSync => List.unmodifiable(_pendingSync);
+
+  /// 같은 대상에 대한 앞선 변경은 지운다 — 마지막 것만 보내면 된다.
+  ///
+  /// **부호는 대상의 일부가 아니다.** `a+4444` 다음에 `a-4444`가 오면
+  /// 둘 다 보내는 게 아니라 뒤엣것만 남아야 한다.
+  Future<void> addPendingSync(String op) async {
+    final target = _syncTarget(op);
+    _pendingSync.removeWhere((e) => _syncTarget(e) == target);
+    _pendingSync.add(op);
+    await _persist();
+  }
+
+  /// `a+4444` → `a4444`, `g5` → `g`. 가이드 진행도는 대상이 하나뿐이다.
+  static String _syncTarget(String op) =>
+      op.startsWith('g') ? 'g' : '${op[0]}${op.substring(2)}';
+
+  Future<void> clearPendingSync(Iterable<String> done) async {
+    _pendingSync.removeWhere(done.contains);
+    await _persist();
+  }
+
+  /// 서버가 준 목록으로 통째로 바꾼다. 동기화가 끝난 뒤에만 부른다.
+  Future<void> replaceSynced({
+    Set<String>? attended,
+    Set<String>? favoritePlayers,
+  }) async {
+    if (attended != null) {
+      _attendedGameIds
+        ..clear()
+        ..addAll(attended);
+    }
+    if (favoritePlayers != null) {
+      _favoritePlayerIds
+        ..clear()
+        ..addAll(favoritePlayers);
+    }
+    _syncedOnce = true;
+    await _persist();
+  }
+
+  /// 서버가 준 가이드 진행도를 적는다.
+  ///
+  /// **진행도는 줄지 않는다.** 서버 응답은 늦게 도착하므로 그대로 덮어쓰면
+  /// 그 사이에 끝낸 레슨이 되돌아간다 — 3번을 끝내고 4번까지 끝냈는데
+  /// 3번의 응답이 도착해 다시 3이 되는 식이다. 서버도 같은 규칙으로
+  /// 큰 값을 유지한다.
+  ///
+  /// 수료일은 서버 것을 쓴다 — 기기를 바꿨다고 수료일이 오늘로 밀리면
+  /// 배지의 "2026.09.24 수료"가 거짓이 된다.
+  Future<void> applyGuideProgress(int doneCount, DateTime? completedAt) async {
+    final next = doneCount.clamp(0, AppConfig.guideLessonCount);
+    if (next > _guideDoneCount) _guideDoneCount = next;
+    if (completedAt != null) _guideCompletedAt = completedAt;
+    await _persist();
+  }
+
   bool didAttend(String gameId) => _attendedGameIds.contains(gameId);
+
+  /// 켜고 끄기를 명시적으로. 서버에 같은 동작을 보내야 해서, 부르는 쪽이
+  /// 결과를 알아야 한다 ([UserRecordsRepository]).
+  Future<void> setAttended(String gameId, {required bool on}) async {
+    if (on) {
+      _attendedGameIds.add(gameId);
+    } else {
+      _attendedGameIds.remove(gameId);
+    }
+    await _persist();
+  }
 
   Future<void> toggleAttended(String gameId) async {
     if (!_attendedGameIds.remove(gameId)) _attendedGameIds.add(gameId);
@@ -374,6 +464,15 @@ class PreferencesRepository {
   Set<String> get favoritePlayerIds => Set.unmodifiable(_favoritePlayerIds);
 
   bool isFavoritePlayer(String id) => _favoritePlayerIds.contains(id);
+
+  Future<void> setFavoritePlayer(String id, {required bool on}) async {
+    if (on) {
+      _favoritePlayerIds.add(id);
+    } else {
+      _favoritePlayerIds.remove(id);
+    }
+    await _persist();
+  }
 
   Future<void> toggleFavoritePlayer(String id) async {
     if (!_favoritePlayerIds.remove(id)) _favoritePlayerIds.add(id);

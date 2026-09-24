@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_error_view.dart';
 import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
@@ -63,7 +64,16 @@ class GameDetailScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   GameDetailHeader(state: state),
-                  if (state.canAttend) _AttendButton(state: state, onTap: vm.toggleAttended),
+                  if (state.canAttend)
+                    _AttendButton(
+                      state: state,
+                      onTap: () async {
+                        await vm.toggleAttended();
+                        if (context.mounted) {
+                          showAttendanceOfflineToast(context, ref);
+                        }
+                      },
+                    ),
                 ],
               ),
             ),

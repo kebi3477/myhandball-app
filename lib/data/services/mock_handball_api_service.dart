@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../config/app_config.dart';
+
 import '../../domain/models/game.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
@@ -7,6 +9,7 @@ import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/prediction.dart';
 import '../../domain/models/rank_row.dart';
+import '../../domain/models/sync_models.dart';
 import '../../domain/models/season.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
@@ -644,6 +647,9 @@ class MockHandballApiService implements HandballApiService {
   static final _reports = <String>{};
   static final _blocks = <String, DateTime>{};
   static PredictionProfile? _profile;
+  static final _attendance = <int>{};
+  static final _favorites = <int>{};
+  static GuideProgress _guide = const GuideProgress(doneCount: 0);
 
   /// 테스트가 사이에 끼어들어 남긴 값을 지운다.
   ///
@@ -656,6 +662,9 @@ class MockHandballApiService implements HandballApiService {
     _reports.clear();
     _blocks.clear();
     _profile = null;
+    _attendance.clear();
+    _favorites.clear();
+    _guide = const GuideProgress(doneCount: 0);
   }
 
   @override
@@ -963,4 +972,76 @@ class MockHandballApiService implements HandballApiService {
     }
     return fetchCheers(team);
   }
+
+  // --- 기기 대신 서버에 두는 내 기록 ---
+
+  @override
+  Future<List<int>> fetchAttendance() async {
+    await _delay();
+    return _attendance.toList();
+  }
+
+  @override
+  Future<void> addAttendance(int matchSeq) async {
+    await _delay();
+    _attendance.add(matchSeq);
+  }
+
+  @override
+  Future<void> removeAttendance(int matchSeq) async {
+    await _delay();
+    _attendance.remove(matchSeq);
+  }
+
+  @override
+  Future<GuideProgress> fetchGuideProgress() async {
+    await _delay();
+    return _guide;
+  }
+
+  @override
+  Future<GuideProgress> saveGuideProgress(int doneCount) async {
+    await _delay();
+    // 서버와 같게 — 진행도는 줄지 않는다.
+    if (doneCount <= _guide.doneCount) return _guide;
+    return _guide = GuideProgress(
+      doneCount: doneCount,
+      completedAt: doneCount >= AppConfig.guideLessonCount
+          ? _guide.completedAt ?? DateTime.now()
+          : _guide.completedAt,
+    );
+  }
+
+  @override
+  Future<List<int>> fetchFavoritePlayers() async {
+    await _delay();
+    return _favorites.toList();
+  }
+
+  @override
+  Future<void> addFavoritePlayer(int playerSeq) async {
+    await _delay();
+    _favorites.add(playerSeq);
+  }
+
+  @override
+  Future<void> removeFavoritePlayer(int playerSeq) async {
+    await _delay();
+    _favorites.remove(playerSeq);
+  }
+
+  @override
+  Future<SeasonStatus> fetchSeasonStatus(Gender gender) async {
+    await _delay();
+    final season = Season.current;
+    return SeasonStatus(
+      season: season.year,
+      gender: gender,
+      isOffseason: true,
+      // 운영도 아직 `nextOpensAt`이 null이다. 목업이 날짜를 지어내면
+      // 시뮬레이터에서만 D-day가 보이고 실기기에서는 안 보인다.
+      nextSeason: '${season.startYear + 1}',
+    );
+  }
+
 }
