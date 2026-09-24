@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myhandball/data/repositories/preferences_repository.dart';
 import 'package:myhandball/data/repositories/schedule_repository.dart';
-import 'package:myhandball/data/repositories/team_repository.dart';
 import 'package:myhandball/data/services/mock_handball_api_service.dart';
 import 'package:myhandball/domain/models/gender.dart';
 import 'package:myhandball/ui/my/view_models/my_view_model.dart';
