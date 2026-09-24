@@ -113,12 +113,25 @@ class MhIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.string(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" '
-      'viewBox="0 0 24 24" fill="none">$icon</svg>',
-      width: size,
-      height: size,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    // **Center가 꼭 있어야 한다.** `SizedBox(width: 48, height: 36, child: ...)`
+    // 처럼 부모가 크기를 꽉 조이면 SvgPicture는 자기 width/height를 버리고
+    // 그 크기로 늘어난다 — 18로 부른 아이콘이 36으로 그려진다.
+    // Center가 tight 제약을 loose로 바꿔 주므로 안쪽 SizedBox가 size를 지킨다.
+    // Material의 `Icon`은 글리프라 이 문제가 없어서, 갈아끼운 뒤에야 드러났다.
+    return Center(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: SvgPicture.string(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="$size" '
+          'height="$size" viewBox="0 0 24 24" fill="none">$icon</svg>',
+          width: size,
+          height: size,
+          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        ),
+      ),
     );
   }
 }
@@ -142,11 +155,20 @@ class MhMedal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.string(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="$size" '
-      'height="${size * 72 / 60}" viewBox="0 0 60 72">$_svg</svg>',
-      width: size,
-      height: size * 72 / 60,
+    // [MhIcon]과 같은 이유로 Center + SizedBox로 크기를 지킨다.
+    return Center(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: SizedBox(
+        width: size,
+        height: size * 72 / 60,
+        child: SvgPicture.string(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="$size" '
+          'height="${size * 72 / 60}" viewBox="0 0 60 72">$_svg</svg>',
+          width: size,
+          height: size * 72 / 60,
+        ),
+      ),
     );
   }
 }

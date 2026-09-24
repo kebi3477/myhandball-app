@@ -24,6 +24,7 @@ import 'package:myhandball/domain/models/season.dart';
 import 'package:myhandball/ui/core/themes/theme.dart';
 import 'package:myhandball/ui/core/themes/tokens.dart';
 import 'package:myhandball/ui/core/ui/mh_error_view.dart';
+import 'package:myhandball/ui/core/ui/mh_icons.dart';
 import 'package:myhandball/ui/game_detail/view_models/game_detail_view_model.dart';
 import 'package:myhandball/ui/game_detail/widgets/game_detail_screen.dart';
 import 'package:myhandball/ui/guide/view_models/guide_view_model.dart';
@@ -350,6 +351,61 @@ void main() {
       find.byType(MaterialApp),
       matchesGoldenFile('preview/states.png'),
     );
+  });
+
+  // 아이콘이 부모 제약에 따라 얼마나 커지는지 — Material 과 나란히 비교
+  testWidgets('icon sizes', (t) async {
+    t.view.physicalSize = const Size(390, 420);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+
+    Widget row(String label, Widget a, Widget b, Widget c) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(children: [
+            SizedBox(width: 92, child: Text(label,
+                style: const TextStyle(color: Colors.white, fontSize: 11))),
+            Container(color: Colors.red.withValues(alpha: 0.25), child: a),
+            const SizedBox(width: 16),
+            Container(color: Colors.red.withValues(alpha: 0.25), child: b),
+            const SizedBox(width: 16),
+            Container(color: Colors.red.withValues(alpha: 0.25), child: c),
+          ]),
+        );
+
+    await t.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.black,
+        body: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('느슨 / SizedBox 48x36 / SizedBox 32x32',
+                style: TextStyle(color: Colors.white70, fontSize: 11)),
+            row('MhIcon 18',
+                const MhIcon(MhIcons.chevLeft, size: 18, color: Colors.white),
+                const SizedBox(width: 48, height: 36,
+                    child: MhIcon(MhIcons.chevLeft, size: 18, color: Colors.white)),
+                const SizedBox(width: 32, height: 32,
+                    child: MhIcon(MhIcons.chevLeft, size: 18, color: Colors.white))),
+            row('Material 18',
+                const Icon(Icons.chevron_left, size: 18, color: Colors.white),
+                const SizedBox(width: 48, height: 36,
+                    child: Icon(Icons.chevron_left, size: 18, color: Colors.white)),
+                const SizedBox(width: 32, height: 32,
+                    child: Icon(Icons.chevron_left, size: 18, color: Colors.white))),
+            row('MhIcon 30',
+                const MhIcon(MhIcons.heart, size: 30, color: Colors.white),
+                const SizedBox(width: 72, height: 72,
+                    child: MhIcon(MhIcons.heart, size: 30, color: Colors.white)),
+                const SizedBox(width: 32, height: 32,
+                    child: MhIcon(MhIcons.heart, size: 30, color: Colors.white))),
+          ]),
+        ),
+      ),
+    ));
+    await t.pump(const Duration(milliseconds: 200));
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('preview/icon-sizes.png'));
   });
 
   testWidgets('season picker', (t) async {
