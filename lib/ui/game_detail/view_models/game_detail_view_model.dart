@@ -28,6 +28,7 @@ class GameDetailState {
     required this.attended,
     required this.tally,
     required this.mvp,
+    this.mvpFailed = false,
     this.notice,
   });
 
@@ -42,6 +43,14 @@ class GameDetailState {
 
   /// 서버가 집계한 MVP 투표.
   final MvpBoard mvp;
+
+  /// MVP 집계를 못 받아왔는지.
+  ///
+  /// **"못 받았다"와 "아직 안 열렸다"를 구분해야 한다.** 빈 보드는
+  /// `open == false`라서, 서버가 500을 주든 타임아웃이 나든 화면에는
+  /// "아직 투표 전이에요"가 뜬다. 경기가 끝났는데 투표가 안 열린 것처럼
+  /// 보이고, 사용자는 다시 시도할 방법도 없다.
+  final bool mvpFailed;
 
   /// 쓰기가 거절됐을 때 띄울 문구 (마감·중복 투표·요청 제한).
   final String? notice;
@@ -80,6 +89,7 @@ class GameDetailState {
     bool? attended,
     PredictionTally? tally,
     MvpBoard? mvp,
+    bool? mvpFailed,
     String? notice,
   }) =>
       GameDetailState(
@@ -88,6 +98,7 @@ class GameDetailState {
         attended: attended ?? this.attended,
         tally: tally ?? this.tally,
         mvp: mvp ?? this.mvp,
+        mvpFailed: mvpFailed ?? this.mvpFailed,
         notice: notice,
       );
 }
@@ -102,10 +113,13 @@ class GameDetailViewModel
     final detail = await api.fetchGameDetail(game);
 
     // 집계는 상세와 독립이다. 실패해도 기록·중계는 보여준다.
+    var mvpFailed = false;
     final results = await Future.wait([
       _or(() => api.fetchPrediction(detail.game),
           PredictionTally.empty(open: detail.predictionOpen)),
-      _or(() => api.fetchMvp(detail.game), const MvpBoard.empty()),
+      _or(() => api.fetchMvp(detail.game), const MvpBoard.empty(), () {
+        mvpFailed = true;
+      }),
     ]);
 
     return GameDetailState(
@@ -117,13 +131,19 @@ class GameDetailViewModel
       attended: prefs.didAttend(game.id),
       tally: results[0] as PredictionTally,
       mvp: results[1] as MvpBoard,
+      mvpFailed: mvpFailed,
     );
   }
 
-  Future<T> _or<T>(Future<T> Function() run, T fallback) async {
+  Future<T> _or<T>(
+    Future<T> Function() run,
+    T fallback, [
+    void Function()? onFail,
+  ]) async {
     try {
       return await run();
     } on ApiException {
+      onFail?.call();
       return fallback;
     }
   }

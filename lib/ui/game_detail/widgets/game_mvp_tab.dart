@@ -19,10 +19,27 @@ class GameMvpTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
 
+    // 못 받아온 것과 아직 안 열린 것은 다르다. 섞으면 경기가 끝났는데도
+    // "아직 투표 전"으로 보이고 다시 시도할 방법이 없다.
+    if (state.mvpFailed) {
+      return _Notice(
+        icon: MhIcons.alert,
+        title: '투표를 불러오지 못했어요',
+        description: '잠시 뒤에 다시 시도해 주세요',
+        onRetry: ref
+            .read(gameDetailViewModelProvider(state.game).notifier)
+            .refresh,
+      );
+    }
+
     if (!state.mvpOpen) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(
-            MhSpacing.gutter, MhSpacing.sm, MhSpacing.gutter, MhSpacing.xl),
+          MhSpacing.gutter,
+          MhSpacing.sm,
+          MhSpacing.gutter,
+          MhSpacing.xl,
+        ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
           decoration: BoxDecoration(
@@ -39,13 +56,20 @@ class GameMvpTab extends ConsumerWidget {
                 child: MhIcon(MhIcons.star, size: 26, color: c.textSub),
               ),
               const SizedBox(height: MhSpacing.xs),
-              Text('아직 투표 전이에요',
-                  style: MhText.custom(
-                      size: 15, weight: FontWeight.w700, color: c.text)),
+              Text(
+                '아직 투표 전이에요',
+                style: MhText.custom(
+                  size: 15,
+                  weight: FontWeight.w700,
+                  color: c.text,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text('경기가 끝나면 오늘의 MVP 투표가 열려요',
-                  textAlign: TextAlign.center,
-                  style: MhText.meta(c.textSub)),
+              Text(
+                '경기가 끝나면 오늘의 MVP 투표가 열려요',
+                textAlign: TextAlign.center,
+                style: MhText.meta(c.textSub),
+              ),
             ],
           ),
         ),
@@ -57,9 +81,23 @@ class GameMvpTab extends ConsumerWidget {
     final candidates = state.mvp.candidates;
     final total = state.mvp.total;
 
+    // 투표는 열렸는데 후보가 없는 경우 — 연맹에 선수 기록이 아직 안 올라온
+    // 경기다. 빈 카드만 두면 눌러도 아무 일이 없는 화면이 된다.
+    if (candidates.isEmpty) {
+      return const _Notice(
+        icon: MhIcons.star,
+        title: '후보가 아직 없어요',
+        description: '경기 기록이 올라오면 투표할 수 있어요',
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          MhSpacing.gutter, MhSpacing.sm, MhSpacing.gutter, MhSpacing.xl),
+        MhSpacing.gutter,
+        MhSpacing.sm,
+        MhSpacing.gutter,
+        MhSpacing.xl,
+      ),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -74,9 +112,14 @@ class GameMvpTab extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('오늘의 MVP',
-                      style: MhText.custom(
-                          size: 15, weight: FontWeight.w700, color: c.text)),
+                  Text(
+                    '오늘의 MVP',
+                    style: MhText.custom(
+                      size: 15,
+                      weight: FontWeight.w700,
+                      color: c.text,
+                    ),
+                  ),
                   Flexible(
                     child: Text(
                       state.hasVotedMvp
@@ -86,9 +129,10 @@ class GameMvpTab extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: MhText.custom(
-                          size: 11,
-                          weight: FontWeight.w400,
-                          color: c.textFaint),
+                        size: 11,
+                        weight: FontWeight.w400,
+                        color: c.textFaint,
+                      ),
                     ),
                   ),
                 ],
@@ -149,31 +193,38 @@ class _CandidateRow extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   widthFactor: pct.clamp(0.0, 1.0),
                   child: Container(
-                    color: MhColors.brand
-                        .withValues(alpha: mine ? 0.22 : 0.10),
+                    color: MhColors.brand.withValues(alpha: mine ? 0.22 : 0.10),
                   ),
                 ),
               ),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 children: [
-                  TeamLogo(size: 30, logoUrl: candidate.teamLogoUrl, inset: 0.78),
+                  TeamLogo(
+                    size: 30,
+                    logoUrl: candidate.teamLogoUrl,
+                    inset: 0.78,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(candidate.name,
-                            style: MhText.custom(
-                                size: 14,
-                                weight: FontWeight.w700,
-                                color: c.text)),
-                        Text('${candidate.teamName} · ${candidate.statLine}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: MhText.caption(c.textSub)),
+                        Text(
+                          candidate.name,
+                          style: MhText.custom(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: c.text,
+                          ),
+                        ),
+                        Text(
+                          '${candidate.teamName} · ${candidate.statLine}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: MhText.caption(c.textSub),
+                        ),
                       ],
                     ),
                   ),
@@ -188,6 +239,93 @@ class _CandidateRow extends StatelessWidget {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// MVP 탭이 투표 대신 띄우는 안내 카드.
+class _Notice extends StatelessWidget {
+  const _Notice({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.onRetry,
+  });
+
+  final String icon;
+  final String title;
+  final String description;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        MhSpacing.gutter,
+        MhSpacing.sm,
+        MhSpacing.gutter,
+        MhSpacing.xl,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(MhRadius.card),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: c.bg, shape: BoxShape.circle),
+              child: MhIcon(icon, size: 26, color: c.textSub),
+            ),
+            const SizedBox(height: MhSpacing.xs),
+            Text(
+              title,
+              style: MhText.custom(
+                size: 15,
+                weight: FontWeight.w700,
+                color: c.text,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: MhText.meta(c.textSub),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: MhSpacing.sm),
+              MhTap(
+                haptic: MhHaptic.impact,
+                onTap: onRetry,
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: MhColors.brand,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(
+                      '다시 시도',
+                      style: MhText.custom(
+                        size: 14,
+                        weight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
