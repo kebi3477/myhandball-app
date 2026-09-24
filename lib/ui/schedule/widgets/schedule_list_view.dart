@@ -6,6 +6,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
@@ -32,7 +33,8 @@ class ScheduleListView extends ConsumerWidget {
           child: Row(
             children: [
               for (final g in Gender.values) ...[
-                if (g != Gender.values.first) const SizedBox(width: MhSpacing.sm),
+                if (g != Gender.values.first)
+                  const SizedBox(width: MhSpacing.sm),
                 Expanded(
                   child: _GenderPill(
                     label: g.divisionLabel,
@@ -60,7 +62,11 @@ class ScheduleListView extends ConsumerWidget {
                   onRefresh: vm.refresh,
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(
-                        MhSpacing.gutter, 0, MhSpacing.gutter, MhSpacing.xl),
+                      MhSpacing.gutter,
+                      0,
+                      MhSpacing.gutter,
+                      MhSpacing.xl,
+                    ),
                     itemCount: games.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: MhSpacing.xs),
@@ -128,7 +134,11 @@ class _DayChips extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(
-            MhSpacing.gutter, 0, MhSpacing.gutter, MhSpacing.sm),
+          MhSpacing.gutter,
+          0,
+          MhSpacing.gutter,
+          MhSpacing.sm,
+        ),
         itemCount: state.days.length,
         separatorBuilder: (_, _) => const SizedBox(width: MhSpacing.xs),
         itemBuilder: (_, i) {
@@ -137,13 +147,11 @@ class _DayChips extends StatelessWidget {
           return MhTap(
             onTap: () => onTap(day.label),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: selected ? MhColors.brand : Colors.transparent,
                 borderRadius: BorderRadius.circular(9999),
-                border: Border.all(
-                    color: selected ? MhColors.brand : c.border),
+                border: Border.all(color: selected ? MhColors.brand : c.border),
               ),
               child: Text(
                 day.shortLabel,
@@ -175,56 +183,113 @@ class _ScheduleGameCard extends StatelessWidget {
       GameStatus.pre => MhColors.brand,
       GameStatus.finished => MhColors.closed,
     };
-    final chipLabel =
-        game.status == GameStatus.pre ? game.meta : game.status.chipLabel;
+    // 시각은 위 날짜 줄로 올라갔다. 칩은 상태만 말한다 — 둘 다 시각을
+    // 적으면 같은 정보가 카드 안에 두 번 들어간다.
+    final chipLabel = game.status.chipLabel;
 
     return Container(
-      height: 134,
-      padding: const EdgeInsets.all(MhSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
         color: c.card,
         borderRadius: BorderRadius.circular(MhRadius.card),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _Side(team: game.home)),
-          SizedBox(
-            width: 91,
-            child: Column(
+          // 시안: 날짜(12/700) — 핀 + 경기장(12/textSub), 아래 1px 구분선.
+          // **일정에서 날짜와 장소가 안 보이면 카드만 보고는 언제 어디서
+          // 하는 경기인지 알 수 없다.**
+          Container(
+            padding: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: c.border)),
+            ),
+            child: Row(
               children: [
-                Container(
-                  height: 24,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: chipBg,
-                    borderRadius: BorderRadius.circular(20),
+                Text(
+                  game.meta,
+                  style: MhText.custom(
+                    size: 12,
+                    weight: FontWeight.w700,
+                    color: c.text,
                   ),
-                  child: Text(chipLabel,
-                      style: MhText.custom(
-                          size: 10,
-                          weight: FontWeight.w400,
-                          color: Colors.white,
-                          height: 16 / 10)),
                 ),
-                const SizedBox(height: MhSpacing.sm),
-                // 시안은 Impact(좁은 폭)로 91px 안에 36px 숫자를 넣는다.
-                // Pretendard는 더 넓어 그대로면 줄바꿈되므로 축소해 맞춘다.
-                SizedBox(
-                  height: 30,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '${game.scoreHomeText} : ${game.scoreAwayText}',
-                      style: MhText.score(c.text),
-                    ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (game.venue case final venue?) ...[
+                        MhIcon(MhIcons.pin, size: 12, color: c.textSub),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            venue,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: MhText.custom(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              color: c.textSub,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          Expanded(child: _Side(team: game.away)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 102,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _Side(team: game.home)),
+                SizedBox(
+                  width: 91,
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 24,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: chipBg,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          chipLabel,
+                          style: MhText.custom(
+                            size: 10,
+                            weight: FontWeight.w400,
+                            color: Colors.white,
+                            height: 16 / 10,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: MhSpacing.sm),
+                      // 시안은 Impact(좁은 폭)로 91px 안에 36px 숫자를 넣는다.
+                      // Pretendard는 더 넓어 그대로면 줄바꿈되므로 축소해 맞춘다.
+                      SizedBox(
+                        height: 30,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '${game.scoreHomeText} : ${game.scoreAwayText}',
+                            style: MhText.score(c.text),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _Side(team: game.away)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -270,9 +335,14 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text('이번 달 예정된 경기가 없습니다',
-          style: MhText.custom(
-              size: 14, weight: FontWeight.w600, color: context.mh.textSub)),
+      child: Text(
+        '이번 달 예정된 경기가 없습니다',
+        style: MhText.custom(
+          size: 14,
+          weight: FontWeight.w600,
+          color: context.mh.textSub,
+        ),
+      ),
     );
   }
 }

@@ -190,6 +190,9 @@ class MockHandballApiService implements HandballApiService {
           home: a,
           away: b,
           status: status,
+          // 실제 API는 `startsAt`을 준다. 목업에 없으면 일정 카드의 날짜,
+          // 비시즌 D-day, 직관 일지 날짜가 전부 빈 채로 프리뷰된다.
+          startsAt: DateTime(month.year, month.month, day, slot == 0 ? 14 : 16),
           meta: past ? '종료' : time,
           broadcast: const ['MAXPORTS'],
           scoreHome: past ? 22 + (seed + slot) % 10 : null,

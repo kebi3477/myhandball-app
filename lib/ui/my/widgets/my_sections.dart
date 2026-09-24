@@ -11,6 +11,7 @@ import '../../core/ui/team_logo.dart';
 import '../../player_detail/widgets/player_detail_sheet.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import '../../stat/view_models/stat_view_model.dart';
+import '../view_models/my_view_model.dart';
 
 /// 관심 선수 — 분석 > 선수에서 하트를 누른 선수들.
 class FavoritePlayersSection extends ConsumerWidget {
@@ -453,6 +454,39 @@ class TopScorersSection extends StatelessWidget {
                     ],
                   ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 시안의 팀 구분선 — 22px 로고 + 팀 이름 + 가로줄.
+///
+/// **여기서부터 아래는 "내 활동"이 아니라 "마이팀 정보"다.** 다음 경기 ·
+/// 시즌 기록 · 최근 5경기 · 주요 선수가 전부 팀 이야기인데, 구분선이 없으면
+/// 내 직관 기록 바로 아래 붙어서 어디까지가 내 것인지 안 보인다.
+class MyTeamDivider extends StatelessWidget {
+  const MyTeamDivider({super.key, required this.state});
+
+  final MyState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    final team = state.team;
+    if (team == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(MhSpacing.gutter, 8, MhSpacing.gutter, 0),
+      child: Row(
+        children: [
+          TeamLogo(size: 22, logoUrl: team.logoUrl, inset: 0.78),
+          const SizedBox(width: 10),
+          Text(team.name,
+              style: MhText.custom(
+                  size: 13, weight: FontWeight.w800, color: c.textMuted)),
+          const SizedBox(width: 10),
+          Expanded(child: Container(height: 1, color: c.border)),
         ],
       ),
     );

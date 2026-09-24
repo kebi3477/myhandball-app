@@ -71,6 +71,20 @@ class Game {
   /// 외부 중계 링크. v1 웹이 그랬듯 네이버를 먼저 고른다.
   final List<LiveLink> liveLinks;
 
+  /// 시안 `g.dateLabel` — 일정 카드 맨 위의 날짜·시각. `11.09 (일) 14:00`
+  ///
+  /// **[meta]를 그대로 쓰면 안 된다.** 경기 중에는 `전반 18'`로 바뀌어서
+  /// 날짜 자리에 경과 시간이 찍힌다. 시작 시각이 있으면 그걸로 만들고,
+  /// 없을 때만 [meta]로 떨어진다.
+  String get dateLabel {
+    final at = startsAt;
+    if (at == null) return meta;
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${two(at.month)}.${two(at.day)} (${weekdays[at.weekday - 1]}) '
+        '${two(at.hour)}:${two(at.minute)}';
+  }
+
   /// 서버 기능(예측·MVP·중계)을 걸 수 있는 경기인지.
   bool get hasDetail => matchSeq != null;
 

@@ -19,7 +19,10 @@ import 'my_team_card.dart';
 /// MY 탭.
 ///
 /// 시안 순서: 헤더 → 프로필(닉네임) → MY 팀 → 수료 배지 → 관심 선수 →
-/// 직관 기록 → 승부 예측 → 다음 경기 → 시즌 기록 → 최근 5경기 → 주요 선수.
+/// 직관 기록 → 승부 예측 → **팀 구분선** → 다음 경기 → 시즌 기록 →
+/// 최근 5경기 → 주요 선수.
+///
+/// 구분선 위는 내 활동, 아래는 마이팀 정보다.
 class MyScreen extends ConsumerWidget {
   const MyScreen({super.key});
 
@@ -72,6 +75,9 @@ class MyScreen extends ConsumerWidget {
                   MyAttendanceCard(state: state),
                   const SizedBox(height: MhSpacing.md),
                   MyPredictionCard(state: state),
+                  const SizedBox(height: MhSpacing.md),
+                  // 여기서부터 아래는 마이팀 정보다 (시안 구분선).
+                  MyTeamDivider(state: state),
                   const SizedBox(height: MhSpacing.md),
                   MyNextGameCard(state: state),
                   const SizedBox(height: MhSpacing.md),
