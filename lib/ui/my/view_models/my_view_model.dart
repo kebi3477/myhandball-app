@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/repositories/preferences_repository.dart';
 import '../../../data/repositories/ranking_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
+import '../../../domain/models/attendance.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/game_detail.dart';
 import '../../../domain/models/gender.dart';
@@ -78,19 +79,24 @@ class MyState {
   String get rankLabel =>
       rank == null ? '순위 정보 없음' : '${rank!.rank}위 · 승점 ${rank!.points}';
 
-  /// 직관 승률. 기록이 없으면 `-`.
+  int _attendance(String result) =>
+      attendance.where((a) => a.result == result).length;
+
+  /// 마이팀이 뛴 직관 경기 수. 관람(`-`)은 빠진다.
+  int get cheeredGames =>
+      _attendance('승') + _attendance('무') + _attendance('패');
+
+  /// 직관 승률. **분모는 관람을 뺀 응원 경기다** (시안
+  /// `aw / (aw + ad + al)`). 관람을 분모에 넣으면 승률이 실제보다 낮게
+  /// 나오고, "승리 요정" 배지가 열리지 않는다.
   String get attendanceRate {
-    if (attendance.isEmpty) return '-';
-    final wins = attendance.where((a) => a.result == '승').length;
-    return '${(wins * 100 / attendance.length).round()}%';
+    if (cheeredGames == 0) return '-';
+    return '${(_attendance('승') * 100 / cheeredGames).round()}%';
   }
 
-  String get attendanceWdl {
-    final w = attendance.where((a) => a.result == '승').length;
-    final d = attendance.where((a) => a.result == '무').length;
-    final l = attendance.where((a) => a.result == '패').length;
-    return '$w·$d·$l';
-  }
+  /// 시안 `${aw}-${ad}-${al}`
+  String get attendanceWdl =>
+      '${_attendance('승')}-${_attendance('무')}-${_attendance('패')}';
 
   String get predictionRate {
     if (predictions.isEmpty) return '-';
@@ -150,7 +156,7 @@ class MyViewModel extends AsyncNotifier<MyState> {
 
     for (final g in allGames) {
       if (prefs.didAttend(g.id)) {
-        attendance.add(_toAttendance(g, team?.name));
+        attendance.add(_toAttendance(g, team));
       }
       final pick = prefs.predictionFor(g.id);
       if (pick != null) predictions.add(_toPrediction(g, pick));
@@ -190,13 +196,19 @@ class MyViewModel extends AsyncNotifier<MyState> {
     );
   }
 
-  AttendanceRecord _toAttendance(Game g, String? myTeamName) {
-    final isHome = g.home.name == myTeamName;
-    final mine = isHome ? g.scoreHome : g.scoreAway;
-    final theirs = isHome ? g.scoreAway : g.scoreHome;
-    final result = (mine == null || theirs == null)
-        ? '-'
-        : (mine > theirs ? '승' : (mine < theirs ? '패' : '무'));
+  /// **판정은 [AttendanceEntry.resultFor] 하나만 쓴다.**
+  ///
+  /// 예전에는 여기서 따로 계산했는데, **마이팀이 아예 안 뛴 경기(관람)를
+  /// 거르지 않아** 원정 팀을 내 팀인 양 보고 승·패를 매겼다. 그 값이
+  /// 직관 승률과 "승리 요정" 배지에 그대로 들어갔다. 직관 탭은 제대로
+  /// 거르고 있어서 두 화면의 숫자가 달랐다.
+  AttendanceRecord _toAttendance(Game g, Team? myTeam) {
+    final result = switch (AttendanceEntry.resultFor(g, myTeam)) {
+      AttendanceResult.win => '승',
+      AttendanceResult.draw => '무',
+      AttendanceResult.loss => '패',
+      AttendanceResult.unknown => '-',
+    };
 
     return AttendanceRecord(
       matchLabel: '${g.home.name} vs ${g.away.name}',

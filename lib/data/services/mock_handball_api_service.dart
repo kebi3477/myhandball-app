@@ -186,7 +186,10 @@ class MockHandballApiService implements HandballApiService {
         final time = slot == 0 ? '14:00' : '16:00';
 
         games.add(Game(
-          id: 'm${month.year}${month.month}-$day-$slot',
+          // **부를 넣어야 한다.** 실제 API는 연맹 경기 번호로 `g5490`처럼
+          // 유일한 id를 만드는데, 목업이 남·여에 같은 id를 주면 직관·예측이
+          // 두 번씩 세어진다 (MY가 두 부의 일정을 다 받는다).
+          id: 'm${gender.code}${month.year}${month.month}-$day-$slot',
           home: a,
           away: b,
           status: status,
