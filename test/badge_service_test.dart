@@ -50,66 +50,46 @@ void main() {
   });
 
   group('승리 요정', () {
-    test('응원 경기가 3경기 미만이면 경기 수를 센다', () {
-      final b = badge(MhBadgeKind.winFairy,
-          wins: 2, teamWins: 5, teamLosses: 15);
+    // 시안은 "응원 경기 3회 + 승률이 팀보다 높을 때"였는데, 그러면 전승
+    // 팀을 응원하는 사람은 영영 못 딴다. 승리 횟수로 바꿨다.
+    test('3승을 채우면 열린다', () {
+      expect(badge(MhBadgeKind.winFairy, wins: 2).earned, isFalse);
+      expect(badge(MhBadgeKind.winFairy, wins: 2).subtitle, '승리 2/3');
+      expect(badge(MhBadgeKind.winFairy, wins: 3).earned, isTrue);
+    });
+
+    test('무승부와 패배는 승리로 치지 않는다', () {
+      final b = badge(MhBadgeKind.winFairy, wins: 1, draws: 3, losses: 5);
       expect(b.earned, isFalse);
-      expect(b.subtitle, '응원 경기 2/3');
+      expect(b.subtitle, '승리 1/3');
     });
 
-    test('무승부도 응원 경기로 센다', () {
-      // 시안 `attDecided = aw + ad + al`. 2승 1무면 3경기다.
+    test('팀이 전승이어도 열린다', () {
+      // 예전 규칙이 막던 경우다 — 내 승률 100%, 팀 승률 100%라 차이가 0.
       final b = badge(MhBadgeKind.winFairy,
-          wins: 2, draws: 1, teamWins: 5, teamLosses: 15);
+          wins: 3, teamWins: 20, teamLosses: 0);
       expect(b.earned, isTrue);
-      // 내 승률 67%(2/3), 팀 승률 25%(5/20) → +42%p
-      expect(b.subtitle, '내가 가면 승률 +42%p');
+      expect(b.subtitle, '직관 3승 달성');
     });
 
-    test('3경기를 채우고 팀보다 승률이 높으면 획득한다', () {
+    test('팀보다 승률이 높으면 그 차이를 적는다', () {
       // 직관 3전 3승(100%) vs 팀 10승 10패(50%)
       final b = badge(MhBadgeKind.winFairy,
           wins: 3, teamWins: 10, teamLosses: 10);
-      expect(b.earned, isTrue);
       expect(b.subtitle, '내가 가면 승률 +50%p');
     });
 
-    test('3경기를 채웠어도 승률이 낮으면 안 준다', () {
-      // 직관 1승 2패(33%) vs 팀 18승 2패(90%)
+    test('팀보다 낮으면 승률 대신 승수를 적는다', () {
+      // "+-20%p"처럼 읽히면 안 된다.
       final b = badge(MhBadgeKind.winFairy,
-          wins: 1, losses: 2, teamWins: 18, teamLosses: 2);
-      expect(b.earned, isFalse);
-      expect(b.subtitle, '직관 승률이 팀보다 높으면');
-    });
-
-    test('승률이 같으면 안 준다', () {
-      final b = badge(MhBadgeKind.winFairy,
-          wins: 2, losses: 2, teamWins: 10, teamLosses: 10);
-      expect(b.earned, isFalse);
-    });
-
-    test('팀 승률도 무승부를 분모에 넣는다', () {
-      // 팀 5승 5무 5패 → 5/15 = 33%. 무승부를 뺐다면 50%였을 것이다.
-      // 내가 3전 2승 1패 → 67%. 차이는 +34%p.
-      final b = badge(MhBadgeKind.winFairy,
-          wins: 2, losses: 1, teamWins: 5, teamDraws: 5, teamLosses: 5);
+          wins: 3, losses: 5, teamWins: 18, teamLosses: 2);
       expect(b.earned, isTrue);
-      expect(b.subtitle, '내가 가면 승률 +34%p');
+      expect(b.subtitle, '직관 3승 달성');
     });
 
-    test('차이는 각각 반올림한 뒤에 뺀다', () {
-      // 내 승률 1/3 = 33.3 → 33, 팀 2/3 = 66.7 → 67. 33 - 67 = -34.
-      // 먼저 빼고 반올림하면 -33이 되어 1%p 어긋난다.
-      final b = badge(MhBadgeKind.winFairy,
-          wins: 1, losses: 2, teamWins: 2, teamLosses: 1);
-      expect(b.earned, isFalse);
-      expect(b.subtitle, '직관 승률이 팀보다 높으면');
-    });
-
-    test('기록이 없으면 0경기부터 시작한다', () {
+    test('기록이 없으면 0승부터 시작한다', () {
       final b = badge(MhBadgeKind.winFairy, teamWins: 10, teamLosses: 10);
-      expect(b.earned, isFalse);
-      expect(b.subtitle, '응원 경기 0/3');
+      expect(b.subtitle, '승리 0/3');
       expect(b.ratio, 0);
     });
   });
