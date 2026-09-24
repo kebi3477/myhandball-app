@@ -141,6 +141,12 @@ class GameDetailViewModel
     state = AsyncData(current!.copyWith());
   }
 
+  /// 시안 `retryGame` — 오류 화면의 "다시 시도".
+  Future<void> refresh() async {
+    state = const AsyncLoading<GameDetailState>().copyWithPrevious(state);
+    state = await AsyncValue.guard(() => build(arg));
+  }
+
   /// 시안 `toggleAttend`.
   Future<void> toggleAttended() async {
     final current = state.valueOrNull;

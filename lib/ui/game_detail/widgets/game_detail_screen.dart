@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/game.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
-import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_error_view.dart';
 import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
@@ -50,11 +50,11 @@ class GameDetailScreen extends ConsumerWidget {
         loading: () =>
             const Center(child: CircularProgressIndicator(color: MhColors.brand)),
         error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(MhSpacing.gutter),
-            child: Text(mhErrorMessage(e),
-                textAlign: TextAlign.center,
-                style: MhText.meta(context.mh.textSub)),
+          child: MhErrorView(
+            error: e,
+            offlineDescription: '문자중계·기록·예측·MVP 투표는\n'
+                '연결이 복구되면 다시 볼 수 있어요.',
+            onRetry: ref.read(gameDetailViewModelProvider(game).notifier).refresh,
           ),
         ),
         data: (state) => CustomScrollView(

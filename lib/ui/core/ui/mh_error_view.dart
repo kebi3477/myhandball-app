@@ -12,10 +12,21 @@ import 'mh_tap.dart';
 /// 사용자가 할 수 있는 일이 다르기 때문이다 — 하나는 연결을 확인하면 되고,
 /// 다른 하나는 기다리는 수밖에 없다.
 class MhErrorView extends StatelessWidget {
-  const MhErrorView({super.key, required this.error, this.onRetry});
+  const MhErrorView({
+    super.key,
+    required this.error,
+    this.onRetry,
+    this.offlineDescription,
+  });
 
   final Object error;
   final VoidCallback? onRetry;
+
+  /// 오프라인일 때 설명을 갈아끼운다.
+  ///
+  /// 경기 상세처럼 **무엇을 못 보는지가 분명한 화면**은 시안이 그걸 적어
+  /// 준다 — "문자중계·기록·예측·MVP 투표는 연결이 복구되면 다시 볼 수 있어요."
+  final String? offlineDescription;
 
   bool get _offline => error is ApiException && (error as ApiException).isOffline;
 
@@ -27,7 +38,7 @@ class MhErrorView extends StatelessWidget {
         ? (
             MhIcons.wifiOff,
             '연결할 수 없어요',
-            '인터넷 연결을 확인하고\n다시 시도해 주세요',
+            offlineDescription ?? '인터넷 연결을 확인하고\n다시 시도해 주세요',
           )
         : (
             MhIcons.alert,
