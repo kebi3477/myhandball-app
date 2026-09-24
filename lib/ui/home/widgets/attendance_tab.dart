@@ -397,7 +397,7 @@ class _NextGameRow extends StatelessWidget {
               width: 52,
               child: Column(
                 children: [
-                  Text(_dday(at),
+                  Text(game.ddayLabel ?? '',
                       style: MhText.custom(
                           size: 11,
                           weight: FontWeight.w700,
@@ -487,16 +487,7 @@ class _NextGameRow extends StatelessWidget {
     );
   }
 
-  /// `D-5` / `D-DAY`. 시작 시각을 모르면 빈 칸.
-  static String _dday(DateTime? at) {
-    if (at == null) return '';
-    final now = DateTime.now();
-    final days = DateTime(at.year, at.month, at.day)
-        .difference(DateTime(now.year, now.month, now.day))
-        .inDays;
-    if (days == 0) return 'D-DAY';
-    return days > 0 ? 'D-$days' : 'D+${-days}';
-  }
+
 }
 
 /// 시안 "직관 일지" — 왼쪽 날짜, 가운데 타임라인, 오른쪽 카드.

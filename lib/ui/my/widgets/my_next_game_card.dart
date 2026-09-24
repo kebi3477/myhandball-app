@@ -77,7 +77,7 @@ class MyNextGameCard extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              _dday(game.meta),
+                              game.ddayLabel ?? '다음 경기',
                               style: MhText.custom(
                                 size: 12,
                                 weight: FontWeight.w700,
@@ -147,8 +147,4 @@ class MyNextGameCard extends ConsumerWidget {
       ),
     );
   }
-
-  /// 목업 일정은 시각 문자열만 주므로 날짜 계산 없이 "다음 경기"로 둔다.
-  /// 실제 API 연동 후 `dateISO`로 D-day를 계산한다.
-  String _dday(String meta) => '다음 경기';
 }

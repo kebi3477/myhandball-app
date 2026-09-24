@@ -85,6 +85,18 @@ class Game {
         '${two(at.hour)}:${two(at.minute)}';
   }
 
+  /// `D-5` / `D-DAY` / 이미 지났으면 `D+3`. 시작 시각을 모르면 `null`.
+  String? get ddayLabel {
+    final at = startsAt;
+    if (at == null) return null;
+    final now = DateTime.now();
+    final days = DateTime(at.year, at.month, at.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+    if (days == 0) return 'D-DAY';
+    return days > 0 ? 'D-$days' : 'D+${-days}';
+  }
+
   /// 서버 기능(예측·MVP·중계)을 걸 수 있는 경기인지.
   bool get hasDetail => matchSeq != null;
 
