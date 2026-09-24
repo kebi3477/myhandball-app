@@ -173,10 +173,14 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
         if (_division.gender == null || g.home.gender == _division.gender) g,
     ];
 
-    final rows = <PredictionRow>[];
-    for (final game in filtered.take(_tallyLimit)) {
-      rows.add(PredictionRow(game: game, tally: await _tally(game)));
-    }
+    // 경기마다 한 번씩 부르므로 **동시에** 던진다. 순서대로 기다리면
+    // 여섯 경기에 요청 여섯 번이 줄줄이 붙어 탭이 그만큼 늦게 뜬다.
+    final shown = filtered.take(_tallyLimit).toList();
+    final tallies = await Future.wait(shown.map(_tally));
+    final rows = [
+      for (var i = 0; i < shown.length; i++)
+        PredictionRow(game: shown[i], tally: tallies[i]),
+    ];
 
     return PredictionState(
       // 저장소를 직접 읽으면 MY에서 닉네임을 바꿔도 여기가 안 따라온다.

@@ -66,10 +66,10 @@ class ApiClient {
   /// 붙어 있는데 서버만 죽은 경우도 사용자에겐 똑같이 "안 된다"이다.
   final ValueNotifier<bool> offline = ValueNotifier(false);
 
-  void close() {
-    _client.close();
-    offline.dispose();
-  }
+  /// **[offline]은 일부러 dispose 하지 않는다.** 셸 상단의 오프라인 띠가
+  /// 이걸 계속 듣고 있어서, 클라이언트가 먼저 정리되면 폐기된 notifier를
+  /// 듣는 위젯이 남는다. 앱에 하나뿐인 작은 객체라 그냥 둔다.
+  void close() => _client.close();
 
   Uri _uri(String path, [Map<String, String?>? query]) {
     final root = baseUrl.endsWith('/')
