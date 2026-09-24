@@ -402,16 +402,28 @@ void main() {
   });
 
   testWidgets('states', (t) async {
-    t.view.physicalSize = const Size(390, 1100);
+    t.view.physicalSize = const Size(390, 1340);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
+    // 개막일을 모를 때 — 큰 자리에 개막 달이 들어간다.
     const offseason = HomeState(
       games: [],
       ranking: [],
       topPlayers: [],
       gender: Gender.men,
       category: StatCategory.goals,
+    );
+    // 알림을 꺼 둔 경우 — 아래 한 줄이 "알려드릴게요" 대신 담백해진다.
+    // (큰 자리가 "이번 달"로 바뀌는 분기는 개막 달에만 나와서 여기선 못
+    //  찍는다. `test/offseason_card_test.dart`가 대신 잡는다.)
+    final thisMonth = HomeState(
+      games: const [],
+      ranking: const [],
+      topPlayers: const [],
+      gender: Gender.men,
+      category: StatCategory.goals,
+      notificationsOn: false,
     );
     final opening = HomeState(
       games: const [],
@@ -443,6 +455,7 @@ void main() {
             OffseasonCard(state: opening, onSeeSchedule: () {}),
             const SizedBox(height: 16),
             OffseasonCard(state: offseason, onSeeSchedule: () {}),
+            OffseasonCard(state: thisMonth, onSeeSchedule: () {}),
           ],
         ),
       ),

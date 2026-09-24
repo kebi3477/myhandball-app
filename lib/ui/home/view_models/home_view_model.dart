@@ -16,6 +16,8 @@ class HomeState {
     required this.topPlayers,
     required this.gender,
     required this.category,
+    this.openingGender = Gender.men,
+    this.notificationsOn = true,
     this.nextSeasonOpensAt,
     this.rankingUpdatedAt,
   });
@@ -27,6 +29,15 @@ class HomeState {
   /// 시안 `rankGender` — 순위·기록에 함께 걸린다.
   final Gender gender;
   final StatCategory category;
+
+  /// 비시즌 카드가 기준으로 삼는 부. **마이팀의 부**이고, 마이팀이 없으면
+  /// 남자부다. 개막 달이 부마다 다르기 때문이다 (남자부 11월, 여자부 1월).
+  ///
+  /// 순위·기록에 걸린 [gender]와 다르다 — 그쪽은 화면에서 토글로 바뀐다.
+  final Gender openingGender;
+
+  /// 알림 설정. 꺼져 있으면 "알려드릴게요"라고 약속하지 않는다.
+  final bool notificationsOn;
 
   /// 다음 시즌 개막 시각. 연맹이 일정을 올리기 전에는 `null`이다.
   final DateTime? nextSeasonOpensAt;
@@ -63,16 +74,6 @@ class HomeState {
     return days < 0 ? null : days;
   }
 
-  /// 다음 시즌 이름. `26-27`
-  ///
-  /// 개막일을 모를 때 큰 자리에 대신 넣는다.
-  String get nextSeasonName {
-    final opens = nextSeasonOpensAt;
-    return opens == null
-        ? Season.ofYear(Season.current.startYear + 1).label
-        : Season.at(opens).label;
-  }
-
   /// `26-27 시즌 개막까지`
   String get nextSeasonLabel {
     final opens = nextSeasonOpensAt;
@@ -82,13 +83,32 @@ class HomeState {
     return '${season.label} 시즌 개막까지';
   }
 
-  /// `11월 14일(토) 개막 예정`
-  String? get openingLabel {
+  /// H리그 개막 달. **남자부 11월, 여자부 1월.**
+  int get openingMonth => openingGender == Gender.women ? 1 : 11;
+
+  /// 개막 달에 들어섰는데 아직 일정이 없는 상태.
+  ///
+  /// 일 년에 한 달만 나타나는 분기라 테스트에서 [now]를 넣을 수 있게 열어
+  /// 둔다.
+  bool isOpeningMonthAt(DateTime now) => now.month == openingMonth;
+
+  bool get isOpeningMonth => isOpeningMonthAt(DateTime.now());
+
+  /// 비시즌 카드 아래 한 줄.
+  ///
+  /// 개막일을 알면 그 날짜를, 모르면 일정이 나오면 알리겠다고 한다.
+  /// **알림이 꺼져 있으면 알리겠다는 말을 하지 않는다** — 지킬 수 없는
+  /// 약속이다.
+  String get offseasonNote {
     final opens = nextSeasonOpensAt;
-    if (opens == null) return null;
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    return '${opens.month}월 ${opens.day}일'
-        '(${weekdays[opens.weekday - 1]}) 개막 예정';
+    if (opens != null) {
+      const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+      return '지금은 비시즌이에요 · ${opens.month}월 ${opens.day}일'
+          '(${weekdays[opens.weekday - 1]}) 개막 예정이에요';
+    }
+    return notificationsOn
+        ? '지금은 비시즌이에요 · 일정이 나오면 알려드릴게요'
+        : '지금은 비시즌이에요 · 개막 일정 발표 전이에요';
   }
 
   /// 시상대에 올라가는 1~3위.
@@ -103,6 +123,8 @@ class HomeState {
     List<PlayerStat>? topPlayers,
     Gender? gender,
     StatCategory? category,
+    Gender? openingGender,
+    bool? notificationsOn,
     DateTime? nextSeasonOpensAt,
     DateTime? rankingUpdatedAt,
   }) =>
@@ -112,6 +134,8 @@ class HomeState {
         topPlayers: topPlayers ?? this.topPlayers,
         gender: gender ?? this.gender,
         category: category ?? this.category,
+        openingGender: openingGender ?? this.openingGender,
+        notificationsOn: notificationsOn ?? this.notificationsOn,
         nextSeasonOpensAt: nextSeasonOpensAt ?? this.nextSeasonOpensAt,
         rankingUpdatedAt: rankingUpdatedAt ?? this.rankingUpdatedAt,
       );
@@ -134,6 +158,9 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
       topPlayers: topPlayers,
       gender: gender,
       category: category,
+      // 개막 달은 마이팀의 부를 따른다. 마이팀이 없으면 남자부다.
+      openingGender: prefs.myTeam?.gender ?? Gender.men,
+      notificationsOn: prefs.notificationsOn,
       nextSeasonOpensAt: offseason ? await _nextSeasonOpening(gender) : null,
       rankingUpdatedAt: await _lastPlayedAt(gender),
     );
