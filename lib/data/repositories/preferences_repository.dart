@@ -42,6 +42,12 @@ class PreferencesRepository {
   Gender _preferredGender = Gender.men;
   int _guideDoneCount = 0;
 
+  /// 입문 가이드를 다 끝낸 시각. 수료 배지가 `2026.09.24 수료`로 쓴다.
+  ///
+  /// **나중에 서버 기준으로 바뀐다.** 지금은 5개를 처음 채운 순간을 적어
+  /// 둔다. 그 전에 이미 수료한 사용자는 값이 없고, 그때는 날짜 없이 쓴다.
+  DateTime? _guideCompletedAt;
+
   /// 업데이트 안내에서 "나중에"를 고른 버전.
   ///
   /// 같은 버전으로는 다시 묻지 않는다. 켤 때마다 알럿이 뜨면 안내가 아니라
@@ -131,6 +137,9 @@ class PreferencesRepository {
     _notificationsOn = prefs.getBool(_kNotifications) ?? true;
     _nickname = prefs.getString(_kNickname) ?? '';
     _skippedUpdateVersion = prefs.getString(_kSkippedUpdate) ?? '';
+    final graduated = prefs.getString(_kGuideCompletedAt);
+    _guideCompletedAt =
+        graduated == null ? null : DateTime.tryParse(graduated);
     final joined = prefs.getString(_kProfileCreatedAt);
     _profileCreatedAt = joined == null ? null : DateTime.tryParse(joined);
     _season = Season.fromYear(prefs.getString(_kSeason) ?? Season.current.year);
@@ -161,6 +170,10 @@ class PreferencesRepository {
       prefs.setBool(_kNotifications, _notificationsOn),
       prefs.setString(_kNickname, _nickname),
       prefs.setString(_kSkippedUpdate, _skippedUpdateVersion),
+      if (_guideCompletedAt case final at?)
+        prefs.setString(_kGuideCompletedAt, at.toIso8601String())
+      else
+        prefs.remove(_kGuideCompletedAt),
       if (_profileCreatedAt case final at?)
         prefs.setString(_kProfileCreatedAt, at.toIso8601String())
       else
@@ -214,6 +227,7 @@ class PreferencesRepository {
   static const _kPredictions = 'mh_preds';
   static const _kNickname = 'mh_nick';
   static const _kSkippedUpdate = 'mh_update_skipped';
+  static const _kGuideCompletedAt = 'mh_guide_done_at';
   static const _kProfileCreatedAt = 'mh_joined';
 
   /// 시안 `mh_onboarded`
@@ -346,8 +360,14 @@ class PreferencesRepository {
     await _persist();
   }
 
+  DateTime? get guideCompletedAt => _guideCompletedAt;
+
   Future<void> setGuideDoneCount(int value) async {
     _guideDoneCount = value.clamp(0, AppConfig.guideLessonCount);
+    // 처음 다 채운 순간만 적는다. 다시 들어가도 날짜가 오늘로 밀리면 안 된다.
+    if (_guideDoneCount >= AppConfig.guideLessonCount) {
+      _guideCompletedAt ??= DateTime.now();
+    }
     await _persist();
   }
 }

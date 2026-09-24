@@ -1,178 +1,134 @@
-import '../../ui/core/ui/mh_icons.dart';
+import 'package:flutter/material.dart';
 
-/// MY "내 배지" 한 칸의 정의. 시안 `myBadges`.
+/// MY "내 배지"의 배지 종류. **순서가 화면 순서다.**
+enum MhBadgeKind {
+  winFairy('승리 요정', MhBadgeTarget.attendance),
+  predictor('예측 고수', MhBadgeTarget.prediction),
+  graduate('입문 수료', MhBadgeTarget.guide);
+
+  const MhBadgeKind(this.label, this.target);
+
+  final String label;
+
+  /// 카드를 눌렀을 때 갈 곳.
+  final MhBadgeTarget target;
+
+  MhBadgeStyle get style => switch (this) {
+        MhBadgeKind.winFairy => MhBadgeStyle.winFairy,
+        MhBadgeKind.predictor => MhBadgeStyle.predictor,
+        MhBadgeKind.graduate => MhBadgeStyle.graduate,
+      };
+}
+
+enum MhBadgeTarget { attendance, prediction, guide }
+
+/// 배지 한 종류의 색과 문양.
 ///
-/// **조건은 전부 앱이 이미 가진 값으로 센다** — 가이드 진행도, 직관 기록,
-/// 예측 적중. 서버에 배지 테이블을 따로 두지 않는 이유는, 그랬다면 규칙을
-/// 고칠 때마다 서버 배포가 필요하고 오프라인에서는 배지가 안 보이기
-/// 때문이다.
-///
-/// 다만 **재료가 기기에만 있으면 재설치할 때 배지도 같이 사라진다.**
-/// 가이드 진행도와 직관 기록을 서버로 옮기는 작업이 그래서 필요하다.
-class MhBadgeSpec {
-  const MhBadgeSpec({
-    required this.id,
-    required this.name,
+/// 메달은 **원 2겹(바깥 r26 + 테두리 3, 안쪽 r19) + 리본 2개 + 가운데 문양**
+/// 이다. 가이드 화면 메달에 있는 곡선 장식은 배지에 없다.
+class MhBadgeStyle {
+  const MhBadgeStyle({
+    required this.coin,
+    required this.inner,
+    required this.rim,
+    required this.ribbonLeft,
+    required this.ribbonRight,
+    required this.cardBg,
+    required this.nameColor,
+    required this.accent,
     required this.glyph,
-    required this.goal,
-    required this.unit,
-    required this.earnedLabel,
-    required this.target,
-    required this.colors,
+    this.glyphStrokeWidth = 0,
   });
 
-  /// 저장·식별용 키.
-  final String id;
+  /// 바깥 원과 그 테두리, 안쪽 원. SVG에 그대로 넣는 문자열이다.
+  final String coin;
+  final String inner;
+  final String rim;
+  final String ribbonLeft;
+  final String ribbonRight;
 
-  /// 칸에 크게 들어가는 이름.
-  final String name;
+  /// 획득했을 때의 카드 배경·이름색.
+  final Color cardBg;
+  final Color nameColor;
 
-  /// 메달 안에 그릴 SVG path. 좌표계는 메달과 같은 `0 0 60 72`다.
+  /// 진행바 채움에 쓰는 대표색.
+  final Color accent;
+
+  /// 메달 가운데 문양. 좌표계는 `0 0 60 72`, 안쪽 원의 중심이 (30, 28)이다.
   final String glyph;
 
-  /// 메달 색 한 벌. 시안이 배지마다 따로 준다 (`b.r1`, `b.c1` …).
-  ///
-  /// **아직 시안 값이 아니다.** 디자인 파일의 배지 정의가 256KiB 상한
-  /// 뒤쪽 `<script>`에 있어 읽지 못했다. 원본을 받으면 이 값들을 바꾼다.
-  final MhMedalColors colors;
+  /// 0이면 채워 그리고(하트·별), 값이 있으면 선으로만 그린다(체크).
+  final double glyphStrokeWidth;
 
-  /// 이 수치를 채우면 획득.
-  final int goal;
+  bool get glyphFilled => glyphStrokeWidth == 0;
 
-  /// `3/5 레슨`의 "레슨".
-  final String unit;
-
-  /// 획득한 뒤 이름 밑에 붙는 한 줄.
-  final String earnedLabel;
-
-  /// 눌렀을 때 갈 곳.
-  final MhBadgeTarget target;
-}
-
-/// 배지를 누르면 여는 화면.
-enum MhBadgeTarget { guide, attendance, prediction }
-
-/// 정의 + 지금 진행도.
-class MhBadge {
-  const MhBadge({required this.spec, required this.progress});
-
-  final MhBadgeSpec spec;
-
-  /// 지금까지 쌓인 수치. [MhBadgeSpec.goal] 이상이면 획득이다.
-  final int progress;
-
-  bool get earned => progress >= spec.goal;
-
-  /// 진행바 비율. 0~1.
-  double get ratio => (progress / spec.goal).clamp(0.0, 1.0);
-
-  /// 시안 `b.sub` — 획득했으면 한 줄, 아니면 `3/5 레슨`.
-  String get subtitle =>
-      earned ? spec.earnedLabel : '$progress/${spec.goal} ${spec.unit}';
-}
-
-/// 배지 목록. 순서가 화면 순서다.
-abstract final class MhBadges {
-  /// 시안 메달과 같은 `0 0 60 72` 좌표계. 안쪽 원의 중심이 (30, 28)이다.
+  static const _heart =
+      'M30 38.4c-6.8-4.5-10.4-8.3-10.4-12.2a5.4 5.4 0 019.6-3.4l.8 1 .8-1a5.4 '
+      '5.4 0 019.6 3.4c0 3.9-3.6 7.7-10.4 12.2z';
+  static const _check = 'M21 28l6.5 6.5L40 21';
   static const _star =
       'M30 17 l3.2 6.6 7.2.9-5.3 5 1.4 7.1-6.5-3.6-6.5 3.6 1.4-7.1-5.3-5 7.2-.9z';
-  static const _pin =
-      'M30 15c-4.6 0-8.4 3.8-8.4 8.4 0 6.3 8.4 13.6 8.4 13.6s8.4-7.3 '
-      '8.4-13.6c0-4.6-3.8-8.4-8.4-8.4zm0 11.4a3 3 0 110-6 3 3 0 010 6z';
-  static const _ticket =
-      'M19 21h22a2 2 0 012 2v2.5a3 3 0 000 6V34a2 2 0 01-2 2H19a2 2 0 '
-      '01-2-2v-2.5a3 3 0 000-6V23a2 2 0 012-2z';
-  static const _flag = 'M22 14v26M22 16h15l-3.2 5 3.2 5H22z';
-  static const _check = 'M21 28l6.5 6.5L40 21';
-  static const _bolt = 'M33 14l-11 16.5h7.5L27 42l11-16.5h-7.5z';
 
-  static const all = <MhBadgeSpec>[
-    MhBadgeSpec(
-      id: 'guide',
-      name: '핸드볼 입문',
-      glyph: _star,
-      goal: 5,
-      unit: '레슨',
-      earnedLabel: '수료 완료',
-      target: MhBadgeTarget.guide,
-      colors: MhMedalColors.gold,
-    ),
-    MhBadgeSpec(
-      id: 'first_attend',
-      name: '첫 직관',
-      glyph: _pin,
-      goal: 1,
-      unit: '경기',
-      earnedLabel: '첫 도장',
-      target: MhBadgeTarget.attendance,
-      colors: MhMedalColors.gold,
-    ),
-    MhBadgeSpec(
-      id: 'attend_5',
-      name: '직관 5경기',
-      glyph: _ticket,
-      goal: 5,
-      unit: '경기',
-      earnedLabel: '5경기 달성',
-      target: MhBadgeTarget.attendance,
-      colors: MhMedalColors.gold,
-    ),
-    MhBadgeSpec(
-      id: 'venue_3',
-      name: '경기장 3곳',
-      glyph: _flag,
-      goal: 3,
-      unit: '곳',
-      earnedLabel: '3곳 방문',
-      target: MhBadgeTarget.attendance,
-      colors: MhMedalColors.goldOutlined,
-    ),
-    MhBadgeSpec(
-      id: 'first_hit',
-      name: '첫 적중',
-      glyph: _check,
-      goal: 1,
-      unit: '적중',
-      earnedLabel: '첫 적중',
-      target: MhBadgeTarget.prediction,
-      colors: MhMedalColors.goldOutlined,
-    ),
-    MhBadgeSpec(
-      id: 'hit_10',
-      name: '적중 10회',
-      glyph: _bolt,
-      goal: 10,
-      unit: '적중',
-      earnedLabel: '10회 적중',
-      target: MhBadgeTarget.prediction,
-      colors: MhMedalColors.gold,
-    ),
-  ];
+  static const winFairy = MhBadgeStyle(
+    coin: '#FF7FA6',
+    inner: '#FF9DBB',
+    rim: '#D63D72',
+    ribbonLeft: '#C2185B',
+    ribbonRight: '#E5487D',
+    cardBg: Color(0xFFFFE6EE),
+    nameColor: Color(0xFF8A1C45),
+    accent: Color(0xFFE5487D),
+    glyph: _heart,
+  );
 
-  /// 지금 진행도로 배지를 채운다.
-  ///
-  /// 진행도는 **목표를 넘어도 그대로 둔다** — `12/10`처럼 보이지 않도록
-  /// 문구는 [MhBadge.subtitle]이 처리한다.
-  static List<MhBadge> evaluate({
-    required int guideDone,
-    required int attended,
-    required int venues,
-    required int predictionHits,
-  }) =>
-      [
-        for (final spec in all)
-          MhBadge(
-            spec: spec,
-            progress: switch (spec.id) {
-              'guide' => guideDone,
-              'first_attend' || 'attend_5' => attended,
-              'venue_3' => venues,
-              _ => predictionHits,
-            },
-          ),
-      ];
+  static const predictor = MhBadgeStyle(
+    coin: '#0068FF',
+    inner: '#3D8BFF',
+    rim: '#0050C8',
+    ribbonLeft: '#003C99',
+    ribbonRight: '#0050C8',
+    cardBg: Color(0xFFE3EEFF),
+    nameColor: Color(0xFF00347F),
+    accent: Color(0xFF0068FF),
+    glyph: _check,
+    glyphStrokeWidth: 4.5,
+  );
 
-  /// 시안 `myBadgeCount` — `2/6`
+  static const graduate = MhBadgeStyle(
+    coin: '#FFC800',
+    inner: '#FFD43B',
+    rim: '#D9A400',
+    ribbonLeft: '#0050C8',
+    ribbonRight: '#0068FF',
+    cardBg: Color(0xFFFFF4CC),
+    nameColor: Color(0xFF6B4500),
+    accent: Color(0xFFFFC800),
+    glyph: _star,
+  );
+}
+
+/// 배지 하나의 지금 상태. `BadgeService`가 만든다.
+class MhBadge {
+  const MhBadge({
+    required this.kind,
+    required this.earned,
+    required this.ratio,
+    required this.subtitle,
+  });
+
+  final MhBadgeKind kind;
+  final bool earned;
+
+  /// 진행바 비율. 0~1.
+  final double ratio;
+
+  /// 이름 밑 한 줄. 획득 전후 문구가 다르다.
+  final String subtitle;
+
+  String get name => kind.label;
+  MhBadgeStyle get style => kind.style;
+
+  /// 헤더 오른쪽의 `1/3 획득`.
   static String countLabel(List<MhBadge> badges) =>
-      '${badges.where((b) => b.earned).length}/${badges.length}';
+      '${badges.where((b) => b.earned).length}/${badges.length} 획득';
 }

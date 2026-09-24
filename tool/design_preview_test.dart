@@ -35,6 +35,10 @@ import 'package:myhandball/ui/home/view_models/home_view_model.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
 import 'package:myhandball/ui/home/widgets/offseason_card.dart';
 import 'package:myhandball/ui/my/widgets/my_screen.dart';
+import 'package:myhandball/ui/my/widgets/my_badges_section.dart';
+import 'package:myhandball/ui/my/view_models/my_view_model.dart';
+import 'package:myhandball/domain/models/rank_row.dart';
+import 'package:myhandball/domain/models/team.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
@@ -322,6 +326,81 @@ void main() {
   });
 
   // 시안 데모 상태: 오프라인 / 서버 오류 / 비시즌
+
+  // 배지 세 종류를 딴 상태와 못 딴 상태로 나란히 본다. 실제 화면에서는
+  // 기록이 쌓여야 보여서, 색·문양을 눈으로 대조할 자리가 여기뿐이다.
+  testWidgets('my badges', (t) async {
+    t.view.physicalSize = const Size(390, 420);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+
+    const team = Team(name: 'SK호크스');
+    const rank = RankRow(
+        rank: 1, team: team, points: 20, played: 20, wins: 10, losses: 10);
+
+    MyState build({required bool earned}) => MyState(
+          team: team,
+          rank: rank,
+          favoritePlayers: const [],
+          teamPlayers: const [],
+          nextGame: null,
+          recentGames: const [],
+          attendance: [
+            for (var i = 0; i < (earned ? 3 : 1); i++)
+              const AttendanceRecord(
+                matchLabel: 'SK호크스 vs 두산',
+                dateLabel: '11.09',
+                venue: 'SK호크스 홈구장',
+                score: '28 : 26',
+                result: '승',
+              ),
+          ],
+          predictions: [
+            for (var i = 0; i < (earned ? 12 : 4); i++)
+              const PredictionRecord(
+                matchLabel: 'SK호크스 vs 두산',
+                pickLabel: 'SK호크스 승',
+                dateLabel: '11.09',
+                hit: true,
+              ),
+          ],
+        );
+
+    final prefs = PreferencesRepository();
+    await prefs.setGuideDoneCount(5);
+
+    final container = ProviderContainer(overrides: [
+      preferencesRepositoryProvider.overrideWithValue(prefs),
+      handballApiServiceProvider.overrideWithValue(
+        const MockHandballApiService(latency: Duration.zero),
+      ),
+    ]);
+    addTearDown(container.dispose);
+
+    await t.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: buildMhTheme(MhPalette.dark),
+        home: Scaffold(
+          backgroundColor: MhPalette.dark.bg,
+          body: ListView(children: [
+            const SizedBox(height: 12),
+            MyBadgesSection(state: build(earned: true)),
+            const SizedBox(height: 20),
+            MyBadgesSection(state: build(earned: false)),
+          ]),
+        ),
+      ),
+    ));
+    await t.pump();
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('preview/my-badges.png'),
+    );
+  });
+
   testWidgets('states', (t) async {
     t.view.physicalSize = const Size(390, 1100);
     t.view.devicePixelRatio = 1.0;

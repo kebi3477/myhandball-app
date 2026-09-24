@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repositories/preferences_repository.dart';
+import '../../../domain/badge_service.dart';
 import '../../../domain/models/badge.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
@@ -12,25 +14,36 @@ import '../../home/view_models/home_tab.dart';
 import '../../shell/view_models/shell_view_model.dart';
 import '../view_models/my_view_model.dart';
 
-/// MY "내 배지" — 3열 그리드. 시안 `myBadges`.
+/// MY "내 배지" — 3칸 그리드. **MY 탭에서만 보여준다.**
 ///
-/// 예전의 "수료 배지" 카드 한 장을 대신한다. 딴 것만 보여주는 게 아니라
-/// **아직 못 딴 것도 흐리게 깔고 진행바를 보여준다** — 목표가 보여야
-/// 채우러 간다.
+/// 예전의 "입문 수료" 카드 한 장을 대신한다. 딴 것만 보여주는 게 아니라
+/// 못 딴 것도 흑백으로 깔고 진행바를 보여준다 — 목표가 보여야 채우러 간다.
+///
+/// 판정은 [BadgeService] 한 곳에 있다. 조건과 획득일이 나중에 서버 기준으로
+/// 바뀌기 때문이다.
 class MyBadgesSection extends ConsumerWidget {
   const MyBadgesSection({super.key, required this.state});
 
   final MyState state;
 
+  /// 승·패만 센다. 무승부와 "관람"(마이팀이 안 뛰었거나 점수가 없는 경기)은
+  /// 승리 요정 계산에서 빠진다.
+  int _count(String result) =>
+      state.attendance.where((a) => a.result == result).length;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
+    final rank = state.rank;
 
-    final badges = MhBadges.evaluate(
+    final badges = const BadgeService().evaluate(
       guideDone: ref.watch(guideDoneCountProvider),
-      attended: state.attendance.length,
-      // 같은 경기장을 여러 번 가도 한 곳으로 센다.
-      venues: state.attendance.map((a) => a.venue).toSet().length,
+      guideCompletedAt:
+          ref.watch(preferencesRepositoryProvider).guideCompletedAt,
+      attendanceWins: _count('승'),
+      attendanceLosses: _count('패'),
+      teamWins: rank?.wins ?? 0,
+      teamLosses: rank?.losses ?? 0,
       predictionHits: state.predictionHits,
     );
 
@@ -42,8 +55,10 @@ class MyBadgesSection extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('내 배지', style: MhText.sectionTitle(c.text)),
-              Text(MhBadges.countLabel(badges),
+              Text('내 배지',
+                  style: MhText.custom(
+                      size: 16, weight: FontWeight.w700, color: c.text)),
+              Text(MhBadge.countLabel(badges),
                   style: MhText.custom(
                       size: 12, weight: FontWeight.w700, color: c.textSub)),
             ],
@@ -58,8 +73,8 @@ class MyBadgesSection extends ConsumerWidget {
               crossAxisCount: 3,
               mainAxisSpacing: MhSpacing.xs,
               crossAxisSpacing: MhSpacing.xs,
-              // 메달 53 + 이름 + 진행바/문구.
-              mainAxisExtent: 148,
+              // 패딩 16+14 + 메달 53 + 이름 + 진행바 + 문구.
+              mainAxisExtent: 150,
             ),
             itemBuilder: (_, i) => _BadgeTile(badge: badges[i]),
           ),
@@ -74,15 +89,10 @@ class _BadgeTile extends ConsumerWidget {
 
   final MhBadge badge;
 
-  /// 획득한 배지의 카드 배경·글자색. 시안 그대로다.
-  static const _earnedBg = Color(0xFFFFF4CC);
-  static const _earnedName = Color(0xFF6B4500);
-  static const _earnedSub = Color(0xFF8A6A00);
-  static const _barColor = Color(0xFFFFC800);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
+    final style = badge.style;
     final earned = badge.earned;
 
     return MhTap(
@@ -90,12 +100,13 @@ class _BadgeTile extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(8, MhSpacing.sm, 8, 14),
         decoration: BoxDecoration(
-          color: earned ? _earnedBg : c.card,
+          color: earned ? style.cardBg : c.card,
           borderRadius: BorderRadius.circular(MhRadius.card),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 못 딴 배지는 흐리고 회색이다 (시안 `b.op` / `b.filter`).
+            // 못 딴 배지는 흑백에 흐리다.
             Opacity(
               opacity: earned ? 1 : 0.35,
               child: ColorFiltered(
@@ -104,61 +115,56 @@ class _BadgeTile extends ConsumerWidget {
                     : const ColorFilter.matrix(_grayscale),
                 child: MhMedal(
                   size: 44,
-                  glyph: badge.spec.glyph,
-                  colors: badge.spec.colors,
-                  // 시안의 배지 메달에는 곡선 장식이 없다. 가이드 화면
-                  // 메달에만 있다.
+                  glyph: style.glyph,
                   arcs: false,
+                  colors: MhMedalColors(
+                    ribbonLeft: style.ribbonLeft,
+                    ribbonRight: style.ribbonRight,
+                    rim: style.rim,
+                    outer: style.coin,
+                    inner: style.inner,
+                    glyphStrokeWidth: style.glyphStrokeWidth,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              badge.spec.name,
+              badge.name,
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: MhText.custom(
                 size: 13,
                 weight: FontWeight.w800,
-                color: earned ? _earnedName : c.text,
+                color: earned ? style.nameColor : c.text,
               ),
             ),
             const SizedBox(height: 6),
-            if (earned)
-              Text(badge.subtitle,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: MhText.custom(
-                      size: 11, weight: FontWeight.w600, color: _earnedSub))
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Column(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: badge.ratio,
-                        minHeight: 5,
-                        backgroundColor: c.border,
-                        valueColor:
-                            const AlwaysStoppedAnimation<Color>(_barColor),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(badge.subtitle,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: MhText.custom(
-                            size: 11,
-                            weight: FontWeight.w500,
-                            color: c.textSub)),
-                  ],
+            if (!earned) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: badge.ratio,
+                  minHeight: 5,
+                  backgroundColor: c.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(style.accent),
                 ),
               ),
+              const SizedBox(height: 6),
+            ],
+            Text(
+              badge.subtitle,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: MhText.custom(
+                size: 11,
+                weight: FontWeight.w600,
+                color: earned ? style.nameColor : c.textSub,
+                height: 1.3,
+              ),
+            ),
           ],
         ),
       ),
@@ -166,7 +172,7 @@ class _BadgeTile extends ConsumerWidget {
   }
 
   void _open(WidgetRef ref, BuildContext context) {
-    switch (badge.spec.target) {
+    switch (badge.kind.target) {
       case MhBadgeTarget.guide:
         GuideScreen.open(context);
       case MhBadgeTarget.attendance:
