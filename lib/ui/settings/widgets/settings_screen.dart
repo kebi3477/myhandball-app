@@ -8,6 +8,7 @@ import '../../core/themes/tokens.dart';
 import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
+import '../../app/view_models/app_update_view_model.dart';
 import '../view_models/settings_view_model.dart';
 
 /// 설정 화면. 시안 SETTINGS PAGE.
@@ -64,11 +65,21 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => openExternalUrl(context, AppConfig.termsUrl),
             ),
             _Divider(),
-            _LinkRow(
-              label: '앱 버전',
-              trailing:
-                  '${AppConfig.appVersion} (${AppConfig.buildNumber})',
-            ),
+            // 새 버전이 있으면 여기서도 알린다. 시작할 때 "나중에"를 눌러
+            // 안내를 미뤘어도 **없어진 게 아니라 미룬 것**이라 남겨 둔다.
+            if (ref.watch(appUpdateProvider).valueOrNull case final update?)
+              _LinkRow(
+                label: '앱 버전',
+                trailing: '${update.version} 업데이트 >',
+                highlight: true,
+                onTap: () => openExternalUrl(context, update.storeUrl),
+              )
+            else
+              _LinkRow(
+                label: '앱 버전',
+                trailing:
+                    '${AppConfig.appVersion} (${AppConfig.buildNumber})',
+              ),
           ]),
         ],
       ),
@@ -218,11 +229,15 @@ class _LinkRow extends StatelessWidget {
     required this.label,
     required this.trailing,
     this.onTap,
+    this.highlight = false,
   });
 
   final String label;
   final String trailing;
   final VoidCallback? onTap;
+
+  /// 새 버전 안내처럼 눈에 띄어야 하는 줄. 오른쪽 글자가 브랜드색이 된다.
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +255,9 @@ class _LinkRow extends StatelessWidget {
                     size: 15, weight: FontWeight.w600, color: c.text)),
             Text(trailing,
                 style: MhText.custom(
-                    size: 13, weight: FontWeight.w400, color: c.textFaint)),
+                    size: 13,
+                    weight: highlight ? FontWeight.w700 : FontWeight.w400,
+                    color: highlight ? MhColors.brand : c.textFaint)),
           ],
         ),
       ),

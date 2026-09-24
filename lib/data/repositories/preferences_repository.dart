@@ -37,6 +37,12 @@ class PreferencesRepository {
   Gender _preferredGender = Gender.men;
   int _guideDoneCount = 0;
 
+  /// 업데이트 안내에서 "나중에"를 고른 버전.
+  ///
+  /// 같은 버전으로는 다시 묻지 않는다. 켤 때마다 알럿이 뜨면 안내가 아니라
+  /// 방해가 된다.
+  String _skippedUpdateVersion = '';
+
   /// 시안 `mh_nick` — 경기장에서 불릴 닉네임. 온보딩 5스텝에서 정한다.
   ///
   /// **아직 기기에만 남는다.** 적중률 랭킹에 이름을 올리려면 서버가
@@ -114,6 +120,7 @@ class PreferencesRepository {
         (prefs.getInt(_kGuide) ?? 0).clamp(0, AppConfig.guideLessonCount);
     _notificationsOn = prefs.getBool(_kNotifications) ?? true;
     _nickname = prefs.getString(_kNickname) ?? '';
+    _skippedUpdateVersion = prefs.getString(_kSkippedUpdate) ?? '';
     final joined = prefs.getString(_kProfileCreatedAt);
     _profileCreatedAt = joined == null ? null : DateTime.tryParse(joined);
     _season = Season.fromYear(prefs.getString(_kSeason) ?? Season.current.year);
@@ -143,6 +150,7 @@ class PreferencesRepository {
       prefs.setInt(_kGuide, _guideDoneCount),
       prefs.setBool(_kNotifications, _notificationsOn),
       prefs.setString(_kNickname, _nickname),
+      prefs.setString(_kSkippedUpdate, _skippedUpdateVersion),
       if (_profileCreatedAt case final at?)
         prefs.setString(_kProfileCreatedAt, at.toIso8601String())
       else
@@ -212,6 +220,7 @@ class PreferencesRepository {
   static const _kRecentSearch = 'mh_recent_search';
   static const _kPredictions = 'mh_preds';
   static const _kNickname = 'mh_nick';
+  static const _kSkippedUpdate = 'mh_update_skipped';
   static const _kProfileCreatedAt = 'mh_joined';
 
   /// 시안 `mh_onboarded`
@@ -333,6 +342,14 @@ class PreferencesRepository {
     } else {
       _profileCreatedAt ??= DateTime.now();
     }
+    await _persist();
+  }
+
+  /// 업데이트 안내를 미룬 버전. 아직 미룬 적 없으면 빈 문자열.
+  String get skippedUpdateVersion => _skippedUpdateVersion;
+
+  Future<void> skipUpdateVersion(String version) async {
+    _skippedUpdateVersion = version;
     await _persist();
   }
 

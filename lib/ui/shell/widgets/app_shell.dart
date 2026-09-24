@@ -13,6 +13,8 @@ import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../core/ui/push_sync.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
+import '../../app/view_models/app_update_view_model.dart';
+import '../../app/widgets/update_prompt.dart';
 import '../../guide/widgets/guide_screen.dart';
 import '../../home/widgets/home_screen.dart';
 import '../../my/widgets/my_screen.dart';
@@ -47,7 +49,20 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (!mounted) return;
       if (AppConfig.openGuide) GuideScreen.open(context);
       _startPush();
+      _checkUpdate();
     });
+  }
+
+  /// 스토어에 새 버전이 있으면 안내를 띄운다.
+  ///
+  /// 온보딩을 마친 뒤(=셸에 들어온 뒤)에 한다. 앱을 처음 켠 사람에게
+  /// 업데이트부터 들이밀 이유가 없다. 확인에 실패하면 조용히 넘어간다.
+  Future<void> _checkUpdate() async {
+    final update = await ref.read(appUpdateProvider.future);
+    if (update == null || !mounted) return;
+    if (!ref.read(shouldPromptUpdateProvider(update.version))) return;
+    if (!context.mounted) return;
+    await showUpdatePrompt(context, ref, update);
   }
 
   /// 푸시를 붙이고 구독을 지금 설정과 맞춘다.

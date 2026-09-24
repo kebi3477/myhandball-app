@@ -68,6 +68,12 @@ abstract final class AppConfig {
   /// 시안 규칙 가이드의 총 레슨 수 (`{{ guideDoneCount }}/5`).
   static const guideLessonCount = 5;
 
+  /// App Store 번들 ID. 업데이트 확인(iTunes Lookup)이 이걸로 조회한다.
+  ///
+  /// 안드로이드와 다르다 — 기존 배포본이 그래서 바꾸면 새 앱이 된다
+  /// (안드로이드는 `com.myhandball.app`).
+  static const iosBundleId = 'com.kebi.myhandball-ios';
+
   /// 설정 화면에 표시할 앱 버전. `pubspec.yaml`의 `version`과 맞춰야 하며
   /// `test/app_version_test.dart`가 어긋나면 잡는다.
   static const appVersion = '1.1.0';
