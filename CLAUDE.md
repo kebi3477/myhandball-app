@@ -19,8 +19,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 영역 | 상태 |
 |---|---|
 | 디자인 토큰 · 테마 (`lib/ui/core/themes/`) | 다크/라이트 2벌, 시안 `c.*` 키와 1:1 |
-| 온보딩 5스텝 | 완료 |
+| 온보딩 6스텝 (닉네임 포함) | 완료 |
 | 메인 4탭 — 홈 / 일정 / 분석 / MY | 완료 |
+| 홈 하위 3탭 — 홈 / 승부예측 / 직관 | 완료 (랭킹·팬덤은 서버 대기) |
 | 경기 상세 (중계·기록·예측·MVP) | 완료 |
 | 팀 상세 (소개·전적·선수·응원) | 완료 |
 | 규칙 가이드 (레슨 5개 + 퀴즈) | 완료 |
@@ -29,6 +30,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 오프라인 · 서버 오류 · 비시즌 화면 | 완료 (시안 `demoState` 4종) |
 | 데이터 계층 (repository + service) | 완료 — 목업 / HTTP 두 구현체 |
 | **실제 API 연동** | **완료** — `API_BASE_URL`이 있으면 `HttpHandballApiService` |
+
+### 2026-09-24 시안 개편
+
+세 덩어리가 들어왔다.
+
+**닉네임.** 온보딩에 5번째 스텝(인덱스 4)이 생겨 `stepCount`가 5 -> 6이 됐고,
+MY 맨 위에 프로필 카드가 붙어 그 자리에서 고친다. 규칙은
+`domain/models/nickname.dart` 한 곳에 있다 — 2~10자, 한글·영문·숫자.
+**한 글자를 1로 세므로 `length`가 아니라 `runes.length`를 쓴다.**
+
+저장 키는 `mh_nick`, 처음 정한 달이 `mh_joined`("2026.09 가입")다.
+**아직 서버에 안 올라간다.** 적중률 랭킹에 이름을 띄우려면 기기 ID와 닉네임을
+서버가 알아야 하는데 그 API가 없다.
+
+**홈이 3탭이 됐다** (`HomeTab`, `ui/home/view_models/home_tab.dart`).
+하단 4탭(`ShellTab`)과는 다른 층이다.
+
+- **승부예측** — 프로필 · 이번 주 예측 · 적중률 랭킹 · 팬덤 적중률 · 내 예측 기록.
+  랭킹과 팬덤은 **서버가 없어 "준비 중" 카드로 자리만 잡아 뒀다.** 숫자를
+  지어내면 랭킹처럼 보이는 가짜가 된다. 이번 주 예측은 경기마다
+  `GET /api/game/:matchSeq/prediction`을 부르므로 `_tallyLimit`(6)으로 막아
+  뒀다 — 주간 집계 엔드포인트가 생기면 이 상한은 없어져야 한다
+- **직관** — 시즌 요약 · 경기장 도장깨기 · 다음 직관 · 직관 일지.
+  **전부 기기 값(`mh_attended`)과 시즌 일정으로 만든다.** 서버가 없어서
+  앱을 지우면 같이 사라진다
+
+승부예측 탭의 빨간 점은 **홈이 이미 받아 둔 경기**만 본다
+(`_predictionDotProvider`). 점 하나 찍자고 시즌 일정을 미리 받으면 홈이
+그만큼 늦게 뜬다.
+
+**가이드 완료 화면**(`guide_done_view.dart`)이 생겼다. 퀴즈를 맞히면 목록으로
+바로 돌아가는 대신 마스코트 · 퀴즈 결과 · (마지막이면) 수료 배지를 보여주고
+다음 레슨으로 넘긴다.
+
+그 밖에 같이 맞춘 것: 셸 상단 오프라인 띠(`ApiClient.offline`), 분석 탭의
+"시즌 종료" 배너(`offseasonProvider`), 팀 전적의 "득점 유형"
+(`seasonRecords` — **서버가 이미 주고 있었는데 매핑만 없었다**),
+선수 시트의 팀 보기·비교 버튼, 마이팀 선택 시트의 남자팀/여자팀 라벨.
 
 ### 시안 대비 단순화한 것
 
@@ -69,6 +108,12 @@ pat = re.compile(r'<sc-if value="\{\{ sc\.(\w+) \}\}"[^>]*>(<svg.*?</svg>)', re.
 
 **Pretendard에 `✕`(U+2715) 글리프가 없다.** 시안이 이 문자를 닫기 버튼에
 쓰는데 그대로 옮기면 네모(두부)로 찍힌다. `Icons.close_rounded`로 그린다.
+(`>`꼴 홑화살괄호와 하트 기호는 Pretendard에 있어서 그대로 써도 된다.)
+
+**`MhIcon`은 부모가 크기를 조여도 `size`를 지킨다.** `SvgPicture`가 tight
+제약을 받으면 자기 width/height를 버리고 부모 크기로 늘어나서, 안쪽을
+`Center` + `SizedBox`로 감싸 뒀다. Material `Icon`은 글리프라 이 문제가
+없어서 시안 아이콘으로 갈아끼운 뒤에야 드러났다 (`test/mh_icon_test.dart`).
 
 **골든 프리뷰는 폰트 폴백이 없다.** 글리프가 깨진 건지 테스트 환경 탓인지
 구분이 안 되므로 `tool/design_preview_test.dart`가 Pretendard와 MaterialIcons를
@@ -148,8 +193,15 @@ lib/
 `/api/player/:playerSeq`까지 연결돼서 **앱이 안 쓰는 엔드포인트는 위젯·푸시뿐**이고
 그 둘은 네이티브 작업이 선행돼야 한다.
 
-**새로 API 작업이 필요한 건 아래 세 개뿐이다.**
+**새로 API 작업이 필요한 것** (2026-09-24 시안 개편 포함):
 
+- **프로필(닉네임)** — 기기 ID에 닉네임·응원팀을 붙여 둬야 적중률 랭킹에
+  이름이 뜬다. 지금은 `mh_nick`으로 기기에만 있다
+- **적중률 랭킹 · 팬덤 적중률** — 승부예측 탭의 두 섹션이 이것 때문에
+  "준비 중"으로 떠 있다
+- **주간 예측 묶음** — 이번 주 경기 + 집계 + 내 선택을 한 번에. 지금은
+  경기마다 따로 부른다
+- **직관 기록** — `mh_attended`가 기기에만 있어 앱을 지우면 사라진다
 - **내 예측 목록** — 서버는 경기별 집계만 준다. MY 화면이 "내가 예측한 경기"를
   모아 보여주려면 목록이 필요한데, 지금은 내 선택만 기기에 캐시해 대신하고 있다
   (`PreferencesRepository._predictions`)
@@ -473,6 +525,8 @@ mh_onboarded  mh_guide  mh_attended  mh_recent_search  mh_fav_players
 mh_theme  mh_gender  mh_season  mh_notif  mh_my_team
 mh_preds      # 내 예측만. 집계는 서버가 갖는다
 mh_device_id  # 익명 기기 UUID (X-Device-Id)
+mh_nick       # 닉네임 (2026-09-24 시안 개편)
+mh_joined     # 닉네임을 처음 정한 시각. 가입 월로 보여준다
 ```
 
 **`mh_mvp`·`mh_cheer`는 없어졌다.** MVP 투표와 응원글은 서버로 갔다. 예측도
