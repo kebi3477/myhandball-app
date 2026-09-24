@@ -376,6 +376,10 @@ class PreferencesRepository {
 
   DateTime? get guideCompletedAt => _guideCompletedAt;
 
+  /// 차단한 사람이 있는지. **서버가 "숨긴 글 n개"를 주지 않아서**
+  /// 응원글 탭이 이걸로 "숨긴 글이 있다"를 판단한다.
+  bool get hasBlockedAuthors => _blockedNames.isNotEmpty;
+
   /// 차단할 때 봤던 닉네임. 모르면 `null`.
   String? blockedName(String authorId) => _blockedNames[authorId];
 

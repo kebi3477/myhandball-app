@@ -93,6 +93,28 @@ abstract final class MhIcons {
   static const wifiOff =
       '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18" stroke="#000" stroke-width="2" stroke-linecap="round"></path>';
 
+  /// 응원글 `⋯` 메뉴. 시안은 r1.8 점 세 개다.
+  static const more =
+      '<circle cx="5" cy="12" r="1.8" fill="#000"></circle>'
+      '<circle cx="12" cy="12" r="1.8" fill="#000"></circle>'
+      '<circle cx="19" cy="12" r="1.8" fill="#000"></circle>';
+
+  /// 삭제 — 휴지통.
+  static const trash =
+      '<path d="M4 7h16M10 4h4M9 7v12M15 7v12M6 7l1 13h10l1-13" stroke="#000" '
+      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+  /// 신고 — 깃발.
+  static const flag =
+      '<path d="M5 21V4M5 5h12l-2.5 4L17 13H5" stroke="#000" '
+      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+  /// 차단 — 금지.
+  static const ban =
+      '<circle cx="12" cy="12" r="8.5" stroke="#000" stroke-width="1.8"></circle>'
+      '<path d="M6.2 6.2l11.6 11.6" stroke="#000" stroke-width="1.8" '
+      'stroke-linecap="round"></path>';
+
   /// 관심 선수 하트 (테두리). 시안은 같은 path에 fill만 none이다.
   static const heart =
       '<path d="M12 20.5s-7.4-4.5-9.3-9.1C1.3 8 3.4 4.8 6.7 4.8c2 0 3.3 1.1 4.3 2.4 1-1.3 2.3-2.4 4.3-2.4 3.3 0 5.4 3.2 4 6.6-1.9 4.6-9.3 9.1-9.3 9.1z" fill="none" stroke="#000" stroke-width="1.8" stroke-linejoin="round"></path>';

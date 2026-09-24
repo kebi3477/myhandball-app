@@ -725,7 +725,27 @@ class MockHandballApiService implements HandballApiService {
   @override
   Future<List<CheerPost>> fetchCheers(Team team, {int page = 1}) async {
     await _delay();
-    return List.unmodifiable(_cheers[team.name] ?? const <CheerPost>[]);
+    // 남이 쓴 글이 없으면 신고·차단을 눌러볼 데가 없다. 처음 열 때 두 개를
+    // 깔아 둔다 (실제 서버에는 DB에 쌓인 글이 온다).
+    final posts = _cheers[team.name] ??= [
+      CheerPost(
+        id: 'seed-${team.name}-1',
+        authorId: 'author-a',
+        author: '날쌘피벗',
+        text: '오늘도 ${team.name} 화이팅!',
+        dateLabel: '9.23',
+        likes: 3,
+      ),
+      CheerPost(
+        id: 'seed-${team.name}-2',
+        authorId: 'author-b',
+        author: '든든한윙어',
+        text: '이번 시즌은 다르다',
+        dateLabel: '9.22',
+        likes: 1,
+      ),
+    ];
+    return List.unmodifiable(posts);
   }
 
   @override

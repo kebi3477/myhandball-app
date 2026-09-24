@@ -160,6 +160,67 @@ class TeamDetailViewModel
     await _write(c, (api) => api.toggleCheerLike(c.detail.team, postId));
   }
 
+  /// 응원글 신고. 성공하면 서버가 그 글을 숨기므로 목록을 다시 받는다.
+  ///
+  /// 차단까지 고르면 신고 뒤에 이어서 차단한다 — 신고가 실패하면 차단도
+  /// 하지 않는다. 결과 문구는 [TeamDetailState.notice]로 올라간다.
+  Future<void> reportCheer(
+    CheerPost post, {
+    required CheerReportReason reason,
+    String? detail,
+    bool alsoBlock = false,
+  }) async {
+    final c = state.valueOrNull;
+    if (c == null) return;
+    final api = ref.read(handballApiServiceProvider);
+
+    try {
+      await api.reportCheer(c.detail.team, post.id,
+          reason: reason, detail: detail);
+      if (alsoBlock) await _block(api, post);
+      final cheers = await api.fetchCheers(c.detail.team);
+      state = AsyncData(c.copyWith(
+        cheers: cheers,
+        notice: alsoBlock ? '신고하고 이 사용자의 글을 숨겼어요' : '신고가 접수됐어요. 검토 후 조치할게요',
+      ));
+    } on ApiException catch (e) {
+      state = AsyncData(c.copyWith(
+        notice: e.isConflict ? '이미 신고한 응원글이에요' : _failure(e, '신고를 접수하지'),
+      ));
+    }
+  }
+
+  /// 작성자 차단. 그 사람의 글이 모든 팀에서 안 보이게 된다.
+  Future<void> blockAuthor(CheerPost post) async {
+    final c = state.valueOrNull;
+    if (c == null) return;
+    final api = ref.read(handballApiServiceProvider);
+
+    try {
+      await _block(api, post);
+      final cheers = await api.fetchCheers(c.detail.team);
+      state = AsyncData(c.copyWith(
+        cheers: cheers,
+        notice: '${post.author}님의 글을 더 이상 보지 않아요',
+      ));
+    } on ApiException catch (e) {
+      state = AsyncData(c.copyWith(notice: _failure(e, '차단하지')));
+    }
+  }
+
+  /// 서버는 차단 목록에 `authorId`만 준다. 이름은 지금 알고 있으니 적어 둔다.
+  Future<void> _block(HandballApiService api, CheerPost post) async {
+    await api.blockAuthor(post.authorId);
+    await ref
+        .read(preferencesRepositoryProvider)
+        .rememberBlockedName(post.authorId, post.author);
+  }
+
+  /// 시안 `failMsg` — 오프라인인지 서버 오류인지에 따라 다른 문구.
+  String _failure(ApiException e, String what) => e.isOffline
+      ? '오프라인 상태라 $what 못했어요. 연결을 확인해 주세요.'
+      : '일시적인 오류로 $what 못했어요. 잠시 후 다시 시도해 주세요.';
+
   /// 응원글 쓰기는 전부 "서버에 보내고 목록을 다시 받는다"이다.
   /// 서버가 좋아요·내 글 여부를 판정하므로 화면에서 흉내 내지 않는다.
   Future<void> _write(

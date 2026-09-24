@@ -9,6 +9,7 @@ import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
 import '../../app/view_models/app_update_view_model.dart';
+import 'blocked_users_screen.dart';
 import '../view_models/settings_view_model.dart';
 
 /// 설정 화면. 시안 SETTINGS PAGE.
@@ -47,6 +48,16 @@ class SettingsScreen extends ConsumerWidget {
               label: '알림',
               value: state.notificationsOn,
               onChanged: (_) => vm.toggleNotifications(),
+            ),
+          ]),
+          const SizedBox(height: MhSpacing.sm),
+          // 차단 수단만 있고 해제할 곳이 없으면 심사에서 걸린다.
+          _Group(children: [
+            _LinkRow(
+              label: '차단한 사용자',
+              trailing:
+                  '${ref.watch(blockedAuthorsProvider).valueOrNull?.length ?? 0}명 >',
+              onTap: () => BlockedUsersScreen.open(context),
             ),
           ]),
           const SizedBox(height: MhSpacing.sm),
