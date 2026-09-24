@@ -3,16 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../domain/models/gender.dart';
+import '../../../domain/models/nickname.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
+import '../../core/ui/team_logo.dart';
 import '../view_models/onboarding_view_model.dart';
 import 'interest_card.dart';
 import 'team_picker_row.dart';
 
-/// 온보딩 5스텝.
+/// 온보딩 6스텝.
 ///
 /// 시안은 `width:500%` 컨테이너를 `transform: translateX(-N%)`로 밀고
 /// `transition: transform .5s ease-in-out`을 건다. 여기서는 PageView를
@@ -75,7 +77,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onTeamGender: vm.selectTeamGender,
                     onTeam: vm.selectTeam,
                   ),
-                  const _WelcomeStep(),
+                  _NicknameStep(
+                    state: state,
+                    onChanged: vm.setNickname,
+                    onSuggest: vm.suggestNickname,
+                  ),
+                  _WelcomeStep(state: state),
                 ],
               ),
             ),
@@ -124,8 +131,9 @@ class _ProgressBar extends StatelessWidget {
                   value: state.progress,
                   minHeight: 5,
                   backgroundColor: MhColors.onboardTrack,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(MhColors.brand),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    MhColors.brand,
+                  ),
                 ),
               ),
             ),
@@ -146,11 +154,17 @@ class _IntroStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset('assets/design/logo-symbol.svg',
-              width: 46, height: 60),
+          SvgPicture.asset(
+            'assets/design/logo-symbol.svg',
+            width: 46,
+            height: 60,
+          ),
           const SizedBox(height: 8),
-          SvgPicture.asset('assets/design/logo-wordmark.svg',
-              width: 120, height: 27),
+          SvgPicture.asset(
+            'assets/design/logo-wordmark.svg',
+            width: 120,
+            height: 27,
+          ),
           const SizedBox(height: MhSpacing.md),
           Text(
             '마이팀 경기,\n이제 놓치지 않기',
@@ -319,9 +333,14 @@ class _GenderCard extends StatelessWidget {
               colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
             ),
             const SizedBox(height: MhSpacing.xs),
-            Text(label,
-                style:
-                    MhText.custom(size: 14, weight: FontWeight.w700, color: fg)),
+            Text(
+              label,
+              style: MhText.custom(
+                size: 14,
+                weight: FontWeight.w700,
+                color: fg,
+              ),
+            ),
           ],
         ),
       ),
@@ -466,16 +485,24 @@ class _TeamGenderTab extends StatelessWidget {
 }
 
 class _WelcomeStep extends StatelessWidget {
-  const _WelcomeStep();
+  const _WelcomeStep({required this.state});
+
+  final OnboardingState state;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('환영합니다!',
-            style: MhText.custom(
-                size: 24, weight: FontWeight.w700, color: Colors.white)),
+        Text(
+          state.welcomeTitle,
+          textAlign: TextAlign.center,
+          style: MhText.custom(
+            size: 24,
+            weight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
         const SizedBox(height: 30),
         Text(
           '이제부터 여러분의 최애팀을\n응원해보세요.',
@@ -502,11 +529,15 @@ class _PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          MhSpacing.md, MhSpacing.sm, MhSpacing.md, MhSpacing.md),
+        MhSpacing.md,
+        MhSpacing.sm,
+        MhSpacing.md,
+        MhSpacing.md,
+      ),
       child: Opacity(
         opacity: state.canAdvance ? 1 : 0.4,
         child: MhTap(
-        haptic: MhHaptic.impact,
+          haptic: MhHaptic.impact,
           onTap: onTap,
           child: Container(
             width: double.infinity,
@@ -519,10 +550,248 @@ class _PrimaryButton extends StatelessWidget {
             child: Text(
               state.primaryLabel,
               style: MhText.custom(
-                  size: 15, weight: FontWeight.w700, color: Colors.white),
+                size: 15,
+                weight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// 5스텝 — 닉네임. 시안 `경기장에서 불릴 닉네임을 정해주세요`.
+///
+/// 입력칸 + "추천" 버튼 + 규칙 안내 + 미리보기 카드 네 덩어리다.
+/// 미리보기가 있는 이유는 이 닉네임이 **적중률 랭킹에 공개로 뜨기**
+/// 때문이다 — 어디에 쓰이는지 보여주고 정하게 한다.
+class _NicknameStep extends StatefulWidget {
+  const _NicknameStep({
+    required this.state,
+    required this.onChanged,
+    required this.onSuggest,
+  });
+
+  final OnboardingState state;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onSuggest;
+
+  @override
+  State<_NicknameStep> createState() => _NicknameStepState();
+}
+
+class _NicknameStepState extends State<_NicknameStep> {
+  final _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.text = widget.state.nickname;
+  }
+
+  @override
+  void didUpdateWidget(_NicknameStep old) {
+    super.didUpdateWidget(old);
+    // "추천"은 뷰모델이 값을 갈아끼운다. 컨트롤러가 따라가지 않으면
+    // 화면에는 이전 글자가 남는다.
+    final next = widget.state.nickname;
+    if (next != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: next,
+        selection: TextSelection.collapsed(offset: next.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final message = state.nicknameMessage;
+    final hasError = message != null;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        MhSpacing.md,
+        MhSpacing.md,
+        MhSpacing.md,
+        MhSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '경기장에서 불릴\n닉네임을 정해주세요',
+            style: MhText.onboardQuestion(Colors.white),
+          ),
+          const SizedBox(height: MhSpacing.md),
+          // 시안 height 56 / radius 14 / 좌 16 · 우 8 패딩.
+          Container(
+            height: 56,
+            padding: const EdgeInsets.only(left: 16, right: 8),
+            decoration: BoxDecoration(
+              color: MhColors.onboardCard,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: hasError ? _errorColor : MhColors.onboardBorder,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    onChanged: widget.onChanged,
+                    maxLength: Nickname.maxLength,
+                    textInputAction: TextInputAction.done,
+                    style: MhText.custom(
+                      size: 16,
+                      weight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    cursorColor: MhColors.brand,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      isCollapsed: true,
+                      border: InputBorder.none,
+                      hintText: '2~10자 · 한글, 영문, 숫자',
+                      hintStyle: MhText.custom(
+                        size: 16,
+                        weight: FontWeight.w500,
+                        color: const Color(0xFF5D5D5D),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                MhTap(
+                  onTap: widget.onSuggest,
+                  child: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: MhColors.onboardBorder,
+                      borderRadius: BorderRadius.circular(MhRadius.button),
+                    ),
+                    child: Center(
+                      widthFactor: 1,
+                      child: Text(
+                        '추천',
+                        style: MhText.custom(
+                          size: 13,
+                          weight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: MhSpacing.xs),
+          SizedBox(
+            height: 18,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    message ?? '',
+                    style: MhText.custom(
+                      size: 12,
+                      weight: FontWeight.w500,
+                      color: _errorColor,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${state.nicknameLength}/${Nickname.maxLength}',
+                  style: MhText.custom(
+                    size: 11,
+                    weight: FontWeight.w500,
+                    color: const Color(0xFF5D5D5D),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: MhSpacing.md),
+          _NicknamePreview(state: state),
+        ],
+      ),
+    );
+  }
+
+  /// 시안 `obNickBorder` / `obNickMsgColor`의 경고색.
+  static const _errorColor = Color(0xFFFF4D6A);
+}
+
+/// 닉네임 + 마이팀 로고 미리보기. 시안의 마지막 덩어리.
+class _NicknamePreview extends StatelessWidget {
+  const _NicknamePreview({required this.state});
+
+  final OnboardingState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final set = Nickname.normalize(state.nickname).isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: MhColors.onboardCard,
+        borderRadius: BorderRadius.circular(MhRadius.chip),
+      ),
+      child: Row(
+        children: [
+          // 시안은 흰 원에 브랜드색 2px 테두리를 두른다.
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: MhColors.brand, width: 2),
+            ),
+            child: Center(
+              child: TeamLogo(size: 36, logoUrl: state.team?.logoUrl),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  state.nicknamePreview,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: MhText.custom(
+                    size: 15,
+                    weight: FontWeight.w700,
+                    color: set ? Colors.white : const Color(0xFF5D5D5D),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${state.team?.name ?? '마이팀'} 팬',
+                  style: MhText.custom(
+                    size: 12,
+                    weight: FontWeight.w500,
+                    color: const Color(0xFF808080),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

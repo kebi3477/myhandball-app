@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/app_config.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
+import '../../domain/models/nickname.dart';
 import '../../domain/models/season.dart';
 import '../../domain/models/team.dart';
 import '../services/mock_handball_api_service.dart';
@@ -35,6 +36,17 @@ class PreferencesRepository {
       AppConfig.skipOnboarding ? MockHandballApiService.skHawks : null;
   Gender _preferredGender = Gender.men;
   int _guideDoneCount = 0;
+
+  /// 시안 `mh_nick` — 경기장에서 불릴 닉네임. 온보딩 5스텝에서 정한다.
+  ///
+  /// **아직 기기에만 남는다.** 적중률 랭킹에 이름을 올리려면 서버가
+  /// 기기 ID ↔ 닉네임을 알아야 하는데 그 API가 없다.
+  String _nickname = '';
+
+  /// 시안 `{{ pv.since }} 가입` — 프로필을 처음 만든 달.
+  ///
+  /// 서버에 계정이 없으니 "가입"은 닉네임을 정한 시점이다.
+  DateTime? _profileCreatedAt;
 
   /// 시안 `mh_fav_players`
   final _favoritePlayerIds = <String>{};
@@ -101,6 +113,9 @@ class PreferencesRepository {
     _guideDoneCount =
         (prefs.getInt(_kGuide) ?? 0).clamp(0, AppConfig.guideLessonCount);
     _notificationsOn = prefs.getBool(_kNotifications) ?? true;
+    _nickname = prefs.getString(_kNickname) ?? '';
+    final joined = prefs.getString(_kProfileCreatedAt);
+    _profileCreatedAt = joined == null ? null : DateTime.tryParse(joined);
     _season = Season.fromYear(prefs.getString(_kSeason) ?? Season.current.year);
 
     for (final entry in prefs.getStringList(_kPredictions) ?? const []) {
@@ -127,6 +142,11 @@ class PreferencesRepository {
       prefs.setString(_kGender, _preferredGender.code),
       prefs.setInt(_kGuide, _guideDoneCount),
       prefs.setBool(_kNotifications, _notificationsOn),
+      prefs.setString(_kNickname, _nickname),
+      if (_profileCreatedAt case final at?)
+        prefs.setString(_kProfileCreatedAt, at.toIso8601String())
+      else
+        prefs.remove(_kProfileCreatedAt),
       prefs.setString(_kSeason, _season.year),
       prefs.setStringList(_kFavPlayers, _favoritePlayerIds.toList()),
       prefs.setStringList(_kPredictions,
@@ -191,6 +211,8 @@ class PreferencesRepository {
   static const _kAttended = 'mh_attended';
   static const _kRecentSearch = 'mh_recent_search';
   static const _kPredictions = 'mh_preds';
+  static const _kNickname = 'mh_nick';
+  static const _kProfileCreatedAt = 'mh_joined';
 
   /// 시안 `mh_onboarded`
   bool get onboarded => _onboarded;
@@ -284,6 +306,33 @@ class PreferencesRepository {
 
   Future<void> toggleFavoritePlayer(String id) async {
     if (!_favoritePlayerIds.remove(id)) _favoritePlayerIds.add(id);
+    await _persist();
+  }
+
+  /// 시안 `nick`. 아직 안 정했으면 빈 문자열이다.
+  String get nickname => _nickname;
+
+  bool get hasNickname => _nickname.isNotEmpty;
+
+  /// `2026.09 가입` — 프로필을 만든 달.
+  String? get joinedLabel {
+    final at = _profileCreatedAt;
+    if (at == null) return null;
+    return '${at.year}.${at.month.toString().padLeft(2, '0')}';
+  }
+
+  /// 닉네임을 저장한다. 빈 값을 주면 지운다.
+  ///
+  /// 처음 정하는 순간을 가입 시점으로 잡아 둔다. 이미 있으면 덮어쓰지
+  /// 않는다 — 닉네임을 바꿨다고 가입일이 오늘로 밀리면 안 된다.
+  Future<void> setNickname(String value) async {
+    final next = Nickname.normalize(value);
+    _nickname = next;
+    if (next.isEmpty) {
+      _profileCreatedAt = null;
+    } else {
+      _profileCreatedAt ??= DateTime.now();
+    }
     await _persist();
   }
 

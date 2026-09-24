@@ -74,7 +74,6 @@ class MyState {
   final List<AttendanceRecord> attendance;
   final List<PredictionRecord> predictions;
 
-
   String get rankLabel =>
       rank == null ? '순위 정보 없음' : '${rank!.rank}위 · 승점 ${rank!.points}';
 
@@ -127,7 +126,9 @@ class MyViewModel extends AsyncNotifier<MyState> {
     final team = prefs.myTeam;
     final gender = prefs.preferredGender;
 
-    final ranking = await ref.read(rankingRepositoryProvider).getRanking(gender);
+    final ranking = await ref
+        .read(rankingRepositoryProvider)
+        .getRanking(gender);
     final players = await ref.read(playerRepositoryProvider).getPlayers(gender);
 
     final favIds = prefs.favoritePlayerIds;
@@ -164,8 +165,7 @@ class MyViewModel extends AsyncNotifier<MyState> {
       }
 
       final games = allGames
-          .where((g) =>
-              g.home.name == team.name || g.away.name == team.name)
+          .where((g) => g.home.name == team.name || g.away.name == team.name)
           .toList();
       nextGame = games.where((g) => g.status == GameStatus.pre).toList();
       recent = games.reversed
@@ -245,20 +245,26 @@ class MyViewModel extends AsyncNotifier<MyState> {
   Future<void> removeFavorite(String playerId) async {
     final current = state.valueOrNull;
     if (current == null) return;
-    await ref.read(preferencesRepositoryProvider).toggleFavoritePlayer(playerId);
-    state = AsyncData(MyState(
-      team: current.team,
-      rank: current.rank,
-      favoritePlayers:
-          current.favoritePlayers.where((p) => p.id != playerId).toList(),
-      teamPlayers: current.teamPlayers,
-      nextGame: current.nextGame,
-      recentGames: current.recentGames,
-      attendance: current.attendance,
-      predictions: current.predictions,
-    ));
+    await ref
+        .read(preferencesRepositoryProvider)
+        .toggleFavoritePlayer(playerId);
+    state = AsyncData(
+      MyState(
+        team: current.team,
+        rank: current.rank,
+        favoritePlayers: current.favoritePlayers
+            .where((p) => p.id != playerId)
+            .toList(),
+        teamPlayers: current.teamPlayers,
+        nextGame: current.nextGame,
+        recentGames: current.recentGames,
+        attendance: current.attendance,
+        predictions: current.predictions,
+      ),
+    );
   }
 }
 
-final myViewModelProvider =
-    AsyncNotifierProvider<MyViewModel, MyState>(MyViewModel.new);
+final myViewModelProvider = AsyncNotifierProvider<MyViewModel, MyState>(
+  MyViewModel.new,
+);

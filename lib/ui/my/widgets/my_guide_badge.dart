@@ -51,23 +51,32 @@ class _Earned extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('획득한 배지',
-                    style: MhText.custom(
-                        size: 11,
-                        weight: FontWeight.w700,
-                        color: const Color(0xFFB37800))),
+                Text(
+                  '획득한 배지',
+                  style: MhText.custom(
+                    size: 11,
+                    weight: FontWeight.w700,
+                    color: const Color(0xFFB37800),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('핸드볼 입문 수료',
-                    style: MhText.custom(
-                        size: 16,
-                        weight: FontWeight.w800,
-                        color: const Color(0xFF6B4500))),
+                Text(
+                  '핸드볼 입문 수료',
+                  style: MhText.custom(
+                    size: 16,
+                    weight: FontWeight.w800,
+                    color: const Color(0xFF6B4500),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('입문 가이드 5개 레슨을 모두 마쳤어요',
-                    style: MhText.custom(
-                        size: 11,
-                        weight: FontWeight.w400,
-                        color: const Color(0xFF8A6A00))),
+                Text(
+                  '입문 가이드 5개 레슨을 모두 마쳤어요',
+                  style: MhText.custom(
+                    size: 11,
+                    weight: FontWeight.w400,
+                    color: const Color(0xFF8A6A00),
+                  ),
+                ),
               ],
             ),
           ),
@@ -113,9 +122,14 @@ class _InProgress extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('입문 가이드 완료하고 수료 배지 받기',
-                    style: MhText.custom(
-                        size: 14, weight: FontWeight.w800, color: c.text)),
+                Text(
+                  '입문 가이드 완료하고 수료 배지 받기',
+                  style: MhText.custom(
+                    size: 14,
+                    weight: FontWeight.w800,
+                    color: c.text,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -127,24 +141,33 @@ class _InProgress extends StatelessWidget {
                           minHeight: 6,
                           backgroundColor: c.border,
                           valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFFFFC800)),
+                            Color(0xFFFFC800),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: MhSpacing.xs),
-                    Text('$doneCount/$total',
-                        style: MhText.custom(
-                            size: 11,
-                            weight: FontWeight.w700,
-                            color: c.textSub)),
+                    Text(
+                      '$doneCount/$total',
+                      style: MhText.custom(
+                        size: 11,
+                        weight: FontWeight.w700,
+                        color: c.textSub,
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
-          Text('›',
-              style: MhText.custom(
-                  size: 18, weight: FontWeight.w400, color: c.textFaint)),
+          Text(
+            '›',
+            style: MhText.custom(
+              size: 18,
+              weight: FontWeight.w400,
+              color: c.textFaint,
+            ),
+          ),
         ],
       ),
     );
@@ -196,7 +219,10 @@ class _TrophyPainter extends CustomPainter {
 
     // 메달 본체
     canvas.drawCircle(
-        const Offset(30, 28), 26, Paint()..color = const Color(0xFFFFC800));
+      const Offset(30, 28),
+      26,
+      Paint()..color = const Color(0xFFFFC800),
+    );
     canvas.drawCircle(
       const Offset(30, 28),
       26,
@@ -206,7 +232,10 @@ class _TrophyPainter extends CustomPainter {
         ..strokeWidth = 3,
     );
     canvas.drawCircle(
-        const Offset(30, 28), 19, Paint()..color = MhColors.guideYellow);
+      const Offset(30, 28),
+      19,
+      Paint()..color = MhColors.guideYellow,
+    );
 
     // 공 라인
     final line = Paint()

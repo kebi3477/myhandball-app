@@ -57,9 +57,18 @@ void main() {
     await _pumpApp(tester, _container(onboarded: true));
 
     expect(find.byType(AppShell), findsOneWidget);
-    for (final label in ['홈', '일정', '분석', 'MY']) {
+    for (final label in ['일정', '분석', 'MY']) {
       expect(find.text(label), findsOneWidget);
     }
+    // '홈'은 하단 탭바와 홈 화면 안의 탭 줄에 하나씩 있다.
+    expect(find.text('홈'), findsNWidgets(2));
+  });
+
+  testWidgets('홈에 승부예측·직관 탭이 함께 뜬다', (tester) async {
+    await _pumpApp(tester, _container(onboarded: true));
+
+    expect(find.text('승부예측'), findsOneWidget);
+    expect(find.text('직관'), findsOneWidget);
   });
 
   testWidgets('테마를 라이트로 바꾸면 팔레트 배경이 흰색이 된다', (tester) async {

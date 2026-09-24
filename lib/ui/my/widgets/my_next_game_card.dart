@@ -53,12 +53,15 @@ class MyNextGameCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(MhRadius.card),
             ),
             child: game == null
-                ? Text('예정된 경기가 없어요',
+                ? Text(
+                    '예정된 경기가 없어요',
                     textAlign: TextAlign.center,
                     style: MhText.custom(
-                        size: 14,
-                        weight: FontWeight.w600,
-                        color: c.textSub))
+                      size: 14,
+                      weight: FontWeight.w600,
+                      color: c.textSub,
+                    ),
+                  )
                 : Column(
                     children: [
                       Row(
@@ -66,16 +69,21 @@ class MyNextGameCard extends ConsumerWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 3),
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: MhColors.brand,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(_dday(game.meta),
-                                style: MhText.custom(
-                                    size: 12,
-                                    weight: FontWeight.w700,
-                                    color: Colors.white)),
+                            child: Text(
+                              _dday(game.meta),
+                              style: MhText.custom(
+                                size: 12,
+                                weight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                           Text(game.meta, style: MhText.meta(c.textSub)),
                         ],
@@ -84,29 +92,39 @@ class MyNextGameCard extends ConsumerWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(myName,
-                                textAlign: TextAlign.center,
-                                style: MhText.custom(
-                                    size: 17,
-                                    weight: FontWeight.w700,
-                                    color: c.text)),
+                            child: Text(
+                              myName,
+                              textAlign: TextAlign.center,
+                              style: MhText.custom(
+                                size: 17,
+                                weight: FontWeight.w700,
+                                color: c.text,
+                              ),
+                            ),
                           ),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: MhSpacing.xs),
-                            child: Text('VS',
-                                style: MhText.custom(
-                                    size: 14,
-                                    weight: FontWeight.w600,
-                                    color: c.textFaint)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: MhSpacing.xs,
+                            ),
+                            child: Text(
+                              'VS',
+                              style: MhText.custom(
+                                size: 14,
+                                weight: FontWeight.w600,
+                                color: c.textFaint,
+                              ),
+                            ),
                           ),
                           Expanded(
-                            child: Text(opponent,
-                                textAlign: TextAlign.center,
-                                style: MhText.custom(
-                                    size: 17,
-                                    weight: FontWeight.w700,
-                                    color: c.text)),
+                            child: Text(
+                              opponent,
+                              textAlign: TextAlign.center,
+                              style: MhText.custom(
+                                size: 17,
+                                weight: FontWeight.w700,
+                                color: c.text,
+                              ),
+                            ),
                           ),
                         ],
                       ),

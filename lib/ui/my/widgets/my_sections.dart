@@ -37,7 +37,9 @@ class FavoritePlayersSection extends ConsumerWidget {
               Text('관심 선수', style: MhText.sectionTitle(c.text)),
               MhTap(
                 onTap: () {
-                  ref.read(shellViewModelProvider.notifier).select(ShellTab.stat);
+                  ref
+                      .read(shellViewModelProvider.notifier)
+                      .select(ShellTab.stat);
                   ref
                       .read(statViewModelProvider.notifier)
                       .selectTab(StatTab.player);
@@ -56,12 +58,19 @@ class FavoritePlayersSection extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  Text('아직 관심 선수가 없어요',
-                      style: MhText.custom(
-                          size: 14, weight: FontWeight.w600, color: c.text)),
+                  Text(
+                    '아직 관심 선수가 없어요',
+                    style: MhText.custom(
+                      size: 14,
+                      weight: FontWeight.w600,
+                      color: c.text,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('분석 > 선수에서 ♡를 눌러 추가해 보세요',
-                      style: MhText.meta(c.textSub)),
+                  Text(
+                    '분석 > 선수에서 ♡를 눌러 추가해 보세요',
+                    style: MhText.meta(c.textSub),
+                  ),
                 ],
               ),
             )
@@ -106,44 +115,60 @@ class _FavoriteRow extends StatelessWidget {
     return MhTap(
       onTap: () => showPlayerDetailSheet(context, player),
       child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom:
-              BorderSide(color: isLast ? Colors.transparent : c.borderSubtle),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isLast ? Colors.transparent : c.borderSubtle,
+            ),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          TeamLogo(size: 36, logoUrl: player.teamLogoUrl, inset: 0.78),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(player.name,
+        child: Row(
+          children: [
+            TeamLogo(size: 36, logoUrl: player.teamLogoUrl, inset: 0.78),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    player.name,
                     style: MhText.custom(
-                        size: 15, weight: FontWeight.w600, color: c.text)),
-                Text('${player.teamName} · ${player.positionFull}',
-                    style: MhText.caption(c.textSub)),
-              ],
+                      size: 15,
+                      weight: FontWeight.w600,
+                      color: c.text,
+                    ),
+                  ),
+                  Text(
+                    '${player.teamName} · ${player.positionFull}',
+                    style: MhText.caption(c.textSub),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(player.statLine,
+            Text(
+              player.statLine,
               style: MhText.custom(
-                  size: 13, weight: FontWeight.w700, color: c.text)),
-          MhTap(
-            behavior: HitTestBehavior.opaque,
-            onTap: onRemove,
-            child: const SizedBox(
-              width: 32,
-              height: 32,
-              child: MhIcon(MhIcons.heartFilled,
-                  size: 18, color: Color(0xFFFF4D6A)),
+                size: 13,
+                weight: FontWeight.w700,
+                color: c.text,
+              ),
             ),
-          ),
-        ],
-      ),
+            MhTap(
+              behavior: HitTestBehavior.opaque,
+              onTap: onRemove,
+              child: const SizedBox(
+                width: 32,
+                height: 32,
+                child: MhIcon(
+                  MhIcons.heartFilled,
+                  size: 18,
+                  color: Color(0xFFFF4D6A),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -178,24 +203,30 @@ class SeasonStatsSection extends StatelessWidget {
               children: [
                 for (final (label, value, highlight) in stats)
                   SizedBox(
-                    width: (MediaQuery.sizeOf(context).width -
+                    width:
+                        (MediaQuery.sizeOf(context).width -
                             MhSpacing.gutter * 2 -
                             16) /
                         4,
                     child: Column(
                       children: [
-                        Text(value,
-                            style: MhText.custom(
-                              size: 20,
-                              weight: FontWeight.w700,
-                              color: highlight ? MhColors.brand : c.text,
-                            )),
+                        Text(
+                          value,
+                          style: MhText.custom(
+                            size: 20,
+                            weight: FontWeight.w700,
+                            color: highlight ? MhColors.brand : c.text,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        Text(label,
-                            style: MhText.custom(
-                                size: 11,
-                                weight: FontWeight.w400,
-                                color: c.textSub)),
+                        Text(
+                          label,
+                          style: MhText.custom(
+                            size: 11,
+                            weight: FontWeight.w400,
+                            color: c.textSub,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -237,9 +268,14 @@ class RecentGamesSection extends StatelessWidget {
                 color: c.card,
                 borderRadius: BorderRadius.circular(MhRadius.card),
               ),
-              child: Text('최근 경기 기록이 없어요',
-                  style: MhText.custom(
-                      size: 14, weight: FontWeight.w600, color: c.textSub)),
+              child: Text(
+                '최근 경기 기록이 없어요',
+                style: MhText.custom(
+                  size: 14,
+                  weight: FontWeight.w600,
+                  color: c.textSub,
+                ),
+              ),
             )
           else
             for (final g in games) ...[
@@ -286,21 +322,36 @@ class _RecentRow extends StatelessWidget {
             height: 26,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-            child: Text(result,
-                style: MhText.custom(
-                    size: 12, weight: FontWeight.w700, color: Colors.white)),
+            child: Text(
+              result,
+              style: MhText.custom(
+                size: 12,
+                weight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text('vs $opponent',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: MhText.custom(
-                    size: 14, weight: FontWeight.w600, color: c.text)),
-          ),
-          Text('${game.scoreHomeText} : ${game.scoreAwayText}',
+            child: Text(
+              'vs $opponent',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: MhText.custom(
-                  size: 14, weight: FontWeight.w700, color: c.text)),
+                size: 14,
+                weight: FontWeight.w600,
+                color: c.text,
+              ),
+            ),
+          ),
+          Text(
+            '${game.scoreHomeText} : ${game.scoreAwayText}',
+            style: MhText.custom(
+              size: 14,
+              weight: FontWeight.w700,
+              color: c.text,
+            ),
+          ),
         ],
       ),
     );
@@ -332,11 +383,14 @@ class TopScorersSection extends StatelessWidget {
             child: players.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text('등록된 선수 정보가 없습니다',
-                        style: MhText.custom(
-                            size: 13,
-                            weight: FontWeight.w400,
-                            color: c.textSub)),
+                    child: Text(
+                      '등록된 선수 정보가 없습니다',
+                      style: MhText.custom(
+                        size: 13,
+                        weight: FontWeight.w400,
+                        color: c.textSub,
+                      ),
+                    ),
                   )
                 : Column(
                     children: [
@@ -356,33 +410,43 @@ class TopScorersSection extends StatelessWidget {
                             children: [
                               SizedBox(
                                 width: 18,
-                                child: Text('${i + 1}',
-                                    style: MhText.custom(
-                                      size: 16,
-                                      weight: FontWeight.w700,
-                                      color: i < 3 ? MhColors.brand : c.textSub,
-                                    )),
+                                child: Text(
+                                  '${i + 1}',
+                                  style: MhText.custom(
+                                    size: 16,
+                                    weight: FontWeight.w700,
+                                    color: i < 3 ? MhColors.brand : c.textSub,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(players[i].name,
-                                        style: MhText.custom(
-                                            size: 15,
-                                            weight: FontWeight.w600,
-                                            color: c.text)),
-                                    Text(players[i].positionFull,
-                                        style: MhText.caption(c.textSub)),
+                                    Text(
+                                      players[i].name,
+                                      style: MhText.custom(
+                                        size: 15,
+                                        weight: FontWeight.w600,
+                                        color: c.text,
+                                      ),
+                                    ),
+                                    Text(
+                                      players[i].positionFull,
+                                      style: MhText.caption(c.textSub),
+                                    ),
                                   ],
                                 ),
                               ),
-                              Text(players[i].statLine,
-                                  style: MhText.custom(
-                                      size: 13,
-                                      weight: FontWeight.w700,
-                                      color: c.text)),
+                              Text(
+                                players[i].statLine,
+                                style: MhText.custom(
+                                  size: 13,
+                                  weight: FontWeight.w700,
+                                  color: c.text,
+                                ),
+                              ),
                             ],
                           ),
                         ),

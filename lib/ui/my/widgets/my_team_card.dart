@@ -56,18 +56,20 @@ class MyTeamCard extends ConsumerWidget {
                       Text(
                         team?.name ?? '마이팀 없음',
                         style: MhText.custom(
-                            size: 24,
-                            weight: FontWeight.w700,
-                            color: c.text,
-                            height: 40 / 24),
+                          size: 24,
+                          weight: FontWeight.w700,
+                          color: c.text,
+                          height: 40 / 24,
+                        ),
                       ),
                       Text(
                         team == null ? '팀을 골라주세요' : state.rankLabel,
                         style: MhText.custom(
-                            size: 14,
-                            weight: FontWeight.w400,
-                            color: c.text,
-                            height: 24 / 14),
+                          size: 14,
+                          weight: FontWeight.w400,
+                          color: c.text,
+                          height: 24 / 14,
+                        ),
                       ),
                     ],
                   ),
@@ -85,11 +87,14 @@ class MyTeamCard extends ConsumerWidget {
                       color: const Color(0xFF898989),
                       borderRadius: BorderRadius.circular(50),
                     ),
-                    child: Text('팀 상세보기',
-                        style: MhText.custom(
-                            size: 14,
-                            weight: FontWeight.w600,
-                            color: Colors.white)),
+                    child: Text(
+                      '팀 상세보기',
+                      style: MhText.custom(
+                        size: 14,
+                        weight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ],

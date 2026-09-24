@@ -5,6 +5,9 @@ import '../../../data/repositories/schedule_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/game_detail.dart';
+import '../../home/view_models/attendance_view_model.dart';
+import '../../home/view_models/prediction_view_model.dart';
+import '../../my/view_models/my_view_model.dart';
 
 /// 시안 `gdTab` — 경기 상세의 서브탭.
 enum GameDetailTab {
@@ -145,6 +148,11 @@ class GameDetailViewModel
     final prefs = ref.read(preferencesRepositoryProvider);
     await prefs.toggleAttended(current.game.id);
     state = AsyncData(current.copyWith(attended: !current.attended));
+    // 직관 탭·MY가 같은 값을 읽는다. 새로 만들어 두지 않으면 돌아갔을 때
+    // 방금 찍은 도장이 없다 — 새로고침해야 나타난다.
+    ref
+      ..invalidate(attendanceViewModelProvider)
+      ..invalidate(myViewModelProvider);
   }
 
   /// 시안 `pickPred` — 경기 시작 전까지만 바꿀 수 있다.
@@ -163,6 +171,9 @@ class GameDetailViewModel
           .read(preferencesRepositoryProvider)
           .setPrediction(current.game.id, pick);
       state = AsyncData(current.copyWith(tally: tally));
+      ref
+        ..invalidate(predictionViewModelProvider)
+        ..invalidate(myViewModelProvider);
     } on ApiException catch (e) {
       state = AsyncData(current.copyWith(notice: _message(e, '예측을 저장하지 못했어요')));
     }

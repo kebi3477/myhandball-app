@@ -21,8 +21,7 @@ class NearbyGamesSection extends ConsumerStatefulWidget {
   List<Game> get games => state.games;
 
   @override
-  ConsumerState<NearbyGamesSection> createState() =>
-      _NearbyGamesSectionState();
+  ConsumerState<NearbyGamesSection> createState() => _NearbyGamesSectionState();
 }
 
 class _NearbyGamesSectionState extends ConsumerState<NearbyGamesSection> {
@@ -57,57 +56,59 @@ class _NearbyGamesSectionState extends ConsumerState<NearbyGamesSection> {
           ),
         ),
         const SizedBox(height: 12),
-        // 비시즌에는 지난 경기 대신 개막 카운트다운을 보여준다 (시안).
-        if (widget.state.isOffseason) ...[
+        // **비시즌이면 개막 카운트다운만 보여준다.** 시안이 `isOffseason`과
+        // `hasHomeGames`를 배타적으로 쓴다. 둘 다 그리면 "개막까지 D-53" 밑에
+        // 지난 시즌 경기가 깔려서, 카운트다운이 무슨 말인지 알 수 없게 된다.
+        if (widget.state.isOffseason)
           OffseasonCard(
             state: widget.state,
             onSeeSchedule: () => ref
                 .read(shellViewModelProvider.notifier)
                 .select(ShellTab.schedule),
-          ),
-          const SizedBox(height: 12),
-        ],
-        SizedBox(
-          height: GameCard.height,
-          child: PageView.builder(
-            controller: _controller,
-            padEnds: false,
-            onPageChanged: (i) => setState(() => _index = i),
-            itemCount: widget.games.length,
-            itemBuilder: (_, i) => Padding(
-              padding: EdgeInsets.only(
-                left: i == 0 ? MhSpacing.md : 0,
-                right: 12,
-              ),
-              child: SizedBox(
-                width: width - _cardPeek,
-                child: GameCard(
-                  game: widget.games[i],
-                  onTap: () =>
-                      GameDetailScreen.open(context, widget.games[i]),
+          )
+        else ...[
+          SizedBox(
+            height: GameCard.height,
+            child: PageView.builder(
+              controller: _controller,
+              padEnds: false,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemCount: widget.games.length,
+              itemBuilder: (_, i) => Padding(
+                padding: EdgeInsets.only(
+                  left: i == 0 ? MhSpacing.md : 0,
+                  right: 12,
+                ),
+                child: SizedBox(
+                  width: width - _cardPeek,
+                  child: GameCard(
+                    game: widget.games[i],
+                    onTap: () =>
+                        GameDetailScreen.open(context, widget.games[i]),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var i = 0; i < widget.games.length; i++) ...[
-              if (i > 0) const SizedBox(width: 6),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: i == _index ? 18 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: i == _index ? MhColors.brand : c.border,
-                  borderRadius: BorderRadius.circular(3),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < widget.games.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: i == _index ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == _index ? MhColors.brand : c.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
-        ),
+          ),
+        ],
       ],
     );
   }

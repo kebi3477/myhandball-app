@@ -12,13 +12,14 @@ import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
 import 'my_guide_badge.dart';
 import 'my_next_game_card.dart';
+import 'my_profile_card.dart';
 import 'my_sections.dart';
 import 'my_team_card.dart';
 
 /// MY 탭.
 ///
-/// 시안 순서: 헤더 → MY 팀 → 수료 배지 → 관심 선수 → 직관 기록 →
-/// 승부 예측 → 다음 경기 → 시즌 기록 → 최근 5경기 → 주요 선수.
+/// 시안 순서: 헤더 → 프로필(닉네임) → MY 팀 → 수료 배지 → 관심 선수 →
+/// 직관 기록 → 승부 예측 → 다음 경기 → 시즌 기록 → 최근 5경기 → 주요 선수.
 class MyScreen extends ConsumerWidget {
   const MyScreen({super.key});
 
@@ -34,14 +35,17 @@ class MyScreen extends ConsumerWidget {
         Expanded(
           child: async.when(
             skipLoadingOnReload: true,
-            loading: () =>
-                const Center(child: CircularProgressIndicator(color: MhColors.brand)),
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: MhColors.brand),
+            ),
             error: (e, _) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(MhSpacing.gutter),
-                child: Text(mhErrorMessage(e),
-                    textAlign: TextAlign.center,
-                    style: MhText.meta(context.mh.textSub)),
+                child: Text(
+                  mhErrorMessage(e),
+                  textAlign: TextAlign.center,
+                  style: MhText.meta(context.mh.textSub),
+                ),
               ),
             ),
             data: (state) => RefreshIndicator(
@@ -51,6 +55,8 @@ class MyScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: MhSpacing.xl),
                 children: [
+                  MyProfileCard(state: state),
+                  const SizedBox(height: MhSpacing.md),
                   MyTeamCard(state: state),
                   const SizedBox(height: MhSpacing.md),
                   MyGuideBadge(
@@ -100,9 +106,14 @@ class _Header extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('MY',
-                style: MhText.custom(
-                    size: 20, weight: FontWeight.w700, color: c.text)),
+            Text(
+              'MY',
+              style: MhText.custom(
+                size: 20,
+                weight: FontWeight.w700,
+                color: c.text,
+              ),
+            ),
             MhTap(
               behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.of(context).push(
