@@ -33,10 +33,11 @@ AttendanceState _state(
     AttendanceState(
       team: _mine,
       seasonLabel: '25-26 시즌 나의 직관',
+      seasonName: '25-26 시즌',
       entries: entries,
       stamps: stamps,
       upcoming: const [],
-      candidates: const [],
+      pool: const [],
       teamRank: rank,
     );
 

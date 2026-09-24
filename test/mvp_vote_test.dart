@@ -106,9 +106,9 @@ void main() {
     expect(fake.voted, ['p1']);
   });
 
-  testWidgets('이미 투표했으면 누를 수 없고, 내 표가 표시된다', (tester) async {
-    // 기기당 한 번만 투표할 수 있다(서버 unique 제약). 그래서 투표 뒤에는
-    // 모든 줄이 눌리지 않는데, 표시가 없으면 "눌러도 안 된다"로 읽힌다.
+  testWidgets('이미 투표했으면 누를 수 없고 결과가 보인다', (tester) async {
+    // 기기당 한 번만 투표할 수 있다(서버 unique 제약). 투표 뒤에는 모든
+    // 줄이 눌리지 않으므로, 머리글이 그 사실을 말해 줘야 한다.
     final fake = _FakeVm();
     final container = ProviderContainer(
       overrides: [gameDetailViewModelProvider.overrideWith(() => fake)],
@@ -138,8 +138,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('내 표'), findsOneWidget);
-    expect(find.text('4표 · 이미 투표했어요'), findsOneWidget);
+    // 시안 `mvp.total`표 · `mvp.hint`
+    expect(find.text('4표 · 투표 완료'), findsOneWidget);
+    // 투표 전에는 모든 줄이 '투표', 후에는 득표율이 보인다.
+    expect(find.text('투표'), findsNothing);
 
     await tester.tap(find.text('강예린'));
     await tester.pump();

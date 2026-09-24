@@ -39,6 +39,7 @@ import 'package:myhandball/ui/my/view_models/my_view_model.dart';
 import 'package:myhandball/domain/models/rank_row.dart';
 import 'package:myhandball/domain/models/team.dart';
 import 'package:myhandball/data/services/api_client.dart';
+import 'package:myhandball/ui/home/widgets/attendance_tab.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
@@ -399,6 +400,20 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('preview/my-badges.png'),
+    );
+  });
+
+  // 기록 추가 시트 — 체크를 켜고 끄는 시트라 이미 기록한 경기도 남는다.
+  testWidgets('attendance sheet', (t) async {
+    await _shoot(
+      t,
+      'attendance-sheet',
+      const AttendanceTab(),
+      MhPalette.dark,
+      size: const Size(390, 900),
+      tap: (tester) async {
+        await tester.tap(find.text('기록 추가'));
+      },
     );
   });
 

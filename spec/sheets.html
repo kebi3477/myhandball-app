@@ -1,0 +1,82 @@
+<!-- MyHandball v2.dc.html 에서 자동 추출. {{ c.* }} 팔레트는 logic.js renderVals()의 c 객체 참고 -->
+<!-- ATTENDANCE ADD SHEET -->
+        <sc-if value="{{ attSheetOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeAttSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:34;">
+            <div onClick="{{ stop }}" style="width:100%;max-width:{{ sheetMax }};max-height:85%;background:{{ c.bg }};border-radius:24px 24px 0 0;padding:12px 24px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;">
+              <div style="width:40px;height:4px;border-radius:2px;background:{{ c.border }};align-self:center;flex-shrink:0;"></div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+                <span style="font-size:20px;font-weight:800;color:{{ c.text }};">다녀온 경기를 골라주세요</span>
+                <span style="font-size:13px;color:{{ c.textSub }};">25-26 시즌 {{ myTeamName }} 경기 · {{ av.pickedCount }}경기 선택됨</span>
+              </div>
+              <div class="mh-scroll" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ av.pool }}" as="p" hint-placeholder-count="6">
+                  <div onClick="{{ p.toggle }}" style="display:flex;align-items:center;gap:12px;background:{{ p.bg }};border:1.5px solid {{ p.border }};border-radius:16px;padding:12px 14px;box-sizing:border-box;cursor:pointer;">
+                    <div style="width:22px;height:22px;border-radius:11px;background:{{ p.checkBg }};border:1.5px solid {{ p.checkBorder }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="{{ p.checkMark }}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                      <span style="font-size:14px;font-weight:700;color:{{ c.text }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.match }}</span>
+                      <span style="font-size:11px;color:{{ c.textSub }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.dateLabel }} · {{ p.venue }}</span>
+                    </div>
+                    <span style="font-family:Impact,Pretendard,sans-serif;font-size:16px;color:{{ c.text }};flex-shrink:0;">{{ p.score }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div onClick="{{ closeAttSheet }}" style="height:52px;border-radius:26px;background:#0068FF;color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">완료</div>
+            </div>
+          </div>
+        </sc-if>
+
+<!-- PREDICTION PROFILE SHEET -->
+        <sc-if value="{{ pf.open }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeProfile }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:34;">
+            <div onClick="{{ stop }}" class="mh-scroll" style="width:100%;max-width:{{ sheetMax }};max-height:92%;overflow-y:auto;background:{{ c.bg }};border-radius:24px 24px 0 0;padding:12px 24px 28px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;">
+              <div style="width:40px;height:4px;border-radius:2px;background:{{ c.border }};align-self:center;flex-shrink:0;"></div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <span style="font-size:20px;font-weight:800;color:{{ c.text }};">{{ pf.title }}</span>
+                <span style="font-size:13px;line-height:1.5;color:{{ c.textSub }};">랭킹에서 나를 구분할 닉네임과 응원팀만 있으면 돼요</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;font-weight:700;color:{{ c.text }};">닉네임</span><span style="font-size:11px;color:{{ c.textFaint }};">{{ pf.count }}/10</span></div>
+                <div style="height:50px;border-radius:14px;background:{{ c.card }};border:1.5px solid {{ pf.inputBorder }};display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-sizing:border-box;">
+                  <input value="{{ pf.nick }}" onChange="{{ onPfNick }}" maxLength="10" placeholder="2~10자 · 한글, 영문, 숫자" style="flex:1;min-width:0;height:100%;border:none;outline:none;background:transparent;color:{{ c.text }};font-size:15px;font-weight:600;font-family:inherit;">
+                  <div onClick="{{ suggestNick }}" style="height:36px;padding:0 12px;border-radius:10px;background:{{ c.bg }};font-size:12px;font-weight:700;color:{{ c.text }};display:flex;align-items:center;cursor:pointer;flex-shrink:0;">추천</div>
+                </div>
+                <span style="font-size:12px;min-height:16px;color:{{ pf.msgColor }};">{{ pf.msg }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;font-weight:700;color:{{ c.text }};">응원팀</span><span style="font-size:11px;color:{{ c.textFaint }};">MY 팀과 함께 바뀌어요</span></div>
+                <div style="display:flex;gap:8px;">
+                  <sc-for list="{{ pf.genderTabs }}" as="t" hint-placeholder-count="2">
+                    <div onClick="{{ t.select }}" style="height:32px;padding:0 14px;border-radius:16px;font-size:13px;font-weight:600;display:flex;align-items:center;cursor:pointer;background:{{ t.bg }};color:{{ t.color }};">{{ t.label }}</div>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+                  <sc-for list="{{ pf.teams }}" as="t" hint-placeholder-count="6">
+                    <div onClick="{{ t.select }}" style="border-radius:14px;background:{{ t.bg }};border:1.5px solid {{ t.border }};box-sizing:border-box;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+                      <div style="width:40px;height:40px;border-radius:20px;background:#fff;display:flex;align-items:center;justify-content:center;"><div style="width:80%;height:80%;background-image:{{ t.logo }};background-size:contain;background-repeat:no-repeat;background-position:center;"></div></div>
+                      <span style="font-size:10px;font-weight:600;color:{{ t.color }};text-align:center;line-height:1.3;max-width:100%;min-width:0;overflow-wrap:anywhere;">{{ t.name }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:{{ c.card }};border-radius:16px;padding:14px 16px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:grid;grid-template-columns:64px minmax(0,1fr);gap:6px 10px;font-size:12px;line-height:1.5;">
+                  <span style="font-weight:700;color:{{ c.text }};">공개</span><span style="color:{{ c.textSub }};">닉네임 · 응원팀 · 예측 적중 기록</span>
+                  <span style="font-weight:700;color:{{ c.text }};">받지 않음</span><span style="color:{{ c.textSub }};">이름 · 이메일 · 전화번호 · 위치</span>
+                  <span style="font-weight:700;color:{{ c.text }};">구분 방법</span><span style="color:{{ c.textSub }};">기기마다 익명 ID가 자동 생성돼요</span>
+                </div>
+                <span onClick="{{ openPolicy }}" style="font-size:11px;font-weight:600;color:{{ c.textNeutral }};text-decoration:underline;cursor:pointer;align-self:flex-start;">개인정보 처리방침</span>
+              </div>
+              <div onClick="{{ togglePfConsent }}" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <div style="width:22px;height:22px;border-radius:6px;background:{{ pf.consentBg }};border:1.5px solid {{ pf.consentBorder }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="{{ pf.consentCheck }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+                <span style="font-size:13px;color:{{ c.text }};">랭킹에 닉네임·응원팀 공개에 동의해요 <span style="color:{{ c.textSub }};">(필수)</span></span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div onClick="{{ saveProfile }}" style="height:52px;border-radius:26px;background:{{ pf.saveBg }};color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:{{ pf.saveCursor }};">{{ pf.saveLabel }}</div>
+                <div onClick="{{ closeProfile }}" style="height:40px;font-size:13px;font-weight:600;color:{{ c.textSub }};display:flex;align-items:center;justify-content:center;cursor:pointer;">{{ pf.laterLabel }}</div>
+                <sc-if value="{{ pf.isEdit }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ leaveRanking }}" style="font-size:12px;color:#E5484D;text-align:center;cursor:pointer;">랭킹 참여 중단 · 프로필 삭제</div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>

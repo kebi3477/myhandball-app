@@ -57,7 +57,7 @@ class GameMvpTab extends ConsumerWidget {
               ),
               const SizedBox(height: MhSpacing.xs),
               Text(
-                '아직 투표 전이에요',
+                state.mvpLockTitle,
                 style: MhText.custom(
                   size: 15,
                   weight: FontWeight.w700,
@@ -122,9 +122,7 @@ class GameMvpTab extends ConsumerWidget {
                   ),
                   Flexible(
                     child: Text(
-                      state.hasVotedMvp
-                          ? '$total표 · 이미 투표했어요'
-                          : '$total표 · 한 번만 투표할 수 있어요',
+                      '${state.mvp.totalLabel}표 · ${state.mvpHint}',
                       textAlign: TextAlign.right,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -192,8 +190,10 @@ class _CandidateRow extends StatelessWidget {
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
                   widthFactor: pct.clamp(0.0, 1.0),
-                  child: Container(
-                    color: MhColors.brand.withValues(alpha: mine ? 0.22 : 0.10),
+                  child: ColoredBox(
+                    color: mine
+                        ? MhColors.brand.withValues(alpha: 0.18)
+                        : const Color(0xFF808080).withValues(alpha: 0.12),
                   ),
                 ),
               ),
@@ -228,31 +228,14 @@ class _CandidateRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // **내가 뽑은 줄은 한눈에 보여야 한다.** 투표 뒤에는 모든
-                  // 줄이 눌리지 않는데, 표시가 흐릿하면 "눌러도 안 된다"로
-                  // 읽힌다.
-                  if (mine) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: MhColors.brand,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text('내 표',
-                          style: MhText.custom(
-                              size: 10,
-                              weight: FontWeight.w800,
-                              color: Colors.white)),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
                   Text(
                     showResult ? '${(pct * 100).round()}%' : '투표',
                     style: MhText.custom(
                       size: 13,
                       weight: FontWeight.w800,
-                      color: mine ? MhColors.brand : c.textSub,
+                      // 시안 `pctColor` — 아직 안 찍었으면 전부 브랜드색,
+                      // 찍은 뒤에는 내가 고른 줄만 브랜드색이다.
+                      color: !showResult || mine ? MhColors.brand : c.textSub,
                     ),
                   ),
                 ],

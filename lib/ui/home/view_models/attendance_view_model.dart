@@ -18,10 +18,11 @@ class AttendanceState {
   const AttendanceState({
     required this.team,
     required this.seasonLabel,
+    required this.seasonName,
     required this.entries,
     required this.stamps,
     required this.upcoming,
-    required this.candidates,
+    required this.pool,
     required this.teamRank,
   });
 
@@ -29,6 +30,9 @@ class AttendanceState {
 
   /// `25-26 시즌 나의 직관`
   final String seasonLabel;
+
+  /// `25-26 시즌` — 기록 추가 시트 부제에 쓴다.
+  final String seasonName;
 
   /// 최근 경기가 위로 오게 정렬돼 있다.
   final List<AttendanceEntry> entries;
@@ -38,8 +42,11 @@ class AttendanceState {
   /// 시안 "다음 직관 어때요?" — 마이팀의 다가오는 경기.
   final List<Game> upcoming;
 
-  /// 기록 추가 시트에 올릴 후보 — 이미 끝났고 아직 기록 안 한 마이팀 경기.
-  final List<Game> candidates;
+  /// 기록 추가 시트에 올릴 목록 — **이미 끝난 마이팀 경기 전부.**
+  ///
+  /// 기록한 경기도 남긴다. 시안은 체크를 켜고 끄는 시트라서, 뺀 목록을
+  /// 주면 잘못 찍은 기록을 시트에서 지울 수 없다.
+  final List<Game> pool;
 
   final RankRow? teamRank;
 
@@ -84,6 +91,9 @@ class AttendanceState {
     if (entries.isEmpty) return '첫 직관을 기록해 보세요';
     return '응원 경기 ${_decided.length} · 관람 $watchedOnly';
   }
+
+  /// 시안 `av.pickedCount` — 시트 부제의 "n경기 선택됨".
+  int get pickedCount => entries.length;
 
   /// 시안 `av.stampCount` — `4/8 경기장`
   String get stampCountLabel =>
@@ -139,14 +149,15 @@ class AttendanceViewModel extends AsyncNotifier<AttendanceState> {
     return AttendanceState(
       team: team,
       seasonLabel: '${season.label} 시즌 나의 직관',
+      seasonName: '${season.label} 시즌',
       entries: entries,
       stamps: _stamps(mine, prefs),
       upcoming: mine
           .where((g) => g.status != GameStatus.finished)
           .take(_upcomingCount)
           .toList(),
-      candidates: mine.reversed
-          .where((g) => g.status == GameStatus.finished && !prefs.didAttend(g.id))
+      pool: mine.reversed
+          .where((g) => g.status == GameStatus.finished)
           .toList(),
       teamRank: rank,
     );

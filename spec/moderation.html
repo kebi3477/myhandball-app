@@ -1,0 +1,153 @@
+<!-- MyHandball v2.dc.html 에서 자동 추출. {{ c.* }} 팔레트는 logic.js renderVals()의 c 객체 참고 -->
+<!-- 1) 팀 상세 > 응원글 탭 (⋯ 버튼, 빈 상태, 숨긴 글 안내 포함) -->
+<sc-if value="{{ isTeamDetailCheer }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:12px;padding:20px 24px 40px;box-sizing:border-box;">
+                  <div style="background:{{ c.card }};border-radius:20px;padding:18px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;">
+                    <span style="font-size:15px;font-weight:700;color:{{ c.text }};">{{ teamDetail.name }}에게 응원 한마디</span>
+                    <textarea value="{{ cheerDraft }}" onChange="{{ onCheerInput }}" maxlength="200" placeholder="매너 있는 응원 부탁드려요 (최대 200자)" style="width:100%;min-height:84px;resize:none;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.text }};border-radius:12px;padding:12px;box-sizing:border-box;font-family:inherit;font-size:14px;line-height:1.5;outline:none;"></textarea>
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                      <span style="font-size:11px;color:{{ c.textFaint }};">{{ cheerCount }}/200</span>
+                      <div onClick="{{ submitCheer }}" style="height:36px;padding:0 18px;border-radius:18px;background:{{ cheerBtnBg }};color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;cursor:pointer;">등록</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 2px 0;">
+                    <span style="font-size:13px;font-weight:700;color:{{ c.text }};">응원글 {{ cheerTotal }}</span>
+                    <span style="font-size:11px;color:{{ c.textFaint }};">내 글은 이 기기에서만 삭제할 수 있어요</span>
+                  </div>
+                  <sc-if value="{{ mod.showEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:{{ c.card }};border-radius:16px;padding:32px 20px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;">
+                      <span style="font-size:15px;font-weight:700;color:{{ c.text }};">{{ mod.emptyTitle }}</span>
+                      <span style="font-size:12px;line-height:1.6;color:{{ c.textSub }};white-space:pre-line;">{{ mod.emptyDesc }}</span>
+                      <sc-if value="{{ mod.emptyHasLink }}" hint-placeholder-val="{{ false }}"><span onClick="{{ openBlocked }}" style="margin-top:6px;font-size:12px;font-weight:700;color:#0068FF;cursor:pointer;">차단한 사용자 관리 ›</span></sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-for list="{{ cheerPosts }}" as="post" hint-placeholder-count="3">
+                    <div style="position:relative;background:{{ c.card }};border-radius:16px;padding:14px 16px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;border:1px solid {{ post.borderColor }};">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:28px;height:28px;border-radius:14px;background:#fff;box-shadow:0 0 0 1.5px {{ post.avatarRing }};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:78%;height:78%;background-image:{{ post.teamLogo }};background-size:contain;background-repeat:no-repeat;background-position:center;"></div></div>
+                        <div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;"><span style="font-size:13px;font-weight:700;color:{{ c.text }};">{{ post.author }}</span><sc-if value="{{ post.isMine }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;color:#0068FF;border:1px solid #0068FF;border-radius:8px;padding:1px 6px;">내 글</span></sc-if></div>
+                        <span style="font-size:11px;color:{{ c.textFaint }};">{{ post.date }}</span>
+                        <div onClick="{{ post.openMenu }}" style="width:32px;height:32px;margin:-8px -10px -8px -4px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="{{ c.textSub }}"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></div>
+                      </div>
+                      <span style="font-size:14px;line-height:1.55;color:{{ c.text }};white-space:pre-line;word-break:break-word;">{{ post.text }}</span>
+                      <div onClick="{{ post.like }}" style="align-self:flex-start;display:flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:14px;border:1px solid {{ c.border }};cursor:pointer;">
+                        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 20.5s-7.4-4.5-9.3-9.1C1.3 8 3.4 4.8 6.7 4.8c2 0 3.3 1.1 4.3 2.4 1-1.3 2.3-2.4 4.3-2.4 3.3 0 5.4 3.2 4 6.6-1.9 4.6-9.3 9.1-9.3 9.1z" fill="{{ post.heartFill }}" stroke="{{ post.heartStroke }}" stroke-width="2" stroke-linejoin="round"></path></svg>
+                        <span style="font-size:12px;font-weight:600;color:{{ c.textSub }};">{{ post.likes }}</span>
+                      </div>
+                      <sc-if value="{{ post.confirming }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:{{ c.bg }};border-radius:12px;padding:10px 12px;">
+                          <span style="font-size:12px;font-weight:600;color:{{ c.text }};">이 응원글을 삭제할까요?</span>
+                          <div style="display:flex;gap:6px;">
+                            <div onClick="{{ post.cancelDelete }}" style="height:30px;padding:0 12px;border-radius:15px;border:1px solid {{ c.border }};font-size:12px;font-weight:600;color:{{ c.textSub }};display:flex;align-items:center;cursor:pointer;">취소</div>
+                            <div onClick="{{ post.doDelete }}" style="height:30px;padding:0 12px;border-radius:15px;background:#E5484D;font-size:12px;font-weight:700;color:#fff;display:flex;align-items:center;cursor:pointer;">삭제</div>
+                          </div>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ mod.showHiddenNote }}" hint-placeholder-val="{{ false }}">
+                    <span onClick="{{ openBlocked }}" style="align-self:center;padding:8px;font-size:11px;color:{{ c.textSub }};cursor:pointer;">{{ mod.hiddenNote }}</span>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+<!-- 2) 액션 시트 · 신고 시트 · 차단 확인 -->
+<!-- CHEER ACTION SHEET -->
+        <sc-if value="{{ mod.menuOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeCheerMenu }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:35;">
+            <div onClick="{{ stop }}" style="width:100%;max-width:{{ sheetMax }};background:{{ c.bg }};border-radius:24px 24px 0 0;padding:12px 16px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;">
+              <div style="width:40px;height:4px;border-radius:2px;background:{{ c.border }};align-self:center;margin-bottom:8px;"></div>
+              <span style="font-size:12px;color:{{ c.textSub }};padding:0 8px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ mod.menuAuthor }}님의 응원글</span>
+              <sc-if value="{{ mod.menuMine }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ menuDelete }}" style="height:52px;border-radius:14px;padding:0 12px;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;font-weight:600;color:#E5484D;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="#E5484D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>삭제</div>
+              </sc-if>
+              <sc-if value="{{ mod.menuOther }}" hint-placeholder-val="{{ true }}">
+                <div onClick="{{ menuReport }}" style="height:52px;border-radius:14px;padding:0 12px;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;font-weight:600;color:{{ c.text }};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 21V4M5 4h11l-2 4 2 4H5" stroke="{{ c.text }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>신고하기</div>
+                <div onClick="{{ menuBlock }}" style="height:52px;border-radius:14px;padding:0 12px;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;font-weight:600;color:#E5484D;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#E5484D" stroke-width="1.8"></circle><path d="M6 6l12 12" stroke="#E5484D" stroke-width="1.8" stroke-linecap="round"></path></svg>이 사용자의 글 보지 않기</div>
+              </sc-if>
+              <div onClick="{{ closeCheerMenu }}" style="height:48px;margin-top:6px;border-radius:24px;background:{{ c.card }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:{{ c.text }};cursor:pointer;">취소</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- REPORT SHEET -->
+        <sc-if value="{{ mod.reportOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeReport }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:35;">
+            <div onClick="{{ stop }}" class="mh-scroll" style="width:100%;max-width:{{ sheetMax }};max-height:92%;overflow-y:auto;background:{{ c.bg }};border-radius:24px 24px 0 0;padding:12px 24px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;">
+              <div style="width:40px;height:4px;border-radius:2px;background:{{ c.border }};align-self:center;flex-shrink:0;"></div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <span style="font-size:20px;font-weight:800;color:{{ c.text }};">응원글 신고</span>
+                <span style="font-size:13px;line-height:1.5;color:{{ c.textSub }};word-break:keep-all;">신고 사유를 골라주세요. 신고한 사람은 상대에게 알려지지 않아요.</span>
+              </div>
+              <div style="background:{{ c.card }};border-radius:14px;padding:12px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:12px;font-weight:700;color:{{ c.textSub }};">{{ mod.reportAuthor }}</span>
+                <span style="font-size:13px;line-height:1.5;color:{{ c.text }};overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ mod.reportText }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ mod.reasons }}" as="r" hint-placeholder-count="4">
+                  <div onClick="{{ r.select }}" style="height:52px;border-radius:14px;border:1.5px solid {{ r.border }};background:{{ r.bg }};padding:0 14px;box-sizing:border-box;display:flex;align-items:center;gap:12px;cursor:pointer;">
+                    <div style="width:20px;height:20px;border-radius:10px;border:1.5px solid {{ r.ring }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:10px;height:10px;border-radius:5px;background:{{ r.dot }};"></div></div>
+                    <span style="font-size:14px;font-weight:600;color:{{ c.text }};">{{ r.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <textarea value="{{ mod.detail }}" onChange="{{ onReportDetail }}" maxlength="200" placeholder="{{ mod.detailPlaceholder }}" style="width:100%;min-height:76px;resize:none;border:1px solid {{ c.border }};background:{{ c.card }};color:{{ c.text }};border-radius:12px;padding:12px;box-sizing:border-box;font-family:inherit;font-size:14px;line-height:1.5;outline:none;"></textarea>
+                <span style="font-size:11px;color:{{ c.textFaint }};align-self:flex-end;">{{ mod.detailCount }}/200</span>
+              </div>
+              <div onClick="{{ toggleReportBlock }}" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <div style="width:22px;height:22px;border-radius:6px;background:{{ mod.blockBg }};border:1.5px solid {{ mod.blockBorder }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="{{ mod.blockCheck }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+                <span style="font-size:13px;color:{{ c.text }};">이 사용자의 글도 보지 않기</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div onClick="{{ submitReport }}" style="height:52px;border-radius:26px;background:{{ mod.submitBg }};color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;">신고하기</div>
+                <span style="font-size:11px;line-height:1.5;color:{{ c.textSub }};text-align:center;">신고한 글은 바로 숨겨지고, 운영정책에 따라 24시간 안에 검토해요.</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- BLOCK CONFIRM -->
+        <sc-if value="{{ mod.blockAskOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ cancelBlock }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:36;padding:0 32px;box-sizing:border-box;">
+            <div onClick="{{ stop }}" style="width:100%;max-width:320px;background:{{ c.bg }};border-radius:20px;padding:24px 20px 16px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;text-align:center;">
+              <span style="font-size:17px;font-weight:800;color:{{ c.text }};word-break:keep-all;">{{ mod.blockAskTitle }}</span>
+              <span style="font-size:13px;line-height:1.6;color:{{ c.textSub }};word-break:keep-all;">이 사용자의 응원글이 모든 팀에서 보이지 않아요. 설정 &gt; 차단한 사용자에서 언제든 해제할 수 있어요.</span>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px;">
+                <div onClick="{{ cancelBlock }}" style="height:46px;border-radius:23px;background:{{ c.card }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:{{ c.text }};cursor:pointer;">취소</div>
+                <div onClick="{{ confirmBlock }}" style="height:46px;border-radius:23px;background:#E5484D;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">보지 않기</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+<!-- 3) 설정 > 차단한 사용자 -->
+<!-- BLOCKED USERS -->
+          <sc-if value="{{ mod.blockedOpen }}" hint-placeholder-val="{{ false }}">
+            <div class="mh-scroll" style="position:absolute;inset:0;padding-left:{{ ovPad }};padding-right:{{ ovPad }};box-sizing:border-box;background:{{ c.bg }};z-index:33;display:flex;flex-direction:column;overflow-y:auto;">
+              <div style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;box-sizing:border-box;">
+                <div onClick="{{ closeBlocked }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="{{ c.text }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+                <span style="font-size:18px;font-weight:700;color:{{ c.text }};">차단한 사용자</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px;padding:8px 20px 40px;box-sizing:border-box;">
+                <span style="font-size:12px;line-height:1.6;color:{{ c.textSub }};word-break:keep-all;">차단한 사용자의 응원글은 모든 팀에서 보이지 않아요. 해제하면 다시 보여요.</span>
+                <sc-if value="{{ mod.hasBlocked }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;border-radius:16px;background:{{ c.card }};overflow:hidden;">
+                    <sc-for list="{{ mod.blockedList }}" as="b" hint-placeholder-count="2">
+                      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid {{ b.divider }};">
+                        <div style="width:32px;height:32px;border-radius:16px;background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><div style="width:78%;height:78%;background-image:{{ b.logo }};background-size:contain;background-repeat:no-repeat;background-position:center;"></div></div>
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;"><span style="font-size:14px;font-weight:700;color:{{ c.text }};">{{ b.nick }}</span><span style="font-size:11px;color:{{ c.textSub }};">{{ b.since }} 차단</span></div>
+                        <div onClick="{{ b.unblock }}" style="height:32px;padding:0 14px;border-radius:16px;border:1px solid {{ c.border }};background:{{ c.bg }};font-size:12px;font-weight:700;color:{{ c.text }};display:flex;align-items:center;cursor:pointer;flex-shrink:0;">해제</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ mod.noBlocked }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:{{ c.card }};border-radius:16px;padding:40px 20px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;">
+                    <span style="font-size:15px;font-weight:700;color:{{ c.text }};">차단한 사용자가 없어요</span>
+                    <span style="font-size:12px;color:{{ c.textSub }};">응원글의 ⋯ 메뉴에서 차단할 수 있어요</span>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>

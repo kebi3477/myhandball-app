@@ -7,3 +7,5 @@
 - `copy.md` — 스크립트가 만드는 문구와 분기
 - `rules.md` — 랭킹, 팬덤, 승률, 비시즌, 경기 상태 계산 규칙
 - `badges.md` — MY 탭 배지 3종
+- `sheets.md` / `sheets.html` — 프로필 시트, 직관 기록 추가 시트(문구 + 마크업 원문)
+- `moderation.md` / `moderation.html` — 응원글 신고·차단·차단 목록·빈 상태(신규)

@@ -13,7 +13,7 @@ class Component extends DCLogic {
     notifOn: true, cardSaveStatus: 'idle',
     loadingHome: false, loadingSchedule: false, loadingStat: false, loadingTeamDetail: false,
     settingsOpen: false, seasonPickerOpen: false, season: '2025-26', policyOpen: false, termsOpen: false,
-    homeTab: 'home', predDiv: 'all', nickEditing: false, nickDraft: '', attTouched: false, attSheetOpen: false, rankScope: 'all', profile: null, pfOpen: false, pfEdit: false, pfNick: '', pfTeam: null, pfGender: 'M', pfConsent: false, pfPending: null,
+    cheerMenu: null, reportPost: null, reportReason: null, reportDetail: '', reportBlock: false, blockAsk: null, blocked: [], reportedKeys: [], blockedOpen: false, homeTab: 'home', predDiv: 'all', nickEditing: false, nickDraft: '', attTouched: false, attSheetOpen: false, rankScope: 'all', profile: null, pfOpen: false, pfEdit: false, pfNick: '', pfTeam: null, pfGender: 'M', pfConsent: false, pfPending: null,
   };
   static M_TEAMS = ['인천도시공사', 'SK호크스', '하남시청', '두산', '충남도청', '상무피닉스'];
   static NICK_A = ['속공', '피봇', '윙어', '7미터', '점프슛', '스카이', '수비벽', '역습', '코트', '백패스', '골문', '센터백'];
@@ -164,6 +164,7 @@ class Component extends DCLogic {
     try { const p = JSON.parse(localStorage.getItem('mh_preds') || '{}'); const m = JSON.parse(localStorage.getItem('mh_mvp') || '{}'); this.setState({ preds: p || {}, mvpVotes: m || {} }); } catch (e) {}
     try { const gd = JSON.parse(localStorage.getItem('mh_guide') || 'null'); if (gd) this.setState({ guideDone: gd.done || [], guideGradDate: gd.gradDate || '' }); } catch (e) {}
     try { const rawAt = localStorage.getItem('mh_attended'); const at = JSON.parse(rawAt || '{}'); if (at && typeof at === 'object') this.setState({ attended: at, attTouched: rawAt !== null }); } catch (e) {}
+    try { const md = JSON.parse(localStorage.getItem('mh_moderation') || 'null'); if (md) this.setState({ blocked: md.blocked || [], reportedKeys: md.reportedKeys || [] }); } catch (e) {}
     try { const rs = JSON.parse(localStorage.getItem('mh_recent_search') || '[]'); if (Array.isArray(rs)) this.setState({ recentSearches: rs }); } catch (e) {}
     try { const ch = JSON.parse(localStorage.getItem('mh_cheer') || 'null'); if (ch) this.setState({ cheerByTeam: ch.byTeam || {}, cheerLiked: ch.liked || [] }); } catch (e) {}
     try { const fav = JSON.parse(localStorage.getItem('mh_fav_players') || '[]'); if (Array.isArray(fav)) this.setState({ favPlayerIds: fav }); } catch (e) {}
@@ -320,6 +321,43 @@ class Component extends DCLogic {
     if (this.state.profile) return this.state.profile.nick;
     try { let n = localStorage.getItem('mh_nick'); if (!n) { n = '핸드볼팬' + String(Math.floor(1000 + Math.random() * 9000)); localStorage.setItem('mh_nick', n); } return n; } catch (e) { return '핸드볼팬'; }
   };
+  // TODO(v3): 신고 POST /reports {postId, reason, detail} (409 = 이미 신고) · 차단 POST/DELETE /blocks
+  static REPORT_REASONS = [['spam', '스팸·광고'], ['abuse', '욕설·비방·혐오 표현'], ['sexual', '음란·선정적인 내용'], ['other', '기타']];
+  persistMod = (blocked, reportedKeys) => { try { localStorage.setItem('mh_moderation', JSON.stringify({ blocked, reportedKeys })); } catch (e) {} };
+  closeCheerMenu = () => this.setState({ cheerMenu: null });
+  menuDelete = () => this.setState(s => ({ cheerMenu: null, cheerConfirmId: s.cheerMenu && s.cheerMenu.id }));
+  menuReport = () => this.setState(s => ({ cheerMenu: null, reportPost: s.cheerMenu, reportReason: null, reportDetail: '', reportBlock: false }));
+  menuBlock = () => this.setState(s => ({ cheerMenu: null, blockAsk: s.cheerMenu }));
+  closeReport = () => this.setState({ reportPost: null });
+  onReportDetail = (e) => this.setState({ reportDetail: e.target.value.slice(0, 200) });
+  toggleReportBlock = () => this.setState(s => ({ reportBlock: !s.reportBlock }));
+  submitReport = () => {
+    const s = this.state, p = s.reportPost; if (!p || !s.reportReason) return;
+    if (s.reportReason === 'other' && !s.reportDetail.trim()) return;
+    if (this.netFail()) { this.showToast(this.failMsg('신고를 접수하지')); return; }
+    if (s.reportedKeys.includes(p.key)) { this.setState({ reportPost: null }); this.showToast('이미 신고한 응원글이에요'); return; }
+    const reportedKeys = [...s.reportedKeys, p.key];
+    const blocked = s.reportBlock && !s.blocked.some(b => b.nick === p.author) ? [...s.blocked, { nick: p.author, team: p.team, since: this.todayStr() }] : s.blocked;
+    this.persistMod(blocked, reportedKeys);
+    this.setState({ reportPost: null, reportedKeys, blocked });
+    this.showToast(s.reportBlock ? '신고하고 이 사용자의 글을 숨겼어요' : '신고가 접수됐어요. 검토 후 조치할게요');
+  };
+  cancelBlock = () => this.setState({ blockAsk: null });
+  confirmBlock = () => {
+    const s = this.state, p = s.blockAsk; if (!p) return;
+    if (this.netFail()) { this.showToast(this.failMsg('차단하지')); return; }
+    const blocked = s.blocked.some(b => b.nick === p.author) ? s.blocked : [...s.blocked, { nick: p.author, team: p.team, since: this.todayStr() }];
+    this.persistMod(blocked, s.reportedKeys); this.setState({ blockAsk: null, blocked });
+    this.showToast(`${p.author}님의 글을 더 이상 보지 않아요`);
+  };
+  unblock = (nick) => () => {
+    if (this.netFail()) { this.showToast(this.failMsg('차단을 해제하지')); return; }
+    const blocked = this.state.blocked.filter(b => b.nick !== nick); this.persistMod(blocked, this.state.reportedKeys); this.setState({ blocked });
+    this.showToast(`${nick}님 차단을 해제했어요`);
+  };
+  openBlocked = () => this.setState({ blockedOpen: true });
+  closeBlocked = () => this.setState({ blockedOpen: false });
+  todayStr = () => { const d = new Date(); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
   deleteCheer = (id) => () => this.setState(s => {
     const team = s.teamDetailName;
     const next = { cheerConfirmId: null, cheerByTeam: { ...s.cheerByTeam, [team]: (s.cheerByTeam[team] || []).filter(p => p.id !== id) } };
@@ -536,12 +574,12 @@ class Component extends DCLogic {
       bg: '#111111', card: '#222222', border: '#333333', borderSubtle: '#2a2a2a',
       text: '#ffffff', textSub: '#6d6d6d', textFaint: '#5d5d5d', textNeutral: '#808080', textMuted: '#a5a5a5',
       statusText: '#ffffff', statusBorder: 'rgba(255,255,255,0.5)', main: '#0068FF',
-      pillInactiveBg: '#494949', pillInactiveText: '#808080',
+      pillInactiveBg: '#494949', pillInactiveText: '#808080', tabInactive: '#AFAFAF', orangeText: '#FF7A45', toggleOff: '#333333',
     } : {
       bg: '#FFFFFF', card: '#F2F2F2', border: '#E5E5E5', borderSubtle: '#E5E5E5',
-      text: '#111111', textSub: '#8a8a8a', textFaint: '#9a9a9a', textNeutral: '#9a9a9a', textMuted: '#9a9a9a',
+      text: '#111111', textSub: '#6b6b6b', textFaint: '#858585', textNeutral: '#737373', textMuted: '#737373',
       statusText: '#111111', statusBorder: 'rgba(0,0,0,0.35)', main: '#0068FF',
-      pillInactiveBg: '#EFEFEF', pillInactiveText: '#9a9a9a',
+      pillInactiveBg: '#EFEFEF', pillInactiveText: '#666666', tabInactive: '#8a8a8a', orangeText: '#D9480F', toggleOff: '#CFCFCF',
     };
 
     const ageOptions = [
@@ -669,14 +707,34 @@ class Component extends DCLogic {
     const likedSet = this.state.cheerLiked;
     const allTeamNames = [...Component.M_TEAMS, ...Component.W_TEAMS];
     const authorTeam = (p, i) => { if (p.team) return p.team; if (p.mine) return (this.state.profile && this.state.profile.team) || selectedTeam || teamDetailName; const r = this.rng('cheer-team-' + teamDetailName + p.id)(); return r < 0.75 ? teamDetailName : allTeamNames[Math.floor(r * 97) % allTeamNames.length]; };
-    const cheerPosts = [...myPosts, ...seedPosts].map((p, i) => {
+    const blockedNicks = this.state.blocked.map(b => b.nick), repKeys = this.state.reportedKeys;
+    const cheerAll = [...myPosts, ...seedPosts];
+    const cheerHidden = cheerAll.filter(p => !p.mine && (blockedNicks.includes(p.author) || repKeys.includes(teamDetailName + ':' + p.id))).length;
+    const cheerPosts = cheerAll.filter(p => p.mine || !(blockedNicks.includes(p.author) || repKeys.includes(teamDetailName + ':' + p.id))).map((p, i) => {
       const key = teamDetailName + ':' + p.id, liked = likedSet.includes(key);
       const isMine = !!p.mine, confirming = this.state.cheerConfirmId === p.id;
       return { ...p, isMine, confirming, showDelete: isMine && !confirming, borderColor: isMine ? '#0068FF' : 'transparent',
         askDelete: () => this.setState({ cheerConfirmId: p.id }), cancelDelete: () => this.setState({ cheerConfirmId: null }), doDelete: this.deleteCheer(p.id),
         initial: p.author.slice(0, 1), avatarBg: isMine ? '#0068FF' : avatarColors[(i + 1) % avatarColors.length], teamLogo: logo(authorTeam(p, i)), avatarRing: isMine ? '#0068FF' : 'transparent', likes: p.likes + (liked ? 1 : 0),
-        heartFill: liked ? '#FF4D6A' : 'none', heartStroke: liked ? '#FF4D6A' : c.textFaint, like: this.toggleCheerLike(key) };
+        heartFill: liked ? '#FF4D6A' : 'none', heartStroke: liked ? '#FF4D6A' : c.textFaint, like: this.toggleCheerLike(key),
+        openMenu: () => this.setState({ cheerMenu: { id: p.id, key, author: p.author, text: p.text, team: authorTeam(p, i), mine: isMine } }) };
     });
+    const MS = this.state, rpP = MS.reportPost, rr = MS.reportReason;
+    const mod = {
+      showEmpty: cheerPosts.length === 0, emptyHasLink: cheerHidden > 0,
+      emptyTitle: cheerHidden > 0 ? '보이는 응원글이 없어요' : '아직 응원글이 없어요',
+      emptyDesc: cheerHidden > 0 ? '차단하거나 신고한 글은 숨겨져 있어요' : '첫 응원을 남겨보세요',
+      showHiddenNote: cheerPosts.length > 0 && cheerHidden > 0, hiddenNote: `차단·신고로 숨긴 글 ${cheerHidden}개`,
+      menuOpen: !!MS.cheerMenu, menuMine: !!(MS.cheerMenu && MS.cheerMenu.mine), menuOther: !!(MS.cheerMenu && !MS.cheerMenu.mine), menuAuthor: MS.cheerMenu ? MS.cheerMenu.author : '',
+      reportOpen: !!rpP, reportAuthor: rpP ? rpP.author : '', reportText: rpP ? rpP.text : '',
+      reasons: Component.REPORT_REASONS.map(([k, label]) => ({ label, select: () => this.setState({ reportReason: k }), border: rr === k ? '#0068FF' : c.border, bg: rr === k ? 'rgba(0,104,255,0.08)' : 'transparent', ring: rr === k ? '#0068FF' : c.textFaint, dot: rr === k ? '#0068FF' : 'transparent' })),
+      detail: MS.reportDetail, detailCount: MS.reportDetail.length, detailPlaceholder: rr === 'other' ? '어떤 문제인지 적어주세요 (필수, 최대 200자)' : '자세한 내용을 적어주세요 (선택, 최대 200자)',
+      blockBg: MS.reportBlock ? '#0068FF' : 'transparent', blockBorder: MS.reportBlock ? '#0068FF' : c.textFaint, blockCheck: MS.reportBlock ? '#fff' : 'transparent',
+      submitBg: rr && (rr !== 'other' || MS.reportDetail.trim()) ? '#E5484D' : c.textFaint,
+      blockAskOpen: !!MS.blockAsk, blockAskTitle: MS.blockAsk ? `${MS.blockAsk.author}님의 글을 보지 않을까요?` : '',
+      blockedOpen: MS.blockedOpen, blockedCountLabel: `${MS.blocked.length}명`, hasBlocked: MS.blocked.length > 0, noBlocked: MS.blocked.length === 0,
+      blockedList: MS.blocked.map((b, i) => ({ ...b, logo: logo(b.team), divider: i === 0 ? 'transparent' : c.borderSubtle, unblock: this.unblock(b.nick) })),
+    };
     const combinedRecord = [...rankData.M, ...rankData.W];
     const trBase = combinedRecord.find(r => r.name === teamDetailName) || { wins: 0, draws: 0, losses: 0, rank: '-', points: 0, goalsFor: 0, goalsAgainst: 0, diff: 0, gender: 'M' };
     const gp = Math.max(1, trBase.wins + trBase.draws + trBase.losses);
@@ -1022,7 +1080,7 @@ class Component extends DCLogic {
     const allPreds = [...livePreds, ...seedPreds];
     const decided = allPreds.filter(p => p.hit !== null), hits = decided.filter(p => p.hit).length;
     const myPred = { count: allPreds.length, hits, rate: decided.length ? Math.round(hits / decided.length * 100) + '%' : '-',
-      recent: allPreds.slice(0, 4).map((p, i, arr) => ({ ...p, chip: p.hit === null ? '대기' : p.hit ? '적중' : '실패', chipBg: p.hit === null ? '#9a9a9a' : p.hit ? '#0068FF' : '#E5484D', divider: i === arr.length - 1 ? 'transparent' : c.border })) };
+      recent: allPreds.slice(0, 4).map((p, i, arr) => ({ ...p, chip: p.hit === null ? '대기' : p.hit ? '적중' : '실패', chipBg: p.hit === null ? '#7a7a7a' : p.hit ? '#0068FF' : '#E5484D', divider: i === arr.length - 1 ? 'transparent' : c.border })) };
     const gS = this.state, LES = this.LESSONS, gL = LES[gS.guideLesson];
     const doneSet = gS.guideDone, firstOpen = LES.findIndex(l => !doneSet.includes(l.id));
     const offsets = ['0px', '56px', '0px', '-56px', '0px'];
@@ -1367,7 +1425,8 @@ class Component extends DCLogic {
       teamDetail, teamDetailTabs, closeTeamDetail: this.closeTeamDetail,
       isTeamDetailInfo: teamDetailTab === 'info' && !this.state.loadingTeamDetail && !errActive, isTeamDetailPlayers: teamDetailTab === 'players' && !this.state.loadingTeamDetail && !errActive,
       isTeamDetailCheer: teamDetailTab === 'cheer' && !this.state.loadingTeamDetail && !errActive, isTeamDetailRecord: teamDetailTab === 'record' && !this.state.loadingTeamDetail && !errActive,
-      teamInfo, teamRecord, cheerPosts, cheerTotal: cheerPosts.length,
+      teamInfo, teamRecord, cheerPosts, cheerTotal: cheerPosts.length, mod,
+      closeCheerMenu: this.closeCheerMenu, menuDelete: this.menuDelete, menuReport: this.menuReport, menuBlock: this.menuBlock, closeReport: this.closeReport, onReportDetail: this.onReportDetail, toggleReportBlock: this.toggleReportBlock, submitReport: this.submitReport, cancelBlock: this.cancelBlock, confirmBlock: this.confirmBlock, openBlocked: this.openBlocked, closeBlocked: this.closeBlocked,
       cheerDraft: this.state.cheerDraft, onCheerInput: this.onCheerInput, submitCheer: this.submitCheer, cheerCount: this.state.cheerDraft.length,
       cheerBtnBg: this.state.cheerDraft.trim() ? '#0068FF' : '#9a9a9a', toggleIntro: this.toggleIntro, toggleHistory: this.toggleHistory,
       loadingHome: this.state.loadingHome, showHomeContent: !this.state.loadingHome && !errActive && homeTab === 'home', showPredContent: !this.state.loadingHome && !errActive && homeTab === 'pred', showAttContent: !this.state.loadingHome && !errActive && homeTab === 'att', av, attSheetOpen: this.state.attSheetOpen, openAttSheet: this.openAttSheet, closeAttSheet: this.closeAttSheet, goAttTab: this.goAttTab,
@@ -1395,10 +1454,10 @@ class Component extends DCLogic {
       primaryAction: this.primaryAction, primaryLabel: labelFor(step),
       primaryBg: disabled ? '#4d4d4d' : '#0068FF', primaryOpacity: disabled ? '0.6' : '1',
       goHome: this.goHome, goSchedule: this.goSchedule, goStat: this.goStat, goMy: this.goMy, goApp: this.goApp,
-      homeColor: appScreen === 'home' ? '#0068FF' : '#AFAFAF',
-      scheduleColor: appScreen === 'schedule' ? '#0068FF' : '#AFAFAF',
-      statColor: appScreen === 'stat' ? '#0068FF' : '#AFAFAF',
-      myColor: appScreen === 'my' ? '#0068FF' : '#AFAFAF',
+      homeColor: appScreen === 'home' ? '#0068FF' : c.tabInactive,
+      scheduleColor: appScreen === 'schedule' ? '#0068FF' : c.tabInactive,
+      statColor: appScreen === 'stat' ? '#0068FF' : c.tabInactive,
+      myColor: appScreen === 'my' ? '#0068FF' : c.tabInactive,
       rankSelectM: this.rankSelectM, rankSelectW: this.rankSelectW,
       rankMBg: rankGender === 'M' ? '#0068FF' : c.pillInactiveBg, rankMColor: rankGender === 'M' ? '#fff' : c.pillInactiveText,
       rankWBg: rankGender === 'W' ? '#0068FF' : c.pillInactiveBg, rankWColor: rankGender === 'W' ? '#fff' : c.pillInactiveText,
@@ -1445,10 +1504,10 @@ class Component extends DCLogic {
       favPlayers, hasFavPlayers: favPlayers.length > 0, noFavPlayers: favPlayers.length === 0, goStatPlayers: this.goStatPlayers,
       openMyTeamDetail: this.openMyTeamDetail,
       notifOn: this.state.notifOn, toggleNotif: this.toggleNotif,
-      notifTrackBg: this.state.notifOn ? '#0068FF' : c.border, notifKnobLeft: this.state.notifOn ? '20px' : '2px',
+      notifTrackBg: this.state.notifOn ? '#0068FF' : c.toggleOff, notifKnobLeft: this.state.notifOn ? '20px' : '2px',
       saveCardImage: this.saveCardImage, cardSaveLabel, cardSaveBg,
       settingsOpen: this.state.settingsOpen, openSettings: this.openSettings, closeSettings: this.closeSettings,
-      setThemeToggle: this.setThemeToggle, themeTrackBg: isDark ? '#0068FF' : c.border, themeKnobLeft: isDark ? '20px' : '2px',
+      setThemeToggle: this.setThemeToggle, themeTrackBg: isDark ? '#0068FF' : c.toggleOff, themeKnobLeft: isDark ? '20px' : '2px',
       seasonPickerOpen: this.state.seasonPickerOpen, openSeasonPicker: this.openSeasonPicker, closeSeasonPicker: this.closeSeasonPicker, season, seasonOptions,
       policyOpen: this.state.policyOpen, openPolicy: this.openPolicy, closePolicy: this.closePolicy, policySections,
       termsOpen: this.state.termsOpen, openTerms: this.openTerms, closeTerms: this.closeTerms,

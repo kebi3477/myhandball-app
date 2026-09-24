@@ -305,4 +305,15 @@ class MvpBoard {
   bool get hasVoted => myVoteId != null;
 
   double ratioFor(MvpCandidate c) => total == 0 ? 0 : c.votes / total;
+
+  /// `1,240` — 시안이 `toLocaleString()`으로 천 단위를 끊는다.
+  String get totalLabel {
+    final digits = total.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(digits[i]);
+    }
+    return buffer.toString();
+  }
 }

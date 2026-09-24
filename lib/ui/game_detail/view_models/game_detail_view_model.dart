@@ -68,6 +68,14 @@ class GameDetailState {
 
   bool get mvpOpen => mvp.open;
 
+  /// 시안 `mvp.lockTitle` — 왜 아직 못 하는지 상태별로 말한다.
+  String get mvpLockTitle => game.status == GameStatus.live
+      ? '경기가 진행 중이에요'
+      : '아직 경기 전이에요';
+
+  /// 시안 `mvp.hint` — 표 수 옆에 붙는 한 줄.
+  String get mvpHint => hasVotedMvp ? '투표 완료' : '한 명을 골라주세요';
+
   /// 직관 기록은 이미 치러진 경기에만 남길 수 있다.
   bool get canAttend => game.status != GameStatus.pre;
 
