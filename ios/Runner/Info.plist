@@ -64,6 +64,12 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<!-- 푸시로 앱을 깨워 처리하기 위한 것.
+	     Xcode의 Background Modes > Remote notifications 와 같다. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<!-- 개발용: 같은 Wi-Fi의 맥에서 도는 API(http://192.168.x.x:3000)에 붙기 위한 것.

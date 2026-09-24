@@ -53,3 +53,8 @@ tool/preview/
 # Xcode가 만드는 SwiftPM 상태 파일
 ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 ios/Runner.xcworkspace/xcshareddata/swiftpm/
+
+# Firebase 설정 — 앱 식별자와 API 키가 들어 있다. 커밋하지 않는다.
+# `firebase apps:sdkconfig` 나 `flutterfire configure` 로 다시 받는다.
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
