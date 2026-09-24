@@ -13,7 +13,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myhandball/data/repositories/preferences_repository.dart';
 import 'package:myhandball/data/repositories/schedule_repository.dart';
-import 'package:myhandball/data/services/api_client.dart';
 import 'package:myhandball/data/services/mock_handball_api_service.dart' as mock;
 import 'package:myhandball/data/services/mock_handball_api_service.dart';
 import 'package:myhandball/domain/models/game.dart';
@@ -39,7 +38,7 @@ import 'package:myhandball/ui/my/widgets/my_badges_section.dart';
 import 'package:myhandball/ui/my/view_models/my_view_model.dart';
 import 'package:myhandball/domain/models/rank_row.dart';
 import 'package:myhandball/domain/models/team.dart';
-import 'package:myhandball/ui/my/widgets/my_error_banner.dart';
+import 'package:myhandball/data/services/api_client.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 import 'package:myhandball/ui/onboarding/widgets/onboarding_screen.dart';
 import 'package:myhandball/ui/schedule/view_models/schedule_view_model.dart';
@@ -404,7 +403,7 @@ void main() {
   });
 
   testWidgets('states', (t) async {
-    t.view.physicalSize = const Size(390, 1560);
+    t.view.physicalSize = const Size(390, 1340);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
@@ -458,14 +457,6 @@ void main() {
             const SizedBox(height: 16),
             OffseasonCard(state: offseason, onSeeSchedule: () {}),
             OffseasonCard(state: thisMonth, onSeeSchedule: () {}),
-            const SizedBox(height: 20),
-            // MY는 전체 오류 화면 대신 띠 하나를 쓴다.
-            const MyErrorBanner(
-                error: ApiException('서버에 연결하지 못했어요'), onRetry: _noop),
-            const SizedBox(height: 12),
-            const MyErrorBanner(
-                error: ApiException('요청에 실패했어요 (500)', statusCode: 500),
-                onRetry: _noop),
           ],
         ),
       ),
@@ -634,5 +625,3 @@ void main() {
     );
   });
 }
-
-void _noop() {}

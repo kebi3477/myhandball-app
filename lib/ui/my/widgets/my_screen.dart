@@ -10,7 +10,6 @@ import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
 import 'my_badges_section.dart';
-import 'my_error_banner.dart';
 import 'my_next_game_card.dart';
 import 'my_profile_card.dart';
 import 'my_sections.dart';
@@ -45,17 +44,20 @@ class MyScreen extends ConsumerWidget {
             // `MyState.error`로 내려와 위쪽 띠로 알린다.
             error: (e, _) =>
                 Center(child: MhErrorView(error: e, onRetry: vm.refresh)),
-            data: (state) => RefreshIndicator(
+            // **홈·일정·분석과 같은 오류 화면을 쓴다.** 시안은 MY만 위쪽
+            // 띠로 알리게 그려 뒀는데, 연결이 끊기면 순위·기록·선수가 전부
+            // 비어서 띠만 떠 있고 나머지는 빈 화면이 된다. 무엇이 문제인지도
+            // 안 보이고 다시 시도할 자리도 눈에 안 띈다.
+            data: (state) => state.hasError
+                ? Center(
+                    child: MhErrorView(error: state.error!, onRetry: vm.refresh))
+                : RefreshIndicator(
               color: MhColors.brand,
               backgroundColor: context.mh.card,
               onRefresh: vm.refresh,
               child: ListView(
                 padding: const EdgeInsets.only(bottom: MhSpacing.xl),
                 children: [
-                  if (state.error case final error?) ...[
-                    MyErrorBanner(error: error, onRetry: vm.refresh),
-                    const SizedBox(height: MhSpacing.md),
-                  ],
                   MyProfileCard(state: state),
                   const SizedBox(height: MhSpacing.md),
                   MyTeamCard(state: state),

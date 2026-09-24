@@ -299,9 +299,13 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleState> {
 
   Future<void> refresh() async {
     final current = state.valueOrNull;
-    if (current == null) return;
     state = const AsyncLoading<ScheduleState>().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
+      // **값이 없으면 처음부터 다시 만든다.** 오류 화면에서는 이전 값이
+      // 없는데, 예전에는 여기서 그냥 돌아가서 "다시 시도"를 눌러도 아무
+      // 일도 일어나지 않았다.
+      if (current == null) return build();
+
       final days = await ref.read(scheduleRepositoryProvider).getMonthlySchedule(
             current.gender,
             ref.read(preferencesRepositoryProvider).season.year,
