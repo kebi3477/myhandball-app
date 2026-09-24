@@ -488,7 +488,7 @@ class _ShotTypes extends StatelessWidget {
             crossAxisCount: 3,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            mainAxisExtent: 66,
+            mainAxisExtent: 72,
           ),
           itemBuilder: (_, i) {
             final (label, value) = r.extras[i];

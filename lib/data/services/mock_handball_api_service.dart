@@ -4,6 +4,7 @@ import '../../domain/models/gender.dart';
 import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
+import '../../domain/models/season.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
 import '../../domain/models/team_detail.dart';
@@ -601,6 +602,25 @@ class MockHandballApiService implements HandballApiService {
       players: players.toList(),
       rankTrend: trend,
       results: results,
+      // 연맹 "팀기록"은 실제로는 득점 유형별로 쪼개져 온다. 목업에도 넣어야
+      // 전적 탭의 "득점 유형"이 프리뷰에서 보인다.
+      seasonRecord: TeamSeasonRecord(
+        season: '${Season.current.startYear}-${Season.current.startYear + 1}',
+        goals: rank.goalsFor,
+        goals6m: (rank.goalsFor * 0.31).round(),
+        goalsWing: (rank.goalsFor * 0.18).round(),
+        goals9m: (rank.goalsFor * 0.21).round(),
+        goals7m: (rank.goalsFor * 0.13).round(),
+        goalsFast: (rank.goalsFor * 0.11).round(),
+        goalsBreakthrough: (rank.goalsFor * 0.06).round(),
+        assists: 120 + next(80),
+        turnovers: 180 + next(60),
+        steals: 90 + next(40),
+        blocks: 40 + next(30),
+        yellowCards: 20 + next(20),
+        twoMinutes: 50 + next(40),
+        redCards: next(4),
+      ),
     );
   }
 

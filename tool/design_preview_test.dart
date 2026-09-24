@@ -29,6 +29,7 @@ import 'package:myhandball/ui/game_detail/view_models/game_detail_view_model.dar
 import 'package:myhandball/ui/game_detail/widgets/game_detail_screen.dart';
 import 'package:myhandball/ui/guide/view_models/guide_view_model.dart';
 import 'package:myhandball/ui/guide/widgets/guide_scene_view.dart';
+import 'package:myhandball/ui/home/view_models/home_tab.dart';
 import 'package:myhandball/ui/guide/widgets/guide_screen.dart';
 import 'package:myhandball/ui/home/view_models/home_view_model.dart';
 import 'package:myhandball/ui/home/widgets/home_screen.dart';
@@ -150,6 +151,28 @@ void main() {
 
   testWidgets('home dark', (t) async {
     await _shoot(t, 'home-dark', const HomeScreen(), MhPalette.dark);
+  });
+
+  testWidgets('home prediction tab', (t) async {
+    await _shoot(
+      t,
+      'home-prediction',
+      const HomeScreen(),
+      MhPalette.dark,
+      after: (container) =>
+          container.read(homeTabProvider.notifier).select(HomeTab.prediction),
+    );
+  });
+
+  testWidgets('home attendance tab', (t) async {
+    await _shoot(
+      t,
+      'home-attendance',
+      const HomeScreen(),
+      MhPalette.dark,
+      after: (container) =>
+          container.read(homeTabProvider.notifier).select(HomeTab.attendance),
+    );
   });
 
   testWidgets('home light', (t) async {
@@ -485,6 +508,18 @@ void main() {
   });
 
   // figassets 아이콘 4개가 실제로 들어왔는지 확인하는 컷.
+  testWidgets('onboarding nickname', (t) async {
+    await _shoot(
+      t,
+      'onboarding-nickname',
+      const OnboardingScreen(),
+      MhPalette.dark,
+      after: (container) => container
+          .read(onboardingViewModelProvider.notifier)
+          .goTo(OnboardingState.nicknameStep),
+    );
+  });
+
   testWidgets('onboarding interest', (t) async {
     await _shoot(
       t,

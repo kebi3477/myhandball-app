@@ -83,8 +83,11 @@ class MyTeamCard extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     alignment: Alignment.center,
+                    // 시안은 `background: c.bg; border: 1px solid c.border`다.
+                    // 회색을 박아 두면 라이트 테마에서 튄다.
                     decoration: BoxDecoration(
-                      color: const Color(0xFF898989),
+                      color: c.bg,
+                      border: Border.all(color: c.border),
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(
@@ -92,7 +95,7 @@ class MyTeamCard extends ConsumerWidget {
                       style: MhText.custom(
                         size: 14,
                         weight: FontWeight.w600,
-                        color: Colors.white,
+                        color: c.text,
                       ),
                     ),
                   ),
