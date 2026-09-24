@@ -244,15 +244,6 @@ class PredictionState {
 }
 
 class PredictionViewModel extends AsyncNotifier<PredictionState> {
-  /// 시안 "이번 주 예측"이 훑는 범위.
-  static const _window = Duration(days: 7);
-
-  /// 한 번에 집계를 받아올 경기 수의 상한.
-  ///
-  /// 서버에 주간 집계 엔드포인트가 없어서 **경기마다 한 번씩 부른다.**
-  /// 목록을 통째로 주는 API가 생기면 이 상한은 없어져야 한다.
-  static const _tallyLimit = 6;
-
   PredictionDivision _division = PredictionDivision.all;
   LeaderboardScope _scope = LeaderboardScope.all;
 
@@ -266,60 +257,57 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
 
     // 랭킹 범위와 팬덤이 보는 팀. 프로필 팀이 있으면 그게 기준이다.
     final team = _scopeTeam(profile, prefs.myTeam);
-    final gender = profile?.gender ?? prefs.myTeam?.gender ?? prefs.preferredGender;
+    final gender =
+        profile?.gender ?? prefs.myTeam?.gender ?? prefs.preferredGender;
 
-    final games = await _seasonGames(prefs);
-
-    final now = DateTime.now();
-    final upcoming = [
-      for (final g in games)
-        if (g.status != GameStatus.finished &&
-            g.startsAt != null &&
-            g.startsAt!.isAfter(now) &&
-            g.startsAt!.isBefore(now.add(_window)))
-          g,
-    ]..sort((a, b) => a.startsAt!.compareTo(b.startsAt!));
-
-    final filtered = [
-      for (final g in upcoming)
-        if (_division.gender == null || g.home.gender == _division.gender) g,
-    ];
-
-    // 경기마다 한 번씩 부르므로 **동시에** 던진다. 순서대로 기다리면
-    // 여섯 경기에 요청 여섯 번이 줄줄이 붙어 탭이 그만큼 늦게 뜬다.
-    // 랭킹·팬덤·내 기록도 같이 던진다 — 서로 기다릴 이유가 없다.
-    final shown = filtered.take(_tallyLimit).toList();
-    final (tallies, board, fandom, mine) = await (
-      Future.wait(shown.map(_tally)),
+    // 서로 기다릴 이유가 없으니 한꺼번에 던진다.
+    final (week, board, fandom, mine) = await (
+      _week(),
       _leaderboard(team),
       _fandom(gender),
       _mine(),
     ).wait;
 
     final rows = [
-      for (var i = 0; i < shown.length; i++)
-        PredictionRow(game: shown[i], tally: tallies[i]),
+      for (final w in week)
+        if (_division.gender == null || w.game.home.gender == _division.gender)
+          PredictionRow(game: w.game, tally: w.tally),
     ];
 
     return PredictionState(
       profile: profile,
       team: team,
-      seasonLabel: upcoming.isEmpty
+      seasonLabel: week.isEmpty
           ? '${season.label} 시즌 최종'
           : '${season.label} 시즌 · 매주 월 갱신',
       division: _division,
       rows: rows,
       // 서버 목록이 오면 그걸 쓰고, 못 받았으면 기기에 남은 선택으로 되살린다.
       history: mine == null
-          ? _localHistory(games, prefs)
+          ? await _localHistory(prefs)
           : [for (final item in mine.items) PredictionHistoryRow.of(item)],
-      isOffseason: upcoming.isEmpty,
+      // **부 필터가 아니라 주간 목록 전체로 판단한다.** 여자부만 걸러서
+      // 비었다고 "비시즌"이라고 하면 안 된다.
+      isOffseason: week.isEmpty,
       scope: _scope,
       leaderboard: board,
       fandom: fandom,
       fandomGender: gender,
       mine: mine,
     );
+  }
+
+  /// 이번 주 예측 대상. 못 받으면 빈 목록이다.
+  ///
+  /// 예전에는 시즌 일정을 통째로 받아 7일 안의 경기를 고르고 **경기마다**
+  /// 집계를 따로 불렀다(최대 6경기). `/api/prediction/week`이 그걸 한 번에
+  /// 준다.
+  Future<List<WeekPrediction>> _week() async {
+    try {
+      return await ref.read(handballApiServiceProvider).fetchPredictionWeek();
+    } on Exception {
+      return const [];
+    }
   }
 
   /// 랭킹을 '내 팀 팬'으로 좁힐 때의 기준 팀.
@@ -334,30 +322,6 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
       teamNum: profile.teamNum,
       logoUrl: profile.teamLogoUrl,
     );
-  }
-
-  /// 예측은 성별을 가리지 않고 보여준다. 전체 탭이 있으므로 두 부를 다 받는다.
-  Future<List<Game>> _seasonGames(PreferencesRepository prefs) async {
-    final repo = ref.read(scheduleRepositoryProvider);
-    final year = prefs.season.year;
-    final results = await Future.wait([
-      repo.getSeasonSchedule(Gender.men, year),
-      repo.getSeasonSchedule(Gender.women, year),
-    ]);
-    return [
-      for (final days in results)
-        for (final d in days) ...d.games,
-    ];
-  }
-
-  Future<PredictionTally?> _tally(Game game) async {
-    if (!game.hasDetail) return null;
-    try {
-      return await ref.read(handballApiServiceProvider).fetchPrediction(game);
-    } on Exception {
-      // 집계 하나 못 받았다고 목록 전체를 못 보여줄 이유는 없다.
-      return null;
-    }
   }
 
   /// 랭킹. 못 받으면 `null`이고 그 섹션만 다시 시도를 띄운다.
@@ -397,12 +361,20 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
 
   /// `mh_preds`에 남아 있는 내 선택을 실제 경기와 맞춰 본다.
   ///
-  /// **서버 목록을 못 받았을 때만 쓴다.** 오프라인에서 기록이 통째로
-  /// 비어 보이지 않게 하려고 남겨 둔 길이다.
-  List<PredictionHistoryRow> _localHistory(
-    List<Game> games,
+  /// **서버 목록을 못 받았을 때만 쓴다.** 그때만 시즌 일정을 받는다 —
+  /// 평소에 받아 두면 탭을 열 때마다 두 부의 시즌 일정이 딸려 온다.
+  Future<List<PredictionHistoryRow>> _localHistory(
     PreferencesRepository prefs,
-  ) {
+  ) async {
+    if (prefs.predictions.isEmpty) return const [];
+
+    final List<Game> games;
+    try {
+      games = await _seasonGames(prefs);
+    } on Exception {
+      return const [];
+    }
+
     final rows = <PredictionHistoryRow>[];
     for (final g in games) {
       final pick = prefs.predictionFor(g.id);
@@ -415,6 +387,20 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
       return y.compareTo(x);
     });
     return rows;
+  }
+
+  /// 예측은 성별을 가리지 않으므로 두 부를 다 받는다.
+  Future<List<Game>> _seasonGames(PreferencesRepository prefs) async {
+    final repo = ref.read(scheduleRepositoryProvider);
+    final year = prefs.season.year;
+    final results = await Future.wait([
+      repo.getSeasonSchedule(Gender.men, year),
+      repo.getSeasonSchedule(Gender.women, year),
+    ]);
+    return [
+      for (final days in results)
+        for (final d in days) ...d.games,
+    ];
   }
 
   Future<void> selectDivision(PredictionDivision division) async {

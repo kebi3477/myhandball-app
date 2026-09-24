@@ -151,6 +151,8 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
     final (games, ranking, topPlayers) = await _fetch(gender, category);
 
     final offseason = !games.any((g) => g.status != GameStatus.finished);
+    // 개막 달은 마이팀의 부를 따른다. 마이팀이 없으면 남자부다.
+    final openingGender = prefs.myTeam?.gender ?? Gender.men;
 
     return HomeState(
       games: games,
@@ -158,10 +160,13 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
       topPlayers: topPlayers,
       gender: gender,
       category: category,
-      // 개막 달은 마이팀의 부를 따른다. 마이팀이 없으면 남자부다.
-      openingGender: prefs.myTeam?.gender ?? Gender.men,
+      openingGender: openingGender,
       notificationsOn: prefs.notificationsOn,
-      nextSeasonOpensAt: offseason ? await _nextSeasonOpening(gender) : null,
+      // **개막일은 마이팀의 부로 찾는다.** 순위 토글(`gender`)로 찾으면
+      // 여자부 팀을 응원하는 사람이 홈에서 남자부를 한 번 누른 순간
+      // 11월 개막일이 1월 개막 문구 옆에 붙는다.
+      nextSeasonOpensAt:
+          offseason ? await _nextSeasonOpening(openingGender) : null,
       rankingUpdatedAt: await _lastPlayedAt(gender),
     );
   }
@@ -183,11 +188,23 @@ class HomeViewModel extends AsyncNotifier<HomeState> {
     }
   }
 
-  /// 다음 시즌 첫 경기 시각.
+  /// 다음 시즌 개막 시각.
   ///
-  /// 연맹이 일정을 올리기 전에는 빈 응답이 오고, 그때는 `null`이다.
-  /// **개막일을 지어내지 않는다** — 틀린 D-day가 없는 것보다 나쁘다.
+  /// **서버가 판정한 값이 먼저다** (`GET /api/season`의 `nextOpensAt`).
+  /// 서버도 모르면 다음 시즌 일정에서 첫 경기를 찾는다 — 연맹이 일정을
+  /// 올리는 순간 서버 설정보다 먼저 보일 수 있다.
+  ///
+  /// 둘 다 없으면 `null`이다. **개막일을 지어내지 않는다** — 틀린 D-day가
+  /// 없는 것보다 나쁘다.
   Future<DateTime?> _nextSeasonOpening(Gender gender) async {
+    try {
+      final status =
+          await ref.read(handballApiServiceProvider).fetchSeasonStatus(gender);
+      if (status.nextOpensAt case final at?) return at;
+    } on Exception {
+      // 서버를 못 봐도 일정으로 찾아본다.
+    }
+
     final next = Season.ofYear(Season.current.startYear + 1);
     try {
       final days = await ref

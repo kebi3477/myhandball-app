@@ -1065,6 +1065,62 @@ class HttpHandballApiService implements HandballApiService {
     return s == null ? null : DateTime.tryParse(s);
   }
 
+  @override
+  Future<List<WeekPrediction>> fetchPredictionWeek() async {
+    final j = _map(await client.get('/prediction/week', {'season': season()}));
+    return [
+      for (final raw in _list(j['games']))
+        if (_map(raw) case final g)
+          if (_int(g['matchSeq']) case final matchSeq?)
+            WeekPrediction(
+              game: _weekGame(g, matchSeq),
+              tally: PredictionTally(
+                total: _int(g['total']) ?? 0,
+                home: _int(g['home']) ?? 0,
+                draw: _int(g['draw']) ?? 0,
+                away: _int(g['away']) ?? 0,
+                open: g['open'] == true,
+                myPick: PredictionPick.fromCode(_str(g['myPick'])),
+              ),
+            ),
+    ];
+  }
+
+  /// 주간 응답은 일정과 필드 이름이 다르다 — 팀이 객체가 아니라 이름·로고
+  /// 두 필드로 온다.
+  Game _weekGame(Map<String, dynamic> g, int matchSeq) {
+    final gender = Gender.fromCode(_str(g['gender']));
+    final startsAt = _date(g['startsAt']);
+    return Game(
+      id: 'g$matchSeq',
+      matchSeq: matchSeq,
+      startsAt: startsAt,
+      home: Team(
+        name: _str(g['homeName']) ?? '',
+        gender: gender,
+        logoUrl: _str(g['homeLogoUrl']),
+      ),
+      away: Team(
+        name: _str(g['awayName']) ?? '',
+        gender: gender,
+        logoUrl: _str(g['awayLogoUrl']),
+      ),
+      // 이 목록은 시작 전 경기만 담는다.
+      status: GameStatus.pre,
+      // `meta`는 일정 카드의 `11.09 14:00`이다. 주간 응답에는 원문 날짜
+      // 문자열이 없으므로 시작 시각으로 만든다.
+      meta: _weekMeta(startsAt),
+      venue: _str(g['venue']),
+    );
+  }
+
+  String _weekMeta(DateTime? startsAt) {
+    final at = startsAt?.toLocal();
+    if (at == null) return '';
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${two(at.month)}.${two(at.day)} ${two(at.hour)}:${two(at.minute)}';
+  }
+
   // --- 기기 대신 서버에 두는 내 기록 ---
 
   @override

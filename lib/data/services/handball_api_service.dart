@@ -142,6 +142,11 @@ abstract interface class HandballApiService {
   /// 내 예측 집계와 최근 목록.
   Future<MyPredictions> fetchMyPredictions({int limit});
 
+  /// 이번 주 예측 대상 경기 + 집계 + 내 선택.
+  ///
+  /// **시작 전 경기만 담는다.** 비어 있으면 이번 주에 예측할 경기가 없다.
+  Future<List<WeekPrediction>> fetchPredictionWeek();
+
   // --- 기기 대신 서버에 두는 내 기록 ---
   //
   // 전부 `X-Device-Id` 기준이다. 앱을 지웠다 깔아도 iOS는 Keychain 덕에

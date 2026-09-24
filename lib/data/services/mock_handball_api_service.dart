@@ -973,6 +973,17 @@ class MockHandballApiService implements HandballApiService {
     return fetchCheers(team);
   }
 
+  @override
+  Future<List<WeekPrediction>> fetchPredictionWeek() async {
+    await _delay();
+    final games = await fetchUpcomingGames();
+    return [
+      for (final g in games)
+        if (g.status == GameStatus.pre)
+          WeekPrediction(game: g, tally: _tallyFor(g)),
+    ];
+  }
+
   // --- 기기 대신 서버에 두는 내 기록 ---
 
   @override

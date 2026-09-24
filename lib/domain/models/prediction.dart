@@ -1,5 +1,18 @@
 import '../number_format.dart';
+import 'game.dart';
+import 'game_detail.dart';
 import 'gender.dart';
+
+/// `GET /api/prediction/week` 한 줄 — 경기와 집계를 한 번에 받는다.
+///
+/// **이게 있으면 경기마다 `/api/game/:matchSeq/prediction`을 부를 이유가
+/// 없다.** 예전에는 요청 수를 줄이려고 여섯 경기로 잘라서 보여줬다.
+class WeekPrediction {
+  const WeekPrediction({required this.game, required this.tally});
+
+  final Game game;
+  final PredictionTally tally;
+}
 
 /// 승부예측 랭킹에 쓰는 프로필. `GET/PUT /api/profile`.
 ///
