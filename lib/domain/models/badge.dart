@@ -35,6 +35,7 @@ class MhBadgeStyle {
     required this.ribbonRight,
     required this.cardBg,
     required this.nameColor,
+    required this.subColor,
     required this.accent,
     required this.glyph,
     this.glyphStrokeWidth = 0,
@@ -47,9 +48,12 @@ class MhBadgeStyle {
   final String ribbonLeft;
   final String ribbonRight;
 
-  /// 획득했을 때의 카드 배경·이름색.
+  /// 획득했을 때의 카드 배경·이름색·보조 문구색.
+  ///
+  /// 보조 문구는 이름보다 한 톤 연하다 (시안 `subColor`).
   final Color cardBg;
   final Color nameColor;
+  final Color subColor;
 
   /// 진행바 채움에 쓰는 대표색.
   final Color accent;
@@ -63,9 +67,9 @@ class MhBadgeStyle {
   bool get glyphFilled => glyphStrokeWidth == 0;
 
   static const _heart =
-      'M30 38.4c-6.8-4.5-10.4-8.3-10.4-12.2a5.4 5.4 0 019.6-3.4l.8 1 .8-1a5.4 '
-      '5.4 0 019.6 3.4c0 3.9-3.6 7.7-10.4 12.2z';
-  static const _check = 'M21 28l6.5 6.5L40 21';
+      'M30 39 C19 32 17 23 23 20.5 C26.5 19 29 21 30 23.5 '
+      'C31 21 33.5 19 37 20.5 C43 23 41 32 30 39 Z';
+  static const _check = 'M20 28.5 L27 35.5 L40 21.5';
   static const _star =
       'M30 17 l3.2 6.6 7.2.9-5.3 5 1.4 7.1-6.5-3.6-6.5 3.6 1.4-7.1-5.3-5 7.2-.9z';
 
@@ -77,6 +81,7 @@ class MhBadgeStyle {
     ribbonRight: '#E5487D',
     cardBg: Color(0xFFFFE6EE),
     nameColor: Color(0xFF8A1C45),
+    subColor: Color(0xFFB0305E),
     accent: Color(0xFFE5487D),
     glyph: _heart,
   );
@@ -89,6 +94,7 @@ class MhBadgeStyle {
     ribbonRight: '#0050C8',
     cardBg: Color(0xFFE3EEFF),
     nameColor: Color(0xFF00347F),
+    subColor: Color(0xFF0050C8),
     accent: Color(0xFF0068FF),
     glyph: _check,
     glyphStrokeWidth: 4.5,
@@ -102,6 +108,7 @@ class MhBadgeStyle {
     ribbonRight: '#0068FF',
     cardBg: Color(0xFFFFF4CC),
     nameColor: Color(0xFF6B4500),
+    subColor: Color(0xFF8A6A00),
     accent: Color(0xFFFFC800),
     glyph: _star,
   );

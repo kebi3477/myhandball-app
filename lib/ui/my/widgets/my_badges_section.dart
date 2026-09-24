@@ -26,8 +26,8 @@ class MyBadgesSection extends ConsumerWidget {
 
   final MyState state;
 
-  /// 승·패만 센다. 무승부와 "관람"(마이팀이 안 뛰었거나 점수가 없는 경기)은
-  /// 승리 요정 계산에서 빠진다.
+  /// 마이팀이 뛴 직관 경기의 승·무·패. 마이팀이 안 뛴 경기("관람")는
+  /// `-`로 들어와 어디에도 안 세진다.
   int _count(String result) =>
       state.attendance.where((a) => a.result == result).length;
 
@@ -41,8 +41,10 @@ class MyBadgesSection extends ConsumerWidget {
       guideCompletedAt:
           ref.watch(preferencesRepositoryProvider).guideCompletedAt,
       attendanceWins: _count('승'),
+      attendanceDraws: _count('무'),
       attendanceLosses: _count('패'),
       teamWins: rank?.wins ?? 0,
+      teamDraws: rank?.draws ?? 0,
       teamLosses: rank?.losses ?? 0,
       predictionHits: state.predictionHits,
     );
@@ -161,7 +163,7 @@ class _BadgeTile extends ConsumerWidget {
               style: MhText.custom(
                 size: 11,
                 weight: FontWeight.w600,
-                color: earned ? style.nameColor : c.textSub,
+                color: earned ? style.subColor : c.textSub,
                 height: 1.3,
               ),
             ),

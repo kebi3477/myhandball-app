@@ -12,8 +12,10 @@ void main() {
     int guideDone = 0,
     DateTime? guideCompletedAt,
     int wins = 0,
+    int draws = 0,
     int losses = 0,
     int teamWins = 0,
+    int teamDraws = 0,
     int teamLosses = 0,
     int hits = 0,
   }) =>
@@ -22,8 +24,10 @@ void main() {
             guideDone: guideDone,
             guideCompletedAt: guideCompletedAt,
             attendanceWins: wins,
+            attendanceDraws: draws,
             attendanceLosses: losses,
             teamWins: teamWins,
+            teamDraws: teamDraws,
             teamLosses: teamLosses,
             predictionHits: hits,
           )
@@ -34,8 +38,10 @@ void main() {
       guideDone: 0,
       guideCompletedAt: null,
       attendanceWins: 0,
+      attendanceDraws: 0,
       attendanceLosses: 0,
       teamWins: 0,
+      teamDraws: 0,
       teamLosses: 0,
       predictionHits: 0,
     );
@@ -44,12 +50,20 @@ void main() {
   });
 
   group('승리 요정', () {
-    test('승패가 3경기 미만이면 경기 수를 센다', () {
-      // 무승부는 분모에서 빠지므로 2승 1무는 2경기다.
+    test('응원 경기가 3경기 미만이면 경기 수를 센다', () {
       final b = badge(MhBadgeKind.winFairy,
           wins: 2, teamWins: 5, teamLosses: 15);
       expect(b.earned, isFalse);
       expect(b.subtitle, '응원 경기 2/3');
+    });
+
+    test('무승부도 응원 경기로 센다', () {
+      // 시안 `attDecided = aw + ad + al`. 2승 1무면 3경기다.
+      final b = badge(MhBadgeKind.winFairy,
+          wins: 2, draws: 1, teamWins: 5, teamLosses: 15);
+      expect(b.earned, isTrue);
+      // 내 승률 67%(2/3), 팀 승률 25%(5/20) → +42%p
+      expect(b.subtitle, '내가 가면 승률 +42%p');
     });
 
     test('3경기를 채우고 팀보다 승률이 높으면 획득한다', () {
@@ -74,14 +88,22 @@ void main() {
       expect(b.earned, isFalse);
     });
 
-    test('팀 승률도 무승부를 빼고 센다', () {
-      // 팀이 5승 5무 5패일 때, 무승부를 분모에 넣으면 33%지만 빼면 50%다.
-      // 내가 3전 2승 1패(67%)면 어느 쪽으로 세든 높지만, 격차가 달라진다.
+    test('팀 승률도 무승부를 분모에 넣는다', () {
+      // 팀 5승 5무 5패 → 5/15 = 33%. 무승부를 뺐다면 50%였을 것이다.
+      // 내가 3전 2승 1패 → 67%. 차이는 +34%p.
       final b = badge(MhBadgeKind.winFairy,
-          wins: 2, losses: 1, teamWins: 5, teamLosses: 5);
+          wins: 2, losses: 1, teamWins: 5, teamDraws: 5, teamLosses: 5);
       expect(b.earned, isTrue);
-      // 67% - 50% = 17%p. 무승부를 넣었다면 +33%p로 나왔을 것이다.
-      expect(b.subtitle, '내가 가면 승률 +17%p');
+      expect(b.subtitle, '내가 가면 승률 +34%p');
+    });
+
+    test('차이는 각각 반올림한 뒤에 뺀다', () {
+      // 내 승률 1/3 = 33.3 → 33, 팀 2/3 = 66.7 → 67. 33 - 67 = -34.
+      // 먼저 빼고 반올림하면 -33이 되어 1%p 어긋난다.
+      final b = badge(MhBadgeKind.winFairy,
+          wins: 1, losses: 2, teamWins: 2, teamLosses: 1);
+      expect(b.earned, isFalse);
+      expect(b.subtitle, '직관 승률이 팀보다 높으면');
     });
 
     test('기록이 없으면 0경기부터 시작한다', () {
@@ -118,10 +140,10 @@ void main() {
       expect(b.subtitle, '2026.09.04 수료');
     });
 
-    test('날짜를 저장하기 전에 수료한 사용자는 날짜 없이 쓴다', () {
+    test('날짜를 저장하기 전에 수료한 사용자는 다른 문구를 쓴다', () {
       final b = badge(MhBadgeKind.graduate, guideDone: 5);
       expect(b.earned, isTrue);
-      expect(b.subtitle, '수료');
+      expect(b.subtitle, '가이드 완료');
     });
   });
 }
