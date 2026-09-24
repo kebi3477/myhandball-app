@@ -6,11 +6,10 @@ import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
-import '../../guide/view_models/guide_progress.dart';
 import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
-import 'my_guide_badge.dart';
+import 'my_badges_section.dart';
 import 'my_next_game_card.dart';
 import 'my_profile_card.dart';
 import 'my_sections.dart';
@@ -18,7 +17,7 @@ import 'my_team_card.dart';
 
 /// MY 탭.
 ///
-/// 시안 순서: 헤더 → 프로필(닉네임) → MY 팀 → 수료 배지 → 관심 선수 →
+/// 시안 순서: 헤더 → 프로필(닉네임) → MY 팀 → 내 배지 → 관심 선수 →
 /// 직관 기록 → 승부 예측 → **팀 구분선** → 다음 경기 → 시즌 기록 →
 /// 최근 5경기 → 주요 선수.
 ///
@@ -62,10 +61,7 @@ class MyScreen extends ConsumerWidget {
                   const SizedBox(height: MhSpacing.md),
                   MyTeamCard(state: state),
                   const SizedBox(height: MhSpacing.md),
-                  MyGuideBadge(
-                    doneCount: ref.watch(guideDoneCountProvider),
-                    allDone: ref.watch(guideDoneCountProvider.notifier).allDone,
-                  ),
+                  MyBadgesSection(state: state),
                   const SizedBox(height: MhSpacing.md),
                   FavoritePlayersSection(
                     players: state.favoritePlayers,

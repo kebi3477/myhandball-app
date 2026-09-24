@@ -68,7 +68,6 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badge = state.badge;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
       child: Container(
@@ -117,36 +116,6 @@ class _SummaryCard extends StatelessWidget {
                 TeamLogo(size: 56, logoUrl: state.team?.logoUrl, inset: 0.76),
               ],
             ),
-            if (badge != null) ...[
-              const SizedBox(height: MhSpacing.sm),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: MhColors.guideYellow,
-                    borderRadius: BorderRadius.circular(MhRadius.pill / 2),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(badge.$1,
-                          style: MhText.custom(
-                              size: 12,
-                              weight: FontWeight.w800,
-                              color: const Color(0xFF6B4500))),
-                      const SizedBox(width: 6),
-                      Text(badge.$2,
-                          style: MhText.custom(
-                              size: 12,
-                              weight: FontWeight.w600,
-                              color: const Color(0xFF6B4500))),
-                    ],
-                  ),
-                ),
-              ),
-            ],
             const SizedBox(height: MhSpacing.sm),
             Row(
               children: [

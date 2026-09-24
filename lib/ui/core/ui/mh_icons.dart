@@ -140,18 +140,38 @@ class MhIcon extends StatelessWidget {
 ///
 /// 색이 여러 개라 [MhIcon]처럼 한 색으로 칠할 수 없어 따로 둔다.
 class MhMedal extends StatelessWidget {
-  const MhMedal({super.key, this.size = 44});
+  const MhMedal({
+    super.key,
+    this.size = 44,
+    this.glyph = star,
+    this.glyphFilled = true,
+  });
 
   final double size;
 
-  static const _svg =
+  /// 메달 안에 그릴 문양. 좌표계는 메달과 같은 `0 0 60 72`다.
+  ///
+  /// 시안의 "내 배지"가 배지마다 다른 문양을 쓴다 (`b.glyph`).
+  final String glyph;
+
+  /// 채워 그릴지(별·핀), 선으로만 그릴지(체크·깃발).
+  final bool glyphFilled;
+
+  /// 기본 문양 — 수료 배지의 별.
+  static const star =
+      'M30 17 l3.2 6.6 7.2.9-5.3 5 1.4 7.1-6.5-3.6-6.5 3.6 1.4-7.1-5.3-5 7.2-.9z';
+
+  String get _body =>
       '<path d="M18 40 L10 70 L22 64 L28 72 L32 44 Z" fill="#0050C8"/>'
       '<path d="M42 40 L50 70 L38 64 L32 72 L28 44 Z" fill="#0068FF"/>'
       '<circle cx="30" cy="28" r="26" fill="#FFC800" stroke="#D9A400" stroke-width="3"/>'
       '<circle cx="30" cy="28" r="19" fill="#FFD43B"/>'
       '<path d="M13 25 C22 31, 38 31, 47 25" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
       '<path d="M30 9 C24 18, 24 38, 30 47" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
-      '<path d="M30 17 l3.2 6.6 7.2.9-5.3 5 1.4 7.1-6.5-3.6-6.5 3.6 1.4-7.1-5.3-5 7.2-.9z" fill="#fff" stroke="#D9A400" stroke-width="1.2" stroke-linejoin="round"/>';
+      '<path d="$glyph" fill="${glyphFilled ? '#fff' : 'none'}" '
+      'stroke="${glyphFilled ? '#D9A400' : '#fff'}" '
+      'stroke-width="${glyphFilled ? 1.2 : 3.0}" '
+      'stroke-linecap="round" stroke-linejoin="round"/>';
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +184,7 @@ class MhMedal extends StatelessWidget {
         height: size * 72 / 60,
         child: SvgPicture.string(
           '<svg xmlns="http://www.w3.org/2000/svg" width="$size" '
-          'height="${size * 72 / 60}" viewBox="0 0 60 72">$_svg</svg>',
+          'height="${size * 72 / 60}" viewBox="0 0 60 72">$_body</svg>',
           width: size,
           height: size * 72 / 60,
         ),

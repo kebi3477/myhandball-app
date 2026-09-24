@@ -87,28 +87,6 @@ void main() {
       expect(_state(const []).wdlLabel, '0·0·0');
     });
 
-    test('팀 승률보다 높을 때만 배지가 붙는다', () {
-      final entries = [
-        for (var i = 0; i < 4; i++) _entry(_game(home: 30 + i, away: 20)),
-      ];
-      // 직관 4전 4승(100%) vs 팀 20경기 10승(50%)
-      const high = RankRow(rank: 1, team: Team(name: 'SK호크스'), points: 20,
-          played: 20, wins: 10);
-      expect(_state(entries, rank: high).badge?.$1, '행운의 직관러');
-
-      // 팀이 전승이면 내가 특별할 게 없다.
-      const perfect = RankRow(rank: 1, team: Team(name: 'SK호크스'), points: 40,
-          played: 20, wins: 20);
-      expect(_state(entries, rank: perfect).badge, isNull);
-    });
-
-    test('확정 3경기 미만이면 배지를 달지 않는다', () {
-      // 한 경기 이겼다고 "행운의 직관러"를 붙이면 아무 뜻이 없다.
-      const rank = RankRow(rank: 1, team: Team(name: 'SK호크스'), points: 20,
-          played: 20, wins: 10);
-      final one = [_entry(_game(home: 30, away: 20))];
-      expect(_state(one, rank: rank).badge, isNull);
-    });
   });
 
   test('도장판은 안 가본 곳도 센다', () {

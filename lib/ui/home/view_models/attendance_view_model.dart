@@ -81,19 +81,6 @@ class AttendanceState {
     return '$venues개 경기장에서 ${team!.name}을 응원했어요';
   }
 
-  /// 시안 `av.badge` / `av.badgeSub` — 직관 승률이 팀 승률보다 높을 때만.
-  ///
-  /// 없을 때 억지로 띄우지 않는다. "행운의 직관러"가 항상 붙어 있으면
-  /// 아무 뜻도 없는 장식이 된다.
-  (String badge, String sub)? get badge {
-    final r = teamRank;
-    if (r == null || r.played == 0 || _decided.length < 3) return null;
-    final mine = wins * 100 / _decided.length;
-    final theirs = r.wins * 100 / r.played;
-    if (mine <= theirs) return null;
-    return ('행운의 직관러', '팀 평균보다 ${(mine - theirs).round()}%p 높아요');
-  }
-
   /// 시안 `av.stampCount` — `4/8`
   String get stampCountLabel =>
       '${stamps.where((s) => s.visited).length}/${stamps.length}';
