@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../domain/models/game.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
@@ -497,6 +498,66 @@ class HttpHandballApiService implements HandballApiService {
               ),
       ];
 
+  /// 라운드별 순위 추이. **연맹이 주지 않아 앱이 직접 만든다.**
+  ///
+  /// 시즌 일정에 전 경기 결과가 들어 있으므로, 경기를 시간순으로 넣으면서
+  /// 순위표를 다시 세면 된다. 값을 남기는 시점은 **이 팀이 경기를 치른
+  /// 직후**다 — 승점 모드가 이 팀의 경기마다 한 점을 찍으므로, 다른 팀만
+  /// 뛴 날까지 넣으면 두 모드의 가로축 길이가 달라진다.
+  ///
+  /// 순위는 **승점 → 득실차 → 다득점** 순으로 매긴다. `/api/ranking`이
+  /// 쓰는 기준과 같다.
+  @visibleForTesting
+  Future<List<int>> rankTrendFor(Team team) => _rankTrend(team);
+
+  Future<List<int>> _rankTrend(Team team) async {
+    final List<ScheduleDay> days;
+    try {
+      days = await _fetchSchedule(team.gender);
+    } on ApiException {
+      return const [];
+    }
+
+    final points = <String, int>{};
+    final scored = <String, int>{};
+    final conceded = <String, int>{};
+    final trend = <int>[];
+
+    int diff(String name) => (scored[name] ?? 0) - (conceded[name] ?? 0);
+
+    void add(String name, int mine, int theirs) {
+      points[name] = (points[name] ?? 0) +
+          (mine > theirs ? 2 : (mine == theirs ? 1 : 0));
+      scored[name] = (scored[name] ?? 0) + mine;
+      conceded[name] = (conceded[name] ?? 0) + theirs;
+    }
+
+    for (final day in days) {
+      for (final g in day.games) {
+        if (g.status != GameStatus.finished) continue;
+        final h = g.scoreHome, a = g.scoreAway;
+        if (h == null || a == null) continue;
+
+        add(g.home.name, h, a);
+        add(g.away.name, a, h);
+
+        final mine = g.home.name == team.name || g.away.name == team.name;
+        if (!mine) continue;
+
+        final table = points.keys.toList()
+          ..sort((x, y) {
+            final byPoints = (points[y] ?? 0).compareTo(points[x] ?? 0);
+            if (byPoints != 0) return byPoints;
+            final byDiff = diff(y).compareTo(diff(x));
+            if (byDiff != 0) return byDiff;
+            return (scored[y] ?? 0).compareTo(scored[x] ?? 0);
+          });
+        trend.add(table.indexOf(team.name) + 1);
+      }
+    }
+    return trend;
+  }
+
   /// 맞대결 기록은 대응 엔드포인트가 없다. 시즌 일정에서 두 팀 경기를
   /// 골라 직접 만든다. 일정은 서버가 캐시하고 있어 비싸지 않다.
   Future<HeadToHead> _headToHead(Game game) async {
@@ -636,8 +697,7 @@ class HttpHandballApiService implements HandballApiService {
                 statLine: '',
               ),
       ],
-      // 라운드별 순위는 연맹이 주지 않는다. 전적 탭은 누적 승점으로 그린다.
-      rankTrend: const [],
+      rankTrend: await _rankTrend(team),
       results: results,
       seasonRecord: _seasonRecord(t),
     );
