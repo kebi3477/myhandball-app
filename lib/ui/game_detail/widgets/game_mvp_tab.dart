@@ -123,7 +123,7 @@ class GameMvpTab extends ConsumerWidget {
                   Flexible(
                     child: Text(
                       state.hasVotedMvp
-                          ? '$total표 · 투표 완료'
+                          ? '$total표 · 이미 투표했어요'
                           : '$total표 · 한 번만 투표할 수 있어요',
                       textAlign: TextAlign.right,
                       maxLines: 1,
@@ -228,6 +228,25 @@ class _CandidateRow extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // **내가 뽑은 줄은 한눈에 보여야 한다.** 투표 뒤에는 모든
+                  // 줄이 눌리지 않는데, 표시가 흐릿하면 "눌러도 안 된다"로
+                  // 읽힌다.
+                  if (mine) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: MhColors.brand,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text('내 표',
+                          style: MhText.custom(
+                              size: 10,
+                              weight: FontWeight.w800,
+                              color: Colors.white)),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   Text(
                     showResult ? '${(pct * 100).round()}%' : '투표',
                     style: MhText.custom(
