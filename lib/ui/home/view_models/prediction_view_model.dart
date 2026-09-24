@@ -6,6 +6,22 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/game_detail.dart';
 import '../../../domain/models/gender.dart';
 import '../../../domain/models/team.dart';
+import '../../my/view_models/nickname_provider.dart';
+
+/// 예측을 저장할 때마다 1 올라간다.
+///
+/// 홈 탭 줄의 빨간 점이 이걸 본다. 점은 `mh_preds`(저장소의 가변 값)를
+/// 읽는데 `PreferencesRepository`는 `Provider`라 값이 바뀌어도 아무도 다시
+/// 그리지 않는다. **예측을 다 해도 점이 안 없어지는 걸 막으려고 둔다.**
+class PredictionRevision extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+final predictionRevisionProvider =
+    NotifierProvider<PredictionRevision, int>(PredictionRevision.new);
 
 /// 승부예측 탭의 부 필터. 시안 `pv.divTabs`.
 enum PredictionDivision {
@@ -163,7 +179,8 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
     }
 
     return PredictionState(
-      nickname: prefs.nickname,
+      // 저장소를 직접 읽으면 MY에서 닉네임을 바꿔도 여기가 안 따라온다.
+      nickname: ref.watch(nicknameProvider),
       team: team,
       joinedLabel: prefs.joinedLabel,
       seasonLabel: '${season.label} 정규리그',
@@ -259,6 +276,7 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
       return;
     }
     await ref.read(preferencesRepositoryProvider).setPrediction(game.id, choice);
+    ref.read(predictionRevisionProvider.notifier).bump();
 
     state = AsyncData(PredictionState(
       nickname: current.nickname,

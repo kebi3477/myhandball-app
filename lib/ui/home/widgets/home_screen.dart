@@ -13,6 +13,7 @@ import '../../guide/view_models/guide_progress.dart';
 import '../../search/widgets/search_screen.dart';
 import '../view_models/home_tab.dart';
 import '../view_models/home_view_model.dart';
+import '../view_models/prediction_view_model.dart';
 import 'attendance_tab.dart';
 import 'guide_banner.dart';
 import 'home_skeleton.dart';
@@ -132,6 +133,9 @@ class _TabBar extends ConsumerWidget {
 final _predictionDotProvider = Provider<bool>((ref) {
   final home = ref.watch(homeViewModelProvider).valueOrNull;
   if (home == null) return false;
+  // 저장소는 Provider라 값이 바뀌어도 알림이 없다. 예측을 저장할 때마다
+  // 올라가는 번호를 같이 지켜본다.
+  ref.watch(predictionRevisionProvider);
   final prefs = ref.watch(preferencesRepositoryProvider);
   return home.games.any(
       (g) => g.status == GameStatus.pre && prefs.predictionFor(g.id) == null);

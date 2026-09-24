@@ -6,6 +6,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/nickname.dart';
 import '../../../domain/models/team.dart';
 import '../../app/view_models/app_view_model.dart';
+import '../../my/view_models/nickname_provider.dart';
 
 /// 시안 온보딩 1스텝의 관심사 선택지.
 enum Interest {
@@ -175,7 +176,7 @@ class OnboardingViewModel extends Notifier<OnboardingState> {
     final prefs = ref.read(preferencesRepositoryProvider);
     await prefs.setMyTeam(state.team);
     await prefs.setPreferredGender(state.teamGender);
-    await prefs.setNickname(state.nickname);
+    await ref.read(nicknameProvider.notifier).set(state.nickname);
     await ref.read(appViewModelProvider.notifier).completeOnboarding();
   }
 }

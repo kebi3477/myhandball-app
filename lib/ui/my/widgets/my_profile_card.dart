@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/repositories/preferences_repository.dart';
 import '../../../domain/models/nickname.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/my_view_model.dart';
+import '../view_models/nickname_provider.dart';
 
 /// MY 맨 위의 프로필 카드. 시안 `myProf`.
 ///
@@ -43,19 +43,17 @@ class _MyProfileCardState extends ConsumerState<MyProfileCard> {
 
   Future<void> _save() async {
     if (!Nickname.isValid(_controller.text)) return;
-    await ref.read(preferencesRepositoryProvider).setNickname(_controller.text);
+    // 저장소에 직접 쓰면 승부예측 탭의 프로필이 안 따라온다 — 저장소는
+    // `Provider`라 내부 값이 바뀌어도 아무도 다시 그리지 않는다.
+    await ref.read(nicknameProvider.notifier).set(_controller.text);
     if (!mounted) return;
     setState(() => _editing = false);
-    // MY 화면의 다른 카드가 닉네임을 쓰지는 않지만, 승부예측 탭의 프로필은
-    // 이 값을 본다. 다시 만들어 두지 않으면 탭을 옮겨야 반영된다.
-    ref.invalidate(myViewModelProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.mh;
-    final prefs = ref.watch(preferencesRepositoryProvider);
-    final nickname = prefs.nickname;
+    final nickname = ref.watch(nicknameProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),

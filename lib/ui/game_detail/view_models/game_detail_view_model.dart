@@ -177,6 +177,7 @@ class GameDetailViewModel
           .read(preferencesRepositoryProvider)
           .setPrediction(current.game.id, pick);
       state = AsyncData(current.copyWith(tally: tally));
+      ref.read(predictionRevisionProvider.notifier).bump();
       ref
         ..invalidate(predictionViewModelProvider)
         ..invalidate(myViewModelProvider);
