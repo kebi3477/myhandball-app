@@ -47,9 +47,13 @@ class AttendanceState {
 
   int get count => entries.length;
 
-  /// 승패가 확정된 경기만 승률에 넣는다.
+  /// 마이팀이 뛴 경기(응원 경기). **무승부도 포함하고 "관람"만 뺀다**
+  /// (시안 `aw + ad + al`).
   List<AttendanceEntry> get _decided =>
       entries.where((e) => e.result != AttendanceResult.unknown).toList();
+
+  /// 마이팀이 안 뛴 경기 수. 시안이 "관람"이라 부른다.
+  int get watchedOnly => entries.length - _decided.length;
 
   int get wins => _decided.where((e) => e.result == AttendanceResult.win).length;
   int get draws =>
@@ -57,8 +61,8 @@ class AttendanceState {
   int get losses =>
       _decided.where((e) => e.result == AttendanceResult.loss).length;
 
-  /// 시안 `av.wdl` — `3·1·2`
-  String get wdlLabel => '$wins·$draws·$losses';
+  /// 시안 `av.wdl` — `3-1-2`
+  String get wdlLabel => '$wins-$draws-$losses';
 
   /// 시안 `av.rate` — 직관 승률.
   String get rateLabel {
@@ -74,17 +78,16 @@ class AttendanceState {
     return '${(r.wins * 100 / r.played).round()}%';
   }
 
-  /// 시안 `av.cheerLine` — 큰 숫자 밑의 한 줄.
+  /// 시안 `av.cheerLine` — `응원 경기 5 · 관람 2`
   String get cheerLine {
     if (team == null) return '마이팀을 정하면 직관 기록이 쌓여요';
     if (entries.isEmpty) return '첫 직관을 기록해 보세요';
-    final venues = stamps.where((s) => s.visited).length;
-    return '$venues개 경기장에서 ${team!.name}을 응원했어요';
+    return '응원 경기 ${_decided.length} · 관람 $watchedOnly';
   }
 
-  /// 시안 `av.stampCount` — `4/8`
+  /// 시안 `av.stampCount` — `4/8 경기장`
   String get stampCountLabel =>
-      '${stamps.where((s) => s.visited).length}/${stamps.length}';
+      '${stamps.where((s) => s.visited).length}/${stamps.length} 경기장';
 }
 
 class AttendanceViewModel extends AsyncNotifier<AttendanceState> {

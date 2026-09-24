@@ -15,7 +15,7 @@ class LiveLink {
 /// 시작 시각만 준다. v1 웹은 "시작~2시간"을 LIVE로 보는 규칙을 클라이언트에서
 /// 계산했다 (`Main.tsx`의 `getGameStatus`). 이 판정은 API로 올리는 게 맞다.
 enum GameStatus {
-  pre('오늘 경기'),
+  pre('경기 예정'),
   live('LIVE'),
   finished('경기 종료');
 

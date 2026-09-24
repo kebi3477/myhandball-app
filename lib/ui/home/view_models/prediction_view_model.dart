@@ -104,7 +104,7 @@ class PredictionState {
   final Team? team;
   final String? joinedLabel;
 
-  /// `25-26 정규리그`
+  /// 시안 `pv.seasonLabel` — 비시즌이면 최종 기록이라고 알린다.
   final String seasonLabel;
 
   final PredictionDivision division;
@@ -130,12 +130,18 @@ class PredictionState {
   /// 시안 `pv.rec` — `12 / 18`
   String get recordLabel => '$hits / ${_settled.length}';
 
-  /// 시안 `pv.openLabel` — 이번 주 예측이 열려 있는지.
+  /// 시안 `pv.openLabel` — 아직 **고르지 않은** 열린 경기 수.
+  ///
+  /// 이미 예측한 경기는 빠진다. "3경기 예측 가능"인데 셋 다 찍어 둔
+  /// 상태면 할 일이 없는데 있는 것처럼 보인다.
   String get openLabel {
-    final open = rows.where((r) => r.open).length;
-    if (isOffseason) return '비시즌';
-    return open == 0 ? '마감' : '$open경기 열림';
+    if (isOffseason) return '';
+    final open = rows.where((r) => r.open && r.myPick == null).length;
+    return open == 0 ? '모두 참여했어요' : '$open경기 예측 가능';
   }
+
+  /// 열린 경기가 남았는지. 남았을 때만 문구를 브랜드색으로 쓴다.
+  bool get hasOpenGames => rows.any((r) => r.open && r.myPick == null);
 }
 
 class PredictionViewModel extends AsyncNotifier<PredictionState> {
@@ -187,7 +193,9 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
       nickname: ref.watch(nicknameProvider),
       team: team,
       joinedLabel: prefs.joinedLabel,
-      seasonLabel: '${season.label} 정규리그',
+      seasonLabel: upcoming.isEmpty
+          ? '${season.label} 시즌 최종'
+          : '${season.label} 시즌 · 매주 월 갱신',
       division: _division,
       rows: rows,
       history: _history(games, prefs),

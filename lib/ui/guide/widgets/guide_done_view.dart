@@ -21,7 +21,6 @@ class GuideDoneView extends ConsumerWidget {
     final c = context.mh;
     final state = ref.watch(guideViewModelProvider);
     final vm = ref.read(guideViewModelProvider.notifier);
-    final lesson = state.finished;
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -36,13 +35,13 @@ class GuideDoneView extends ConsumerWidget {
                   children: [
                     const GuideMascot(size: 110, pop: true),
                     const SizedBox(height: MhSpacing.sm),
-                    Text(state.justGraduated ? '핸드볼 입문 수료!' : '잘했어요!',
+                    Text(state.doneHeadline,
                         style: MhText.custom(
                             size: 26,
                             weight: FontWeight.w900,
                             color: c.text)),
                     const SizedBox(height: 6),
-                    Text(lesson?.title ?? '',
+                    Text(state.doneTitle,
                         textAlign: TextAlign.center,
                         style: MhText.custom(
                             size: 14,

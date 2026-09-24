@@ -375,7 +375,11 @@ class _SelectedGameCard extends StatelessWidget {
                   color: finished ? MhColors.closed : MhColors.brand,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(game.status.chipLabel,
+                // 시안 팀 캘린더는 예정 경기를 `D-n`으로 적는다.
+                child: Text(
+                    game.status == GameStatus.pre
+                        ? (game.ddayLabel ?? game.status.chipLabel)
+                        : game.status.chipLabel,
                     style: MhText.custom(
                         size: 11,
                         weight: FontWeight.w700,

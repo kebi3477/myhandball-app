@@ -6,6 +6,7 @@ import '../../../domain/models/team.dart';
 import '../../home/view_models/home_view_model.dart';
 import '../../my/view_models/my_view_model.dart';
 import '../../schedule/view_models/schedule_view_model.dart';
+import 'external_actions.dart';
 import 'push_sync.dart';
 import 'team_picker_sheet.dart';
 
@@ -26,12 +27,20 @@ Future<void> changeMyTeam(
   );
   if (picked == null) return;
 
+  // 팀을 바꿔도 직관 기록은 그대로 남는다. 기록이 있는 사람은 그게
+  // 지워질까 걱정하므로 미리 알린다 (시안 토스트).
+  final keepsRecords = prefs.attendedGameIds.isNotEmpty;
+
   await prefs.setMyTeam(picked);
   await prefs.setPreferredGender(picked.gender);
 
   ref.invalidate(myViewModelProvider);
   ref.invalidate(homeViewModelProvider);
   ref.invalidate(scheduleViewModelProvider);
+
+  if (keepsRecords && context.mounted) {
+    showMhToast(context, 'MY팀이 바뀌어도 이전 직관 기록은 그대로 유지돼요');
+  }
 
   // 서버는 등록된 teamNum이 뛰는 경기에만 알림을 보낸다. 다시 등록하지
   // 않으면 이전 팀 알림이 계속 온다.

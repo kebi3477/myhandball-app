@@ -539,6 +539,11 @@ Keychain은 앱을 지워도 항목이 남는다 (Apple이 문서로 보장하�
 | `spec/rules.md` | 랭킹·팬덤·승률·비시즌·경기 상태 계산 규칙 |
 | `spec/badges.md` | MY 탭 배지 3종 |
 
+`spec/copy.md`의 문구와 `spec/lessons.md`의 레슨은 **테스트가 파일을 직접
+읽어 대조한다** (`test/copy_spec_test.dart`, `test/guide_lesson_copy_test.dart`).
+아직 구현 안 한 기능의 문구는 `copy_spec_test.dart`의 `pending`에 이유와 함께
+적혀 있다 — 기능이 생기면 거기서 지운다.
+
 **시안 값이 필요하면 `spec/`을 먼저 찾는다. 없으면 멈추고, 디자인 세션에
 넘길 프롬프트를 만들어 사용자에게 준다.** 추측해서 채우지 않는다.
 

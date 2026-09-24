@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/nickname.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../view_models/my_view_model.dart';
@@ -48,6 +49,7 @@ class _MyProfileCardState extends ConsumerState<MyProfileCard> {
     await ref.read(nicknameProvider.notifier).set(_controller.text);
     if (!mounted) return;
     setState(() => _editing = false);
+    showMhToast(context, '닉네임을 바꿨어요');
   }
 
   @override

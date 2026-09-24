@@ -40,7 +40,7 @@ Future<void> exportGamesToCalendar(
 }) async {
   final withTime = games.where((g) => g.startsAt != null).toList();
   if (withTime.isEmpty) {
-    _notify(context, '내보낼 경기가 없어요');
+    _notify(context, '추가할 예정 경기가 없어요');
     return;
   }
 
@@ -59,10 +59,17 @@ Future<void> exportGamesToCalendar(
         subject: calendarName,
       ),
     );
+    if (context.mounted) {
+      _notify(context, '캘린더 파일을 저장했어요 (${withTime.length}경기)');
+    }
   } on Exception {
-    if (context.mounted) _notify(context, '일정을 내보내지 못했어요');
+    if (context.mounted) _notify(context, '캘린더에 추가하지 못했어요');
   }
 }
+
+/// 화면 아래 짧은 안내. 시안의 토스트 자리다.
+void showMhToast(BuildContext context, String message) =>
+    _notify(context, message);
 
 void _notify(BuildContext context, String message) {
   ScaffoldMessenger.of(context)

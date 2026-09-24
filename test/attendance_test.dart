@@ -64,7 +64,7 @@ void main() {
       final state = _state([_entry(game), _entry(_game(home: 30, away: 20))]);
       // 확정 1경기 중 1승 → 100%. 미확정 경기가 분모에 들어가면 50%가 된다.
       expect(state.rateLabel, '100%');
-      expect(state.wdlLabel, '1·0·0');
+      expect(state.wdlLabel, '1-0-0');
     });
 
     test('마이팀이 안 뛴 경기는 판정하지 않는다', () {
@@ -84,7 +84,7 @@ void main() {
   group('요약', () {
     test('기록이 없으면 승률이 -다', () {
       expect(_state(const []).rateLabel, '-');
-      expect(_state(const []).wdlLabel, '0·0·0');
+      expect(_state(const []).wdlLabel, '0-0-0');
     });
 
   });
@@ -95,6 +95,6 @@ void main() {
       VenueStamp(venue: 'B', times: 0),
       VenueStamp(venue: 'C', times: 1),
     ];
-    expect(_state(const [], stamps: stamps).stampCountLabel, '2/3');
+    expect(_state(const [], stamps: stamps).stampCountLabel, '2/3 경기장');
   });
 }

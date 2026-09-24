@@ -44,8 +44,15 @@ class GuideState {
   /// 시안 `doneNextLabel`.
   String get doneNextLabel =>
       finishedLesson == null || finishedLesson! >= HandballGuide.lessons.length - 1
-          ? '가이드 마치기'
+          ? '가이드 완료'
           : '다음 레슨';
+
+  /// 시안 `doneHeadline`.
+  String get doneHeadline => justGraduated ? '입문 가이드 수료!' : '레슨 완료!';
+
+  /// 시안 `doneTitle`.
+  String get doneTitle =>
+      finished == null ? '' : '${finished!.title} 레슨을 끝냈어요';
 
   bool get inLesson => lessonIndex != null;
 
@@ -67,9 +74,10 @@ class GuideState {
 
   double get overallProgress => doneCount / AppConfig.guideLessonCount;
 
+  /// 시안 `guideHeadline`.
   String get headline => allDone
-      ? '핸드볼 입문 수료!'
-      : (doneCount == 0 ? '3분이면 규칙 끝!' : '조금만 더 하면 수료예요');
+      ? '핸드볼 마스터 달성!'
+      : (doneCount == 0 ? '핸드볼, 같이 배워볼까요?' : '좋아요, 계속 가볼까요?');
 
   /// 시안은 앞 레슨을 끝내야 다음이 열린다.
   bool isUnlocked(int index) => index <= doneCount;
