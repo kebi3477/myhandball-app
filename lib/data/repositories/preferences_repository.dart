@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +10,7 @@ import '../../domain/models/gender.dart';
 import '../../domain/models/nickname.dart';
 import '../../domain/models/season.dart';
 import '../../domain/models/team.dart';
+import '../services/device_id_store.dart';
 import '../services/mock_handball_api_service.dart';
 
 /// 기기에 남는 사용자 설정의 source of truth.
@@ -27,6 +27,11 @@ import '../services/mock_handball_api_service.dart';
 /// 값을 동기로 읽을 수 있게 둔 건, 앱 시작 시 테마가 한 프레임 깜빡이는 걸
 /// 막기 위해서다. [load]를 `runApp` 전에 한 번 await 한다.
 class PreferencesRepository {
+  PreferencesRepository({DeviceIdStore? deviceIds})
+      : _deviceIds = deviceIds ?? DeviceIdStore();
+
+  final DeviceIdStore _deviceIds;
+
   bool _onboarded = AppConfig.skipOnboarding;
   ThemeMode _themeMode =
       AppConfig.initialTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
@@ -78,8 +83,10 @@ class PreferencesRepository {
 
   /// 서버 쓰기 요청에 붙이는 익명 기기 ID (`X-Device-Id`).
   ///
-  /// 회원가입이 없는 앱이라 이걸로 **중복 투표만 막는다.** 개인정보가 아닌
-  /// 난수 UUID v4이고, 앱을 지웠다 깔면 새 값이 된다 (서버도 그렇게 본다).
+  /// 회원가입이 없는 앱이라 이걸로 사람을 구분한다. 개인정보가 아닌 난수
+  /// UUID v4이고, **iOS에서는 Keychain에 있어 앱을 지워도 남는다**
+  /// ([DeviceIdStore]). 안 그러면 재설치할 때마다 새 사람이 돼서 내
+  /// 기록을 잃고 MVP를 다시 투표할 수 있게 된다.
   String _deviceId = '';
 
   String get deviceId => _deviceId;
@@ -94,16 +101,19 @@ class PreferencesRepository {
     try {
       _prefs = await SharedPreferences.getInstance();
     } on Exception {
-      _deviceId = _newDeviceId();
+      _deviceId = await _deviceIds.read();
       return;
     }
     final prefs = _prefs!;
 
-    _deviceId = prefs.getString(_kDeviceId) ?? '';
-    if (!_isValidDeviceId(_deviceId)) {
-      _deviceId = _newDeviceId();
-      await prefs.setString(_kDeviceId, _deviceId);
-    }
+    // **Keychain이 먼저다.** 앱을 지웠다 깔아도 같은 사람으로 남아야
+    // 서버에 있는 예측·MVP·응원글이 다시 내 것이 된다. 예전 값은
+    // `shared_preferences`에 있으므로 넘겨서 이어받는다.
+    _deviceId = await _deviceIds.read(
+      legacy: DeviceIdStore.legacyFrom(prefs),
+    );
+    // Keychain을 못 쓰는 경우를 대비해 같은 값을 여기에도 남긴다.
+    await prefs.setString(_kDeviceId, _deviceId);
 
     // 개발용 dart-define이 켜져 있으면 저장값보다 우선한다.
     _onboarded = AppConfig.skipOnboarding
@@ -188,23 +198,6 @@ class PreferencesRepository {
     } on FormatException {
       return null;
     }
-  }
-
-  /// 서버는 영문·숫자·하이픈 8~64자만 받는다.
-  static bool _isValidDeviceId(String value) =>
-      RegExp(r'^[A-Za-z0-9-]{8,64}$').hasMatch(value);
-
-  /// UUID v4. 이것 하나 때문에 uuid 패키지를 들이지 않는다.
-  static String _newDeviceId() {
-    final rnd = Random.secure();
-    final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    String hex(int start, int end) => bytes
-        .sublist(start, end)
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join();
-    return '${hex(0, 4)}-${hex(4, 6)}-${hex(6, 8)}-${hex(8, 10)}-${hex(10, 16)}';
   }
 
   static const _kDeviceId = 'mh_device_id';

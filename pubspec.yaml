@@ -24,8 +24,13 @@ dependencies:
   # 웹/테스트에서도 같은 코드로 돌리고 MockClient를 끼울 수 있어서다.
   http: ^1.2.2
 
-  # 기기 설정 영구 저장. 익명 기기 ID(X-Device-Id)도 여기 남는다.
+  # 기기 설정 영구 저장.
   shared_preferences: ^2.3.2
+
+  # 익명 기기 ID(X-Device-Id)를 iOS Keychain에 둔다. **앱을 지웠다 깔아도
+  # 남아야** 서버에 있는 예측·MVP·응원글이 다시 내 것이 된다.
+  # lib/data/services/device_id_store.dart 참조
+  flutter_secure_storage: ^10.3.4
 
   # 중계·예매 같은 외부 링크 열기
   url_launcher: ^6.3.1

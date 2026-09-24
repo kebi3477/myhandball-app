@@ -380,9 +380,18 @@ flutter run -d <기기> \
 | `POST /api/welcome/submissions` | — | 온보딩 선택값을 Postgres에 기록 |
 
 쓰기 엔드포인트는 **인증이 없고 익명 기기 UUID를 `X-Device-Id` 헤더로** 받는다
-(영문·숫자·하이픈 8~64자). `PreferencesRepository.deviceId`가 한 번 만들어
-저장하고, `ApiClient`가 모든 요청에 붙인다. 앱을 지웠다 깔면 새 값이 된다 —
-서버도 그렇게 본다.
+(영문·숫자·하이픈 8~64자). `ApiClient`가 모든 요청에 붙인다.
+
+**이 값은 iOS Keychain에 있다** (`data/services/device_id_store.dart`).
+`shared_preferences`에만 두면 앱을 지웠다 깔 때마다 새 사람이 되는데, 그러면
+
+- 서버에 남은 내 예측·응원글을 다시 못 찾고
+- **같은 경기에 MVP를 다시 투표할 수 있어 집계가 오염된다**
+
+Keychain은 앱을 지워도 항목이 남는다 (Apple이 문서로 보장하진 않지만 실제로
+그렇게 동작한다). 예전 버전에서 올라온 사용자는 `shared_preferences`에 있던
+값을 그대로 이어받는다. **안드로이드는 이걸로 해결되지 않는다** — 암호화
+저장소도 앱을 지우면 같이 지워진다.
 
 문서와 실제 응답이 다른 부분은 `../myhandball-api/docs/api-tasks/07-후속-작업.md`
 **C절**에 표로 정리돼 있다. 매핑을 고칠 때 먼저 읽는다.
@@ -527,6 +536,7 @@ mh_preds      # 내 예측만. 집계는 서버가 갖는다
 mh_device_id  # 익명 기기 UUID (X-Device-Id)
 mh_nick       # 닉네임 (2026-09-24 시안 개편)
 mh_joined     # 닉네임을 처음 정한 시각. 가입 월로 보여준다
+mh_update_skipped  # 업데이트 안내에서 "나중에"를 고른 버전
 ```
 
 **`mh_mvp`·`mh_cheer`는 없어졌다.** MVP 투표와 응원글은 서버로 갔다. 예측도
@@ -569,11 +579,19 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 기존 앱이 WKWebView로 웹을 띄우느라 넣은 예외인데, Flutter 앱은 WebView를
 쓰지 않는다. 그대로 두면 ATS를 이유 없이 약화시키므로 뺐다.
 
-### 아직 안 옮긴 기능
+### 업데이트 안내
 
-배포본의 `AppUpdateChecker.swift` — iTunes lookup API로 최신 버전을 확인해
-"업데이트 안내" 알럿을 띄운다. 설정이 아니라 기능이라 이식하지 않았다.
-Flutter에서는 `upgrader` 패키지나 원격 설정으로 대체하는 게 낫다.
+배포본의 `AppUpdateChecker.swift`를 옮겼다
+(`data/services/app_update_service.dart`). 셸에 들어온 뒤 iTunes Lookup API로
+최신 버전을 확인하고, 더 높으면 안내를 띄운다.
+
+- **강제하지 않는다.** "나중에"를 고른 버전은 다시 묻지 않는다
+  (`mh_update_skipped`). 그래도 설정의 "앱 버전" 줄에는 계속 남는다
+- 버전 비교는 점으로 끊어 **숫자로** 본다. 문자열 비교면 `1.10.0`이
+  `1.9.0`보다 낮다고 나온다 (`test/app_update_test.dart`)
+- 확인에 실패해도 예외를 올리지 않는다. 업데이트 확인 때문에 앱이 멈추면 안 된다
+- **안드로이드는 확인할 방법이 없다.** Play 스토어에 공개 조회 API가 없다.
+  서버에 버전 엔드포인트가 생기면 그때 붙인다
 
 ### 남은 배포 과제
 
