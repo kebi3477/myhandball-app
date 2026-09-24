@@ -689,20 +689,21 @@ v1(화면 7개)보다 훨씬 크다. 시안 기준:
 ```
 mh_onboarded  mh_guide  mh_attended  mh_recent_search  mh_fav_players
 mh_theme  mh_gender  mh_season  mh_notif  mh_my_team
-mh_preds      # 내 예측만. 집계는 서버가 갖는다
+mh_preds      # 내 예측만. 집계와 목록은 서버가 갖는다
 mh_device_id  # 익명 기기 UUID (X-Device-Id)
-mh_profile    # 랭킹 프로필(닉네임·응원팀)의 서버 응답 사본
-mh_joined     # 프로필을 처음 만든 시점
-mh_blocked_names  # 차단한 authorId → 그때 본 닉네임 (서버는 id만 준다)
 mh_nick       # 닉네임 (2026-09-24 시안 개편)
+mh_joined     # 닉네임을 처음 정한 시각. 가입 월로 보여준다
+mh_profile    # 랭킹 프로필(닉네임·응원팀)의 서버 응답 사본
+mh_guide_done_at   # 가이드 수료일
+mh_blocked_names   # 차단한 authorId → 그때 본 닉네임 (서버는 id만 준다)
 mh_update_skipped  # 업데이트 안내에서 "나중에"를 고른 버전
 mh_sync_pending    # 서버에 아직 못 보낸 변경 (a+5490 / a-5490 / f+69 / g5)
 mh_synced          # 서버와 한 번이라도 맞췄는지. 첫 동기화만 합집합이다
 ```
 
-**`mh_mvp`·`mh_cheer`는 없어졌다.** MVP 투표와 응원글은 서버로 갔다. 예측도
-집계는 서버가 갖고, `mh_preds`는 MY 화면이 "내가 예측한 경기"를 모으려고 두는
-캐시일 뿐이다 (서버에 그 목록 엔드포인트가 없다).
+**`mh_mvp`·`mh_cheer`는 없어졌다.** MVP 투표와 응원글은 서버로 갔다.
+`mh_attended`·`mh_guide`·`mh_fav_players`·`mh_preds`도 이제 **서버가 정본**이고
+기기 쪽은 화면이 바로 읽는 사본이다 (위 `UserRecordsRepository` 참조).
 
 기기에 쌓여 있던 예측·투표·응원글은 **서버로 옮기지 않는다.** 그때는 기기 ID가
 없었기 때문이다 (API 05 문서).

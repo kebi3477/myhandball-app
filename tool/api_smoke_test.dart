@@ -6,6 +6,7 @@ import 'package:myhandball/data/services/api_client.dart';
 import 'package:myhandball/data/services/http_handball_api_service.dart';
 import 'package:myhandball/domain/models/game.dart';
 import 'package:myhandball/domain/models/gender.dart';
+import 'package:myhandball/domain/models/prediction.dart';
 import 'package:myhandball/domain/models/player_stat.dart';
 
 /// **실제 서버에 붙는 점검 스크립트.** 네트워크가 필요해서 `test/`가 아니라
@@ -135,5 +136,57 @@ void main() {
     final teams = await api.fetchTeams(Gender.men);
     final posts = await api.fetchCheers(teams.first);
     print('응원글: ${posts.length}건');
+  });
+
+  test('승부예측 프로필 · 랭킹 · 팬덤', () async {
+    final profile = await api.fetchProfile();
+    print('프로필: ${profile?.nickname ?? '(없음)'}');
+
+    final board =
+        await api.fetchLeaderboard(scope: LeaderboardScope.all);
+    print('랭킹: ${board.rows.length}줄 / 참여 ${board.total}명'
+        ' (확정 ${board.minSettled}경기 이상)');
+    print('  meHint=${board.meHint} meTopPercent=${board.meTopPercent}');
+    // 순위는 1부터 빠짐없이 올라가야 한다.
+    for (var i = 0; i < board.rows.length; i++) {
+      expect(board.rows[i].rank, i + 1);
+    }
+
+    final fandom = await api.fetchFandom(Gender.men);
+    print('팬덤: ${fandom.length}팀');
+    expect(fandom, isNotEmpty);
+
+    final mine = await api.fetchMyPredictions();
+    print('내 예측: 참여 ${mine.count} · 확정 ${mine.settled}'
+        ' · 적중 ${mine.hits} (${mine.rateLabel})');
+    // 확정보다 많이 맞힐 수는 없다.
+    expect(mine.hits, lessThanOrEqualTo(mine.settled));
+    expect(mine.settled, lessThanOrEqualTo(mine.count));
+
+    final week = await api.fetchPredictionWeek();
+    print('이번 주 예측: ${week.length}경기');
+    for (final w in week) {
+      expect(w.game.matchSeq, isNotNull);
+      expect(w.tally.total,
+          w.tally.home + w.tally.draw + w.tally.away,
+          reason: '분포 합이 총합과 다르다');
+    }
+  });
+
+  test('직관 · 가이드 진행도 · 관심 선수 · 시즌', () async {
+    print('직관: ${(await api.fetchAttendance()).length}경기');
+    print('관심 선수: ${(await api.fetchFavoritePlayers()).length}명');
+
+    final guide = await api.fetchGuideProgress();
+    print('가이드: ${guide.doneCount}/5, 수료 ${guide.completedAt}');
+
+    for (final gender in Gender.values) {
+      final status = await api.fetchSeasonStatus(gender);
+      print('${gender.divisionLabel}: ${status.season} 시즌'
+          ' 개막 ${status.opensAt} 종료 ${status.closesAt}'
+          ' / 비시즌=${status.isOffseason}'
+          ' / 다음 ${status.nextSeason} ${status.nextOpensAt}');
+      expect(status.season, isNotEmpty);
+    }
   });
 }
