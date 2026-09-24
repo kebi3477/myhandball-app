@@ -361,6 +361,7 @@ void main() {
                 matchLabel: 'SK호크스 vs 두산',
                 pickLabel: 'SK호크스 승',
                 dateLabel: '11.09',
+                settled: true,
                 hit: true,
               ),
           ],
