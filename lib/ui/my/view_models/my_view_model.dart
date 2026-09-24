@@ -38,12 +38,17 @@ class PredictionRecord {
     required this.matchLabel,
     required this.pickLabel,
     required this.dateLabel,
+    required this.settled,
     required this.hit,
   });
 
   final String matchLabel;
   final String pickLabel;
   final String dateLabel;
+
+  /// 적중 여부가 정해졌는지. 아직 안 끝난 경기는 적중률 분모에서 빠진다.
+  final bool settled;
+
   final bool hit;
 }
 
@@ -98,10 +103,12 @@ class MyState {
   String get attendanceWdl =>
       '${_attendance('승')}-${_attendance('무')}-${_attendance('패')}';
 
+  /// 적중률. **분모는 판정이 끝난 예측이다** (시안 `hits / decided.length`).
+  /// 아직 안 끝난 경기를 분모에 넣으면 예측할수록 적중률이 떨어진다.
   String get predictionRate {
-    if (predictions.isEmpty) return '-';
-    final hits = predictions.where((p) => p.hit).length;
-    return '${(hits * 100 / predictions.length).round()}%';
+    final decided = predictions.where((p) => p.settled).length;
+    if (decided == 0) return '-';
+    return '${(predictionHits * 100 / decided).round()}%';
   }
 
   int get predictionHits => predictions.where((p) => p.hit).length;
@@ -220,11 +227,10 @@ class MyViewModel extends AsyncNotifier<MyState> {
   }
 
   PredictionRecord _toPrediction(Game g, PredictionPick pick) {
-    final h = g.scoreHome ?? 0;
-    final a = g.scoreAway ?? 0;
-    final actual = h > a
-        ? PredictionPick.home
-        : (h < a ? PredictionPick.away : PredictionPick.draw);
+    // 판정은 `PredictionOutcome` 하나만 쓴다. 예전에는 여기서 점수가 없는
+    // 경기를 `?? 0`으로 0:0 무승부처럼 봐서, "무승부" 예측이 적중으로
+    // 세어졌다.
+    final outcome = PredictionOutcome.of(g, pick);
 
     return PredictionRecord(
       matchLabel: '${g.home.name} vs ${g.away.name}',
@@ -234,7 +240,8 @@ class MyViewModel extends AsyncNotifier<MyState> {
         PredictionPick.draw => '무승부',
       },
       dateLabel: g.meta,
-      hit: g.status == GameStatus.finished && pick == actual,
+      settled: outcome.settled,
+      hit: outcome.hit,
     );
   }
 

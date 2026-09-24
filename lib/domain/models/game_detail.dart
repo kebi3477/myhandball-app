@@ -205,6 +205,33 @@ enum PredictionPick {
       };
 }
 
+/// 예측 하나의 판정 결과.
+///
+/// **판정 규칙은 여기 하나만 쓴다.** 예전에는 MY와 승부예측 탭이 각자
+/// 계산했는데, 한쪽은 점수가 없는 경기를 0:0 무승부로 봐서 "무승부" 예측을
+/// 적중으로 세고 다른 쪽은 안 셌다. 두 화면의 적중 수가 달랐고 "예측 고수"
+/// 배지가 그 틀린 쪽을 읽었다.
+class PredictionOutcome {
+  const PredictionOutcome({required this.settled, required this.hit});
+
+  /// 적중 여부가 정해졌는지. **경기가 끝나고 양 팀 점수가 다 있어야** 한다.
+  final bool settled;
+
+  final bool hit;
+
+  static PredictionOutcome of(Game game, PredictionPick pick) {
+    final home = game.scoreHome;
+    final away = game.scoreAway;
+    if (game.status != GameStatus.finished || home == null || away == null) {
+      return const PredictionOutcome(settled: false, hit: false);
+    }
+    final actual = home > away
+        ? PredictionPick.home
+        : (home < away ? PredictionPick.away : PredictionPick.draw);
+    return PredictionOutcome(settled: true, hit: pick == actual);
+  }
+}
+
 /// 서버가 집계한 예측 분포. `GET /api/game/:matchSeq/prediction`.
 ///
 /// 기기에만 있던 값이 서버로 올라오면서 생겼다. 다른 사람 예측을 보여주려면

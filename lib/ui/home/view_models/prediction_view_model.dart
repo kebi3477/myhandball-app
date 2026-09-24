@@ -232,21 +232,12 @@ class PredictionViewModel extends AsyncNotifier<PredictionState> {
       final pick = prefs.predictionFor(g.id);
       if (pick == null) continue;
 
-      final home = g.scoreHome;
-      final away = g.scoreAway;
-      final settled =
-          g.status == GameStatus.finished && home != null && away != null;
-      final actual = !settled
-          ? null
-          : (home > away
-              ? PredictionPick.home
-              : (home < away ? PredictionPick.away : PredictionPick.draw));
-
+      final outcome = PredictionOutcome.of(g, pick);
       rows.add(PredictionHistoryRow(
         game: g,
         pick: pick,
-        settled: settled,
-        hit: settled && pick == actual,
+        settled: outcome.settled,
+        hit: outcome.hit,
       ));
     }
     rows.sort((a, b) {
