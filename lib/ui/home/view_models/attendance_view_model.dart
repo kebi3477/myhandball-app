@@ -7,6 +7,7 @@ import '../../../domain/models/attendance.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/rank_row.dart';
 import '../../../domain/models/team.dart';
+import '../../my/view_models/my_view_model.dart';
 
 /// 홈 "직관" 탭의 상태.
 ///
@@ -193,6 +194,9 @@ class AttendanceViewModel extends AsyncNotifier<AttendanceState> {
   Future<void> toggle(String gameId) async {
     await ref.read(preferencesRepositoryProvider).toggleAttended(gameId);
     state = await AsyncValue.guard(build);
+    // MY의 직관 요약과 "승리 요정" 배지가 같은 기록을 읽는다. 다시 만들어
+    // 두지 않으면 도장을 찍어도 MY는 그대로다.
+    ref.invalidate(myViewModelProvider);
   }
 
   Future<void> refresh() async {

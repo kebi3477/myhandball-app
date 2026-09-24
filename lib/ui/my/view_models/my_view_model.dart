@@ -5,6 +5,7 @@ import '../../../data/repositories/ranking_repository.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import '../../../domain/models/game.dart';
 import '../../../domain/models/game_detail.dart';
+import '../../../domain/models/gender.dart';
 import '../../../domain/models/player.dart';
 import '../../../domain/models/rank_row.dart';
 import '../../../domain/models/team.dart';
@@ -124,7 +125,10 @@ class MyViewModel extends AsyncNotifier<MyState> {
   Future<MyState> build() async {
     final prefs = ref.read(preferencesRepositoryProvider);
     final team = prefs.myTeam;
-    final gender = prefs.preferredGender;
+    // **마이팀의 부를 따른다.** `preferredGender`는 홈 순위의 남자부/여자부
+    // 토글이 바꾼다. 그걸 그대로 쓰면, 여자부 팀을 응원하는 사람이 홈에서
+    // 남자부를 한 번 누른 순간 MY의 순위·시즌 기록·직관 기록이 통째로 빈다.
+    final gender = team?.gender ?? prefs.preferredGender;
 
     final ranking = await ref
         .read(rankingRepositoryProvider)
@@ -222,18 +226,25 @@ class MyViewModel extends AsyncNotifier<MyState> {
     );
   }
 
-  /// 이번 달과 지난달 경기를 시간순으로 모은다.
+  /// 시즌 경기를 남·여 모두 모은다.
+  ///
+  /// 직관은 마이팀 경기뿐이지만 **예측은 부를 가리지 않는다** — 승부예측
+  /// 탭이 두 부를 다 보여준다. 한쪽만 받으면 반대편 부에 한 예측이 적중
+  /// 수에서 빠지고, "예측 고수" 배지가 영영 안 열린다.
+  ///
+  /// 이번 달·지난 달만 보면 비시즌에 마이팀 경기가 하나도 안 잡히므로
+  /// 시즌 전체를 받는다 (저장소가 캐시한다).
   Future<List<Game>> _allGames() async {
     final repo = ref.read(scheduleRepositoryProvider);
-    final prefs = ref.read(preferencesRepositoryProvider);
+    final year = ref.read(preferencesRepositoryProvider).season.year;
 
-    // 이번 달·지난 달만 보면 비시즌에 마이팀 경기가 하나도 안 잡힌다.
-    // 시즌 전체를 받는다 (저장소가 캐시한다).
-    final days = await repo.getSeasonSchedule(
-      prefs.preferredGender,
-      prefs.season.year,
-    );
-    return [for (final d in days) ...d.games];
+    final results = await Future.wait([
+      for (final g in Gender.values) repo.getSeasonSchedule(g, year),
+    ]);
+    return [
+      for (final days in results)
+        for (final d in days) ...d.games,
+    ];
   }
 
   Future<void> refresh() async {
