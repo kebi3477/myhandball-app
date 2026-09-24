@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
+import 'guide_mascot.dart';
 import 'guide_scene_view.dart';
 
 /// 레슨 진행 화면 — 스텝 삽화 + 설명, 마지막에 퀴즈.
@@ -93,8 +93,7 @@ class GuideLessonView extends ConsumerWidget {
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SvgPicture.asset('assets/design/guide-mascot.svg',
-              width: 44, height: 44),
+          const GuideMascot(size: 44),
           const SizedBox(width: 12),
           Expanded(
             child: Container(

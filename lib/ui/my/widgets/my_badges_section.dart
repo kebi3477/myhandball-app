@@ -105,7 +105,10 @@ class _BadgeTile extends ConsumerWidget {
                 child: MhMedal(
                   size: 44,
                   glyph: badge.spec.glyph,
-                  glyphFilled: badge.spec.glyphFilled,
+                  colors: badge.spec.colors,
+                  // 시안의 배지 메달에는 곡선 장식이 없다. 가이드 화면
+                  // 메달에만 있다.
+                  arcs: false,
                 ),
               ),
             ),

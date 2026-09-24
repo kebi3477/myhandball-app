@@ -1,3 +1,5 @@
+import '../../ui/core/ui/mh_icons.dart';
+
 /// MY "내 배지" 한 칸의 정의. 시안 `myBadges`.
 ///
 /// **조건은 전부 앱이 이미 가진 값으로 센다** — 가이드 진행도, 직관 기록,
@@ -16,7 +18,7 @@ class MhBadgeSpec {
     required this.unit,
     required this.earnedLabel,
     required this.target,
-    this.glyphFilled = true,
+    required this.colors,
   });
 
   /// 저장·식별용 키.
@@ -28,8 +30,11 @@ class MhBadgeSpec {
   /// 메달 안에 그릴 SVG path. 좌표계는 메달과 같은 `0 0 60 72`다.
   final String glyph;
 
-  /// 채워 그릴지(별·핀), 선으로만 그릴지(체크·깃발).
-  final bool glyphFilled;
+  /// 메달 색 한 벌. 시안이 배지마다 따로 준다 (`b.r1`, `b.c1` …).
+  ///
+  /// **아직 시안 값이 아니다.** 디자인 파일의 배지 정의가 256KiB 상한
+  /// 뒤쪽 `<script>`에 있어 읽지 못했다. 원본을 받으면 이 값들을 바꾼다.
+  final MhMedalColors colors;
 
   /// 이 수치를 채우면 획득.
   final int goal;
@@ -90,6 +95,7 @@ abstract final class MhBadges {
       unit: '레슨',
       earnedLabel: '수료 완료',
       target: MhBadgeTarget.guide,
+      colors: MhMedalColors.gold,
     ),
     MhBadgeSpec(
       id: 'first_attend',
@@ -99,6 +105,7 @@ abstract final class MhBadges {
       unit: '경기',
       earnedLabel: '첫 도장',
       target: MhBadgeTarget.attendance,
+      colors: MhMedalColors.gold,
     ),
     MhBadgeSpec(
       id: 'attend_5',
@@ -108,26 +115,27 @@ abstract final class MhBadges {
       unit: '경기',
       earnedLabel: '5경기 달성',
       target: MhBadgeTarget.attendance,
+      colors: MhMedalColors.gold,
     ),
     MhBadgeSpec(
       id: 'venue_3',
       name: '경기장 3곳',
       glyph: _flag,
-      glyphFilled: false,
       goal: 3,
       unit: '곳',
       earnedLabel: '3곳 방문',
       target: MhBadgeTarget.attendance,
+      colors: MhMedalColors.goldOutlined,
     ),
     MhBadgeSpec(
       id: 'first_hit',
       name: '첫 적중',
       glyph: _check,
-      glyphFilled: false,
       goal: 1,
       unit: '적중',
       earnedLabel: '첫 적중',
       target: MhBadgeTarget.prediction,
+      colors: MhMedalColors.goldOutlined,
     ),
     MhBadgeSpec(
       id: 'hit_10',
@@ -137,6 +145,7 @@ abstract final class MhBadges {
       unit: '적중',
       earnedLabel: '10회 적중',
       target: MhBadgeTarget.prediction,
+      colors: MhMedalColors.gold,
     ),
   ];
 

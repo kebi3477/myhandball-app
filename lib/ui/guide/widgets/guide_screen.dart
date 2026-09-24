@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../config/app_config.dart';
 import '../../../domain/models/guide_lesson.dart';
@@ -10,6 +9,7 @@ import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
 import 'guide_done_view.dart';
+import 'guide_mascot.dart';
 import 'guide_lesson_view.dart';
 
 /// 핸드볼 입문 가이드. 시안 HANDBALL GUIDE.
@@ -121,8 +121,7 @@ class _ProgressBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SvgPicture.asset('assets/design/guide-mascot.svg',
-              width: 60, height: 60),
+          const GuideMascot(size: 60),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

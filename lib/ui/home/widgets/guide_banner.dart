@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../config/app_config.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
+import '../../guide/widgets/guide_mascot.dart';
 import '../../guide/widgets/guide_screen.dart';
 
 /// 규칙 가이드 진입 배너.
@@ -38,7 +38,7 @@ class GuideBanner extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const _BouncingMascot(size: 56),
+              const GuideMascot(size: 56),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -96,41 +96,3 @@ class GuideBanner extends StatelessWidget {
 }
 
 /// 시안 `@keyframes ghBounce` — 1.6s 왕복 8px.
-class _BouncingMascot extends StatefulWidget {
-  const _BouncingMascot({required this.size});
-
-  final double size;
-
-  @override
-  State<_BouncingMascot> createState() => _BouncingMascotState();
-}
-
-class _BouncingMascotState extends State<_BouncingMascot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1600),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (_, child) => Transform.translate(
-          offset: Offset(0, -8 * Curves.easeInOut.transform(_c.value)),
-          child: child,
-        ),
-        child: SvgPicture.asset('assets/design/guide-mascot.svg'),
-      ),
-    );
-  }
-}

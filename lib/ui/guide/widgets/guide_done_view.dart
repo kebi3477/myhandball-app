@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
+import 'guide_mascot.dart';
 
 /// 레슨을 끝내면 나오는 화면. 시안 `guideDone`.
 ///
@@ -34,7 +34,7 @@ class GuideDoneView extends ConsumerWidget {
                     horizontal: MhSpacing.gutter, vertical: MhSpacing.md),
                 child: Column(
                   children: [
-                    const _PoppingMascot(size: 110),
+                    const GuideMascot(size: 110, pop: true),
                     const SizedBox(height: MhSpacing.sm),
                     Text(state.justGraduated ? '핸드볼 입문 수료!' : '잘했어요!',
                         style: MhText.custom(
@@ -187,58 +187,6 @@ class _BadgeCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 시안 `ghPop`(0 → 1.25 → 1)으로 한 번 튀어나온 뒤 `ghBounce`로 계속 뛴다.
-class _PoppingMascot extends StatefulWidget {
-  const _PoppingMascot({required this.size});
-
-  final double size;
-
-  @override
-  State<_PoppingMascot> createState() => _PoppingMascotState();
-}
-
-class _PoppingMascotState extends State<_PoppingMascot>
-    with TickerProviderStateMixin {
-  late final _pop = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 600),
-  )..forward();
-
-  late final _bounce = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1600),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _pop.dispose();
-    _bounce.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_pop, _bounce]),
-      builder: (_, child) {
-        // ghPop: 0% scale 0 → 60% scale 1.25 → 100% scale 1
-        final t = _pop.value;
-        final scale = t < 0.6 ? (t / 0.6) * 1.25 : 1.25 - (t - 0.6) / 0.4 * 0.25;
-        final dy = -8 * Curves.easeInOut.transform(_bounce.value);
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: Transform.scale(scale: scale, child: child),
-        );
-      },
-      child: SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: SvgPicture.asset('assets/design/guide-mascot.svg'),
       ),
     );
   }

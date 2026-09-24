@@ -139,39 +139,100 @@ class MhIcon extends StatelessWidget {
 /// 가이드 수료 메달. 시안 60x72 SVG를 그대로 쓴다.
 ///
 /// 색이 여러 개라 [MhIcon]처럼 한 색으로 칠할 수 없어 따로 둔다.
+/// 메달 색 한 벌. 시안이 배지마다 따로 준다 (`b.r1`, `b.c1` …).
+class MhMedalColors {
+  const MhMedalColors({
+    required this.ribbonLeft,
+    required this.ribbonRight,
+    required this.rim,
+    required this.outer,
+    required this.inner,
+    required this.glyphFill,
+    required this.glyphStroke,
+    required this.glyphWidth,
+  });
+
+  /// 시안 수료 메달의 금색 한 벌.
+  static const gold = MhMedalColors(
+    ribbonLeft: '#0050C8',
+    ribbonRight: '#0068FF',
+    rim: '#D9A400',
+    outer: '#FFC800',
+    inner: '#FFD43B',
+    glyphFill: '#fff',
+    glyphStroke: '#D9A400',
+    glyphWidth: 1.2,
+  );
+
+  /// 문양을 선으로만 그리는 배지(체크·깃발)용.
+  static const goldOutlined = MhMedalColors(
+    ribbonLeft: '#0050C8',
+    ribbonRight: '#0068FF',
+    rim: '#D9A400',
+    outer: '#FFC800',
+    inner: '#FFD43B',
+    glyphFill: 'none',
+    glyphStroke: '#fff',
+    glyphWidth: 3,
+  );
+
+  final String ribbonLeft;
+  final String ribbonRight;
+
+  /// 바깥 원의 테두리(`b.c0`).
+  final String rim;
+
+  /// 바깥 원(`b.c1`) / 안쪽 원(`b.c2`).
+  final String outer;
+  final String inner;
+
+  /// 문양. 선으로만 그릴 배지는 [glyphFill]을 `none`으로 준다.
+  final String glyphFill;
+  final String glyphStroke;
+  final double glyphWidth;
+}
+
 class MhMedal extends StatelessWidget {
   const MhMedal({
     super.key,
     this.size = 44,
     this.glyph = star,
-    this.glyphFilled = true,
+    this.colors = MhMedalColors.gold,
+    this.arcs = true,
   });
 
   final double size;
 
-  /// 메달 안에 그릴 문양. 좌표계는 메달과 같은 `0 0 60 72`다.
-  ///
-  /// 시안의 "내 배지"가 배지마다 다른 문양을 쓴다 (`b.glyph`).
+  /// 메달 안에 그릴 문양. 좌표계는 `0 0 60 72`, 안쪽 원의 중심이 (30, 28)이다.
   final String glyph;
 
-  /// 채워 그릴지(별·핀), 선으로만 그릴지(체크·깃발).
-  final bool glyphFilled;
+  final MhMedalColors colors;
 
-  /// 기본 문양 — 수료 배지의 별.
+  /// 원을 가로지르는 곡선 장식 두 줄.
+  ///
+  /// **MY의 "내 배지"에는 없다.** 시안에서 가이드 경로·완료 화면의 메달에만
+  /// 그려져 있고, 배지 칸의 메달은 원 + 문양뿐이다. 기본값을 `true`로 둔 건
+  /// 가이드 쪽이 원래 그랬기 때문이다.
+  final bool arcs;
+
+  /// 기본 문양 — 수료 메달의 별.
   static const star =
       'M30 17 l3.2 6.6 7.2.9-5.3 5 1.4 7.1-6.5-3.6-6.5 3.6 1.4-7.1-5.3-5 7.2-.9z';
 
   String get _body =>
-      '<path d="M18 40 L10 70 L22 64 L28 72 L32 44 Z" fill="#0050C8"/>'
-      '<path d="M42 40 L50 70 L38 64 L32 72 L28 44 Z" fill="#0068FF"/>'
-      '<circle cx="30" cy="28" r="26" fill="#FFC800" stroke="#D9A400" stroke-width="3"/>'
-      '<circle cx="30" cy="28" r="19" fill="#FFD43B"/>'
-      '<path d="M13 25 C22 31, 38 31, 47 25" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
-      '<path d="M30 9 C24 18, 24 38, 30 47" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
-      '<path d="$glyph" fill="${glyphFilled ? '#fff' : 'none'}" '
-      'stroke="${glyphFilled ? '#D9A400' : '#fff'}" '
-      'stroke-width="${glyphFilled ? 1.2 : 3.0}" '
+      '<path d="M18 40 L10 70 L22 64 L28 72 L32 44 Z" fill="${colors.ribbonLeft}"/>'
+      '<path d="M42 40 L50 70 L38 64 L32 72 L28 44 Z" fill="${colors.ribbonRight}"/>'
+      '<circle cx="30" cy="28" r="26" fill="${colors.outer}" '
+      'stroke="${colors.rim}" stroke-width="3"/>'
+      '<circle cx="30" cy="28" r="19" fill="${colors.inner}"/>'
+      '${arcs ? _arcs : ''}'
+      '<path d="$glyph" fill="${colors.glyphFill}" '
+      'stroke="${colors.glyphStroke}" stroke-width="${colors.glyphWidth}" '
       'stroke-linecap="round" stroke-linejoin="round"/>';
+
+  static const _arcs =
+      '<path d="M13 25 C22 31, 38 31, 47 25" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
+      '<path d="M30 9 C24 18, 24 38, 30 47" stroke="#E0A800" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
 
   @override
   Widget build(BuildContext context) {
