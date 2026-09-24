@@ -837,11 +837,48 @@ class HttpHandballApiService implements HandballApiService {
     return fetchCheers(team);
   }
 
+  @override
+  Future<void> reportCheer(
+    Team team,
+    String cheerId, {
+    required CheerReportReason reason,
+    String? detail,
+  }) async {
+    final text = detail?.trim() ?? '';
+    await client.post(
+      '/team/${_teamNum(team)}/cheer/$cheerId/report',
+      body: {
+        'reason': reason.code,
+        if (text.isNotEmpty) 'detail': text,
+      },
+    );
+  }
+
+  @override
+  Future<List<BlockedAuthor>> fetchBlocks() async {
+    final json = await client.get('/block');
+    return [
+      for (final raw in _list(_map(json)['items']))
+        if (_map(raw) case final b)
+          if (_str(b['authorId']) case final id?)
+            BlockedAuthor(authorId: id, blockedAt: _date(b['createdAt'])),
+    ];
+  }
+
+  @override
+  Future<void> blockAuthor(String authorId) async =>
+      client.post('/block', body: {'authorId': authorId});
+
+  @override
+  Future<void> unblockAuthor(String authorId) async =>
+      client.delete('/block/$authorId');
+
   List<CheerPost> _cheers(Object? json) => [
         for (final raw in _list(_map(json)['items']))
           if (_map(raw) case final c)
             CheerPost(
               id: '${_int(c['id']) ?? ''}',
+              authorId: _str(c['authorId']) ?? '',
               // 닉네임이 없는 앱이다. 서버가 이름을 만들지 않는다.
               author: c['isMine'] == true ? '나' : '익명',
               text: _str(c['text']) ?? '',

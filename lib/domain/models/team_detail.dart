@@ -14,9 +14,53 @@ class TeamHistoryEntry {
 }
 
 /// 응원글. 시안 `mh_cheer`에 팀별로 쌓인다.
+/// 응원글 신고 사유. 값은 서버가 받는 코드다.
+enum CheerReportReason {
+  spam('spam', '스팸·광고'),
+  abuse('abuse', '욕설·비방·혐오 표현'),
+  sexual('sexual', '음란·선정적인 내용'),
+  other('other', '기타');
+
+  const CheerReportReason(this.code, this.label);
+
+  final String code;
+  final String label;
+
+  /// 기타를 고르면 무엇이 문제인지 적어야 한다.
+  bool get needsDetail => this == CheerReportReason.other;
+}
+
+/// 차단한 작성자 한 명.
+///
+/// 서버는 `authorId`와 차단 시각만 준다 — **닉네임을 모른다.** 차단하는
+/// 순간의 이름을 기기에 적어 두고 목록에서 쓴다
+/// (`PreferencesRepository.blockedName`).
+class BlockedAuthor {
+  const BlockedAuthor({
+    required this.authorId,
+    required this.blockedAt,
+    this.nickname,
+  });
+
+  final String authorId;
+  final DateTime? blockedAt;
+  final String? nickname;
+
+  String get displayName => nickname ?? '익명';
+
+  /// `2026.09.24 차단`
+  String get blockedLabel {
+    final at = blockedAt;
+    if (at == null) return '차단함';
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${at.year}.${two(at.month)}.${two(at.day)} 차단';
+  }
+}
+
 class CheerPost {
   const CheerPost({
     required this.id,
+    required this.authorId,
     required this.author,
     required this.text,
     required this.dateLabel,
@@ -26,6 +70,11 @@ class CheerPost {
   });
 
   final String id;
+
+  /// 작성자 식별자. 서버가 기기 ID를 해싱해 만든 값이라 되돌릴 수 없다.
+  /// **차단은 이걸로 한다** — 닉네임은 바뀔 수 있다.
+  final String authorId;
+
   final String author;
   final String text;
   final String dateLabel;
@@ -39,6 +88,7 @@ class CheerPost {
 
   CheerPost copyWith({int? likes, bool? liked}) => CheerPost(
         id: id,
+        authorId: authorId,
         author: author,
         text: text,
         dateLabel: dateLabel,

@@ -95,4 +95,23 @@ abstract interface class HandballApiService {
 
   /// `POST /api/team/:teamNum/cheer/:cheerId/like` — 토글.
   Future<List<CheerPost>> toggleCheerLike(Team team, String cheerId);
+
+  /// 응원글 신고. 같은 글을 다시 신고하면 `409`.
+  ///
+  /// **스토어 심사가 요구하는 기능이다** (App Store Guideline 1.2 — 사용자
+  /// 생성 콘텐츠가 있으면 앱 안에 신고 수단이 있어야 한다).
+  Future<void> reportCheer(
+    Team team,
+    String cheerId, {
+    required CheerReportReason reason,
+    String? detail,
+  });
+
+  /// 차단한 작성자 목록.
+  Future<List<BlockedAuthor>> fetchBlocks();
+
+  /// 작성자 차단. 이미 차단했어도 성공으로 본다(멱등).
+  Future<void> blockAuthor(String authorId);
+
+  Future<void> unblockAuthor(String authorId);
 }

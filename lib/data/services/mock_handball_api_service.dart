@@ -638,6 +638,8 @@ class MockHandballApiService implements HandballApiService {
   static final _predictions = <String, PredictionPick>{};
   static final _mvpVotes = <String, String>{};
   static final _cheers = <String, List<CheerPost>>{};
+  static final _reports = <String>{};
+  static final _blocks = <String, DateTime>{};
 
   @override
   Future<PredictionTally> fetchPrediction(Game game) async {
@@ -727,6 +729,45 @@ class MockHandballApiService implements HandballApiService {
   }
 
   @override
+  Future<void> reportCheer(
+    Team team,
+    String cheerId, {
+    required CheerReportReason reason,
+    String? detail,
+  }) async {
+    await _delay();
+    if (!_reports.add('${team.name}:$cheerId')) {
+      throw const ApiException('이미 신고한 응원글이에요', statusCode: 409);
+    }
+    // 신고한 글은 바로 안 보이게 한다. 서버도 같은 동작이다.
+    _cheers[team.name]?.removeWhere((c) => c.id == cheerId);
+  }
+
+  @override
+  Future<List<BlockedAuthor>> fetchBlocks() async {
+    await _delay();
+    return [
+      for (final entry in _blocks.entries)
+        BlockedAuthor(authorId: entry.key, blockedAt: entry.value),
+    ];
+  }
+
+  @override
+  Future<void> blockAuthor(String authorId) async {
+    await _delay();
+    _blocks[authorId] ??= DateTime.now();
+    for (final list in _cheers.values) {
+      list.removeWhere((c) => c.authorId == authorId);
+    }
+  }
+
+  @override
+  Future<void> unblockAuthor(String authorId) async {
+    await _delay();
+    _blocks.remove(authorId);
+  }
+
+  @override
   Future<List<CheerPost>> submitCheer(Team team, String text) async {
     await _delay();
     if (text.length > 200) {
@@ -737,6 +778,7 @@ class MockHandballApiService implements HandballApiService {
       0,
       CheerPost(
         id: 'cheer-${now.microsecondsSinceEpoch}',
+        authorId: 'me',
         author: '나',
         text: text.trim(),
         dateLabel: '${now.month}.${now.day}',

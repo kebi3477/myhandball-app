@@ -48,6 +48,13 @@ class PreferencesRepository {
   /// 둔다. 그 전에 이미 수료한 사용자는 값이 없고, 그때는 날짜 없이 쓴다.
   DateTime? _guideCompletedAt;
 
+  /// 차단한 작성자의 닉네임. `authorId` → 이름.
+  ///
+  /// **서버는 차단 목록에 `authorId`와 시각만 준다.** 작성자의 닉네임을
+  /// 모르기 때문인데, 그러면 "차단한 사용자" 화면이 해시값 목록이 된다.
+  /// 차단하는 순간에는 이름을 알고 있으니 그때 적어 둔다.
+  final _blockedNames = <String, String>{};
+
   /// 업데이트 안내에서 "나중에"를 고른 버전.
   ///
   /// 같은 버전으로는 다시 묻지 않는다. 켤 때마다 알럿이 뜨면 안내가 아니라
@@ -137,6 +144,10 @@ class PreferencesRepository {
     _notificationsOn = prefs.getBool(_kNotifications) ?? true;
     _nickname = prefs.getString(_kNickname) ?? '';
     _skippedUpdateVersion = prefs.getString(_kSkippedUpdate) ?? '';
+    for (final entry in prefs.getStringList(_kBlockedNames) ?? const []) {
+      final sep = entry.indexOf(':');
+      if (sep > 0) _blockedNames[entry.substring(0, sep)] = entry.substring(sep + 1);
+    }
     final graduated = prefs.getString(_kGuideCompletedAt);
     _guideCompletedAt =
         graduated == null ? null : DateTime.tryParse(graduated);
@@ -170,6 +181,8 @@ class PreferencesRepository {
       prefs.setBool(_kNotifications, _notificationsOn),
       prefs.setString(_kNickname, _nickname),
       prefs.setString(_kSkippedUpdate, _skippedUpdateVersion),
+      prefs.setStringList(_kBlockedNames,
+          [for (final e in _blockedNames.entries) '${e.key}:${e.value}']),
       if (_guideCompletedAt case final at?)
         prefs.setString(_kGuideCompletedAt, at.toIso8601String())
       else
@@ -228,6 +241,7 @@ class PreferencesRepository {
   static const _kNickname = 'mh_nick';
   static const _kSkippedUpdate = 'mh_update_skipped';
   static const _kGuideCompletedAt = 'mh_guide_done_at';
+  static const _kBlockedNames = 'mh_blocked_names';
   static const _kProfileCreatedAt = 'mh_joined';
 
   /// 시안 `mh_onboarded`
@@ -361,6 +375,19 @@ class PreferencesRepository {
   }
 
   DateTime? get guideCompletedAt => _guideCompletedAt;
+
+  /// 차단할 때 봤던 닉네임. 모르면 `null`.
+  String? blockedName(String authorId) => _blockedNames[authorId];
+
+  Future<void> rememberBlockedName(String authorId, String nickname) async {
+    _blockedNames[authorId] = nickname;
+    await _persist();
+  }
+
+  Future<void> forgetBlockedName(String authorId) async {
+    _blockedNames.remove(authorId);
+    await _persist();
+  }
 
   Future<void> setGuideDoneCount(int value) async {
     _guideDoneCount = value.clamp(0, AppConfig.guideLessonCount);
