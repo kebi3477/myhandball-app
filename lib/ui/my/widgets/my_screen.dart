@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
-import '../../core/ui/error_message.dart';
+import '../../core/ui/mh_error_view.dart';
 import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../settings/widgets/settings_screen.dart';
 import '../view_models/my_view_model.dart';
 import 'my_attendance_card.dart';
 import 'my_badges_section.dart';
+import 'my_error_banner.dart';
 import 'my_next_game_card.dart';
 import 'my_profile_card.dart';
 import 'my_sections.dart';
@@ -40,16 +41,10 @@ class MyScreen extends ConsumerWidget {
             loading: () => const Center(
               child: CircularProgressIndicator(color: MhColors.brand),
             ),
-            error: (e, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(MhSpacing.gutter),
-                child: Text(
-                  mhErrorMessage(e),
-                  textAlign: TextAlign.center,
-                  style: MhText.meta(context.mh.textSub),
-                ),
-              ),
-            ),
+            // 여기까지 오는 건 저장소 자체가 깨진 경우다. 평소의 통신 실패는
+            // `MyState.error`로 내려와 위쪽 띠로 알린다.
+            error: (e, _) =>
+                Center(child: MhErrorView(error: e, onRetry: vm.refresh)),
             data: (state) => RefreshIndicator(
               color: MhColors.brand,
               backgroundColor: context.mh.card,
@@ -57,6 +52,10 @@ class MyScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: MhSpacing.xl),
                 children: [
+                  if (state.error case final error?) ...[
+                    MyErrorBanner(error: error, onRetry: vm.refresh),
+                    const SizedBox(height: MhSpacing.md),
+                  ],
                   MyProfileCard(state: state),
                   const SizedBox(height: MhSpacing.md),
                   MyTeamCard(state: state),

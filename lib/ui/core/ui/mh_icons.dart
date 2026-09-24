@@ -85,9 +85,9 @@ abstract final class MhIcons {
   /// 서버 오류. 시안의 `errIconPath`는 잘린 스크립트에 있어 확인하지 못했다.
   /// 시안과 같은 획 문법(24x24, stroke 1.7~2, round cap)으로 맞춰 그린다.
   static const alert =
-      '<circle cx="12" cy="12" r="9" stroke="#000" stroke-width="1.8"></circle>'
-      '<path d="M12 7.5v5.5M12 16.2h.01" stroke="#000" stroke-width="2" '
-      'stroke-linecap="round"></path>';
+      '<path d="M12 8v5M12 16.5h.01M10.3 3.9L2.4 17.6A2 2 0 0 0 4.1 20.6h15.8'
+      'a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="#000" '
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>';
 
   /// 오프라인
   static const wifiOff =

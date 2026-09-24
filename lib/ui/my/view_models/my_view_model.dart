@@ -62,6 +62,7 @@ class MyState {
     required this.recentGames,
     required this.attendance,
     required this.predictions,
+    this.error,
   });
 
   final Team? team;
@@ -80,6 +81,14 @@ class MyState {
 
   final List<AttendanceRecord> attendance;
   final List<PredictionRecord> predictions;
+
+  /// 일부를 못 받아왔을 때의 원인. **화면을 통째로 지우지 않는다** —
+  /// 마이팀·닉네임·직관 기록은 기기에 있어서 연결이 끊겨도 보여줄 수 있다.
+  /// 시안도 MY만 전체 오류 화면 대신 위쪽에 띠 하나를 두고 "기기에 저장된
+  /// 정보를 보여드리고 있어요"라고 알린다.
+  final Object? error;
+
+  bool get hasError => error != null;
 
   String get rankLabel =>
       rank == null ? '순위 정보 없음' : '${rank!.rank}위 · 승점 ${rank!.points}';
@@ -143,10 +152,23 @@ class MyViewModel extends AsyncNotifier<MyState> {
     // 남자부를 한 번 누른 순간 MY의 순위·시즌 기록·직관 기록이 통째로 빈다.
     final gender = team?.gender ?? prefs.preferredGender;
 
-    final ranking = await ref
-        .read(rankingRepositoryProvider)
-        .getRanking(gender);
-    final players = await ref.read(playerRepositoryProvider).getPlayers(gender);
+    // 하나가 실패해도 나머지는 보여준다. 첫 실패만 기억해 띠에 쓴다.
+    Object? failure;
+    Future<T> keep<T>(Future<T> Function() run, T fallback) async {
+      try {
+        return await run();
+      } on Exception catch (e) {
+        failure ??= e;
+        return fallback;
+      }
+    }
+
+    final ranking = await keep(
+        () => ref.read(rankingRepositoryProvider).getRanking(gender),
+        const <RankRow>[]);
+    final players = await keep(
+        () => ref.read(playerRepositoryProvider).getPlayers(gender),
+        const <Player>[]);
 
     final favIds = prefs.favoritePlayerIds;
     final favorites = players.where((p) => favIds.contains(p.id)).toList();
@@ -157,7 +179,7 @@ class MyViewModel extends AsyncNotifier<MyState> {
     var recent = <Game>[];
 
     // 직관·예측 기록은 경기 상세에서 저장한 id를 실제 경기로 되살린다.
-    final allGames = await _allGames();
+    final allGames = await keep(_allGames, const <Game>[]);
     final attendance = <AttendanceRecord>[];
     final predictions = <PredictionRecord>[];
 
@@ -200,6 +222,7 @@ class MyViewModel extends AsyncNotifier<MyState> {
       recentGames: recent,
       attendance: attendance,
       predictions: predictions,
+      error: failure,
     );
   }
 

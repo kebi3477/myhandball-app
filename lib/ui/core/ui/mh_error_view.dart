@@ -37,13 +37,16 @@ class MhErrorView extends StatelessWidget {
     final (icon, title, description) = _offline
         ? (
             MhIcons.wifiOff,
-            '연결할 수 없어요',
-            offlineDescription ?? '인터넷 연결을 확인하고\n다시 시도해 주세요',
+            '인터넷에 연결되어 있지 않아요',
+            offlineDescription ??
+                'Wi-Fi나 모바일 데이터 연결을 확인한 뒤\n다시 시도해 주세요.',
           )
         : (
             MhIcons.alert,
-            '잠시 문제가 생겼어요',
-            '${_message(error)}\n잠시 뒤에 다시 시도해 주세요',
+            '정보를 불러오지 못했어요',
+            // 시안은 서버가 준 메시지를 띄우지 않는다. 사용자가 할 수 있는
+            // 일이 바뀌지 않는데 문구만 매번 달라진다.
+            '일시적인 오류가 발생했어요.\n잠시 후 다시 시도해 주세요.',
           );
 
     return Padding(
@@ -99,8 +102,4 @@ class MhErrorView extends StatelessWidget {
       ),
     );
   }
-
-  /// 서버가 준 이유가 있으면 보여준다. 예외 원문은 내보내지 않는다.
-  static String _message(Object error) =>
-      error is ApiException ? error.message : '알 수 없는 오류예요';
 }
