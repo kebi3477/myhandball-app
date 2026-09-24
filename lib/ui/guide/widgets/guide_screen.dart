@@ -9,6 +9,7 @@ import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../view_models/guide_view_model.dart';
+import 'guide_done_view.dart';
 import 'guide_lesson_view.dart';
 
 /// 핸드볼 입문 가이드. 시안 HANDBALL GUIDE.
@@ -30,6 +31,7 @@ class GuideScreen extends ConsumerWidget {
     final vm = ref.read(guideViewModelProvider.notifier);
 
     if (state.inLesson) return const GuideLessonView();
+    if (state.showingDone) return const GuideDoneView();
 
     return Scaffold(
       backgroundColor: c.bg,

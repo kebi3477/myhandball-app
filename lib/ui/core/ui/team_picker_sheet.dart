@@ -83,11 +83,9 @@ class _TeamPickerSheetState extends ConsumerState<_TeamPickerSheet> {
                       border: Border.all(color: c.border),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('✕',
-                        style: MhText.custom(
-                            size: 14,
-                            weight: FontWeight.w600,
-                            color: c.textSub)),
+                    // 시안은 '✕'(U+2715)를 쓰지만 Pretendard에 글리프가 없어
+                    // 두부로 찍힌다.
+                    child: Icon(Icons.close_rounded, size: 16, color: c.textSub),
                   ),
                 ),
               ],
@@ -100,7 +98,7 @@ class _TeamPickerSheetState extends ConsumerState<_TeamPickerSheet> {
                 for (final g in Gender.values) ...[
                   if (g != Gender.values.first) const SizedBox(width: MhSpacing.xs),
                   _GenderPill(
-                    label: g.teamLabel,
+                    label: g.pickerLabel,
                     selected: _gender == g,
                     onTap: () => setState(() => _gender = g),
                   ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// API 호출이 실패했을 때 던진다.
@@ -58,7 +59,17 @@ class ApiClient {
   final Duration timeout;
   final http.Client _client;
 
-  void close() => _client.close();
+  /// 마지막 요청이 서버에 닿지 못했는지. 시안 `isOffline`.
+  ///
+  /// 셸 상단의 회색 띠가 이걸 본다. 연결 상태를 따로 감시하는 패키지를
+  /// 들이는 대신 **실제로 실패한 요청**을 신호로 쓴다 — 와이파이에는
+  /// 붙어 있는데 서버만 죽은 경우도 사용자에겐 똑같이 "안 된다"이다.
+  final ValueNotifier<bool> offline = ValueNotifier(false);
+
+  void close() {
+    _client.close();
+    offline.dispose();
+  }
 
   Uri _uri(String path, [Map<String, String?>? query]) {
     final root = baseUrl.endsWith('/')
@@ -107,10 +118,15 @@ class ApiClient {
       };
       res = await request.timeout(timeout);
     } on TimeoutException {
+      offline.value = true;
       throw ApiException('서버가 응답하지 않아요', path: path);
     } on Exception catch (e) {
+      offline.value = true;
       throw ApiException(_offlineMessage(e), path: path);
     }
+
+    // 상태 코드가 무엇이든 응답이 왔으면 연결은 살아 있다.
+    offline.value = false;
 
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.bodyBytes.isEmpty) return null;

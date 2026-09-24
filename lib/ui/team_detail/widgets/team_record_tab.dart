@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repositories/preferences_repository.dart';
 import '../../../domain/models/team_detail.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
@@ -40,7 +41,9 @@ class TeamRecordTab extends ConsumerWidget {
                 textBaseline: TextBaseline.alphabetic,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('25-26 정규리그',
+                  // 시안은 25-26을 박아 뒀지만 그대로 두면 시즌이 바뀌어도
+                  // 영영 25-26이다.
+                  Text('${ref.watch(preferencesRepositoryProvider).season.label} 정규리그',
                       style: MhText.custom(
                           size: 15, weight: FontWeight.w700, color: c.text)),
                   Text('${r.rank}위 · 승점 ${r.points}',
@@ -251,6 +254,8 @@ class TeamRecordTab extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        _ShotTypes(record: d.seasonRecord),
       ],
     );
   }
@@ -375,4 +380,145 @@ class _TrendPainter extends CustomPainter {
       old.values != values ||
       old.invertY != invertY ||
       old.gridColor != gridColor;
+}
+
+/// 시안 `teamRecord` — 득점 유형 막대 + 부가 기록 6칸.
+///
+/// 연맹 "팀기록" 탭에서 온다. 원본에 안 올라온 팀이 있어 시안도
+/// `noDetail` 문구를 따로 두었다.
+class _ShotTypes extends StatelessWidget {
+  const _ShotTypes({required this.record});
+
+  final TeamSeasonRecord? record;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    final r = record;
+
+    if (r == null || !r.hasDetail) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(MhRadius.card),
+        ),
+        child: Text('상세 팀 기록을 준비 중이에요',
+            textAlign: TextAlign.center, style: MhText.meta(c.textSub)),
+      );
+    }
+
+    // 합이 총 득점과 딱 맞지 않는 팀이 있어 최대값을 기준으로 채운다.
+    final max = r.shotTypes.map((t) => t.$2).reduce((a, b) => a > b ? a : b);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: c.card,
+            borderRadius: BorderRadius.circular(MhRadius.card),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('득점 유형',
+                      style: MhText.custom(
+                          size: 15, weight: FontWeight.w700, color: c.text)),
+                  Text('총 ${r.goals}골',
+                      style: MhText.caption(c.textFaint)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              for (final (label, value) in r.shotTypes)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        child: Text(label,
+                            style: MhText.custom(
+                                size: 12,
+                                weight: FontWeight.w600,
+                                color: c.textSub)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: max == 0 ? 0 : value / max,
+                            minHeight: 8,
+                            backgroundColor: c.border,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                MhColors.brand),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 36,
+                        child: Text('$value',
+                            textAlign: TextAlign.right,
+                            style: MhText.custom(
+                                size: 12,
+                                weight: FontWeight.w700,
+                                color: c.text)),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: r.extras.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 66,
+          ),
+          itemBuilder: (_, i) {
+            final (label, value) = r.extras[i];
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              decoration: BoxDecoration(
+                color: c.card,
+                borderRadius: BorderRadius.circular(MhRadius.chip),
+              ),
+              child: Column(
+                children: [
+                  Text(value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MhText.custom(
+                          size: 17, weight: FontWeight.w800, color: c.text)),
+                  const SizedBox(height: 2),
+                  Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MhText.caption(c.textSub)),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        Text('출처: 한국핸드볼연맹 팀기록 (정규리그)',
+            textAlign: TextAlign.center, style: MhText.caption(c.textFaint)),
+      ],
+    );
+  }
 }

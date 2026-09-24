@@ -639,6 +639,48 @@ class HttpHandballApiService implements HandballApiService {
       // 라운드별 순위는 연맹이 주지 않는다. 전적 탭은 누적 승점으로 그린다.
       rankTrend: const [],
       results: results,
+      seasonRecord: _seasonRecord(t),
+    );
+  }
+
+  /// `seasonRecords`에서 지금 보고 있는 시즌의 정규리그 기록을 고른다.
+  ///
+  /// 서버는 `"2025-2026"` 꼴로 주고 과거 시즌과 챔피언결정전(`postseason`)도
+  /// 섞여 온다. 포스트시즌을 그대로 쓰면 3~5경기짜리 숫자가 시즌 기록인 척
+  /// 나온다.
+  TeamSeasonRecord? _seasonRecord(Map<String, dynamic> t) {
+    final rows = _list(t['seasonRecords']).map(_map).toList();
+    if (rows.isEmpty) return null;
+
+    final wanted = season();
+    Map<String, dynamic>? chosen;
+    for (final r in rows) {
+      if (r['postseason'] == true) continue;
+      final label = _str(r['season']) ?? '';
+      if (label.startsWith(wanted)) {
+        chosen = r;
+        break;
+      }
+      chosen ??= r;
+    }
+    if (chosen == null) return null;
+
+    return TeamSeasonRecord(
+      season: _str(chosen['season']) ?? wanted,
+      goals: _int(chosen['goals']) ?? 0,
+      goals6m: _int(chosen['goals6m']) ?? 0,
+      goalsWing: _int(chosen['goalsWing']) ?? 0,
+      goals9m: _int(chosen['goals9m']) ?? 0,
+      goals7m: _int(chosen['goals7m']) ?? 0,
+      goalsFast: _int(chosen['goalsFast']) ?? 0,
+      goalsBreakthrough: _int(chosen['goalsBreakthrough']) ?? 0,
+      assists: _int(chosen['assists']) ?? 0,
+      turnovers: _int(chosen['turnovers']) ?? 0,
+      steals: _int(chosen['steals']) ?? 0,
+      blocks: _int(chosen['blocks']) ?? 0,
+      yellowCards: _int(chosen['yellowCards']) ?? 0,
+      twoMinutes: _int(chosen['twoMinutes']) ?? 0,
+      redCards: _int(chosen['redCards']) ?? 0,
     );
   }
 

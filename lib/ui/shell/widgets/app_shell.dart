@@ -8,6 +8,7 @@ import '../../../data/services/push_service.dart';
 import '../../../domain/models/schedule_day.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/mh_icons.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../core/ui/push_sync.dart';
@@ -115,6 +116,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         bottom: false,
         child: Column(
           children: [
+            const _OfflineBar(),
             Expanded(
               child: IndexedStack(
                 index: tab.index,
@@ -130,6 +132,42 @@ class _AppShellState extends ConsumerState<AppShell> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 시안 `isOffline` — 서버에 닿지 못할 때 화면 맨 위에 붙는 회색 띠.
+///
+/// 목업으로 돌 때는 붙일 클라이언트가 없어 아무것도 그리지 않는다.
+class _OfflineBar extends ConsumerWidget {
+  const _OfflineBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (AppConfig.useMock || AppConfig.apiBaseUrl.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return ValueListenableBuilder<bool>(
+      valueListenable: ref.watch(apiClientProvider).offline,
+      builder: (context, offline, _) {
+        if (!offline) return const SizedBox.shrink();
+        return Container(
+          width: double.infinity,
+          padding:
+              const EdgeInsets.symmetric(horizontal: MhSpacing.sm, vertical: 8),
+          color: MhColors.offlineBar,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const MhIcon(MhIcons.wifiOff, size: 14, color: Colors.white),
+              const SizedBox(width: 6),
+              Text('인터넷 연결이 끊겼어요',
+                  style: MhText.custom(
+                      size: 12, weight: FontWeight.w600, color: Colors.white)),
+            ],
+          ),
+        );
+      },
     );
   }
 }

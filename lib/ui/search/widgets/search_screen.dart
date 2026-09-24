@@ -119,11 +119,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                     color: c.textFaint,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Text('✕',
-                                      style: MhText.custom(
-                                          size: 11,
-                                          weight: FontWeight.w700,
-                                          color: c.bg)),
+                                  // Pretendard에 '✕'(U+2715) 글리프가 없다.
+                                  child: Icon(Icons.close_rounded,
+                                      size: 13, color: c.bg),
                                 ),
                               ),
                           ],

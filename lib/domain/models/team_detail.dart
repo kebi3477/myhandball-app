@@ -48,6 +48,71 @@ class CheerPost {
       );
 }
 
+/// 연맹 "팀기록" 탭의 시즌 누적 기록. `/api/team/:teamNum`의 `seasonRecords`.
+///
+/// 득점을 유형별로 쪼개 준다 — 6m·윙·9m·7m·속공·돌파. 합이 [goals]와
+/// 정확히 맞지 않을 수 있어서(원본이 그렇다) 막대는 [goals]가 아니라
+/// **유형 중 최대값**을 기준으로 그린다.
+class TeamSeasonRecord {
+  const TeamSeasonRecord({
+    required this.season,
+    required this.goals,
+    required this.goals6m,
+    required this.goalsWing,
+    required this.goals9m,
+    required this.goals7m,
+    required this.goalsFast,
+    required this.goalsBreakthrough,
+    required this.assists,
+    required this.turnovers,
+    required this.steals,
+    required this.blocks,
+    required this.yellowCards,
+    required this.twoMinutes,
+    required this.redCards,
+  });
+
+  final String season;
+  final int goals;
+  final int goals6m;
+  final int goalsWing;
+  final int goals9m;
+  final int goals7m;
+  final int goalsFast;
+  final int goalsBreakthrough;
+  final int assists;
+  final int turnovers;
+  final int steals;
+  final int blocks;
+  final int yellowCards;
+  final int twoMinutes;
+  final int redCards;
+
+  /// 시안 `teamRecord.shotTypes` — 라벨 순서까지 시안 그대로.
+  List<(String label, int value)> get shotTypes => [
+        ('6m', goals6m),
+        ('윙', goalsWing),
+        ('9m', goals9m),
+        ('7m', goals7m),
+        ('속공', goalsFast),
+        ('돌파', goalsBreakthrough),
+      ];
+
+  /// 시안 `teamRecord.extras` — 3열 6칸.
+  List<(String label, String value)> get extras => [
+        ('어시스트', '$assists'),
+        ('스틸', '$steals'),
+        ('블록', '$blocks'),
+        ('턴오버', '$turnovers'),
+        ('2분간 퇴장', '$twoMinutes'),
+        ('경고·퇴장', '$yellowCards·$redCards'),
+      ];
+
+  /// 값이 전부 0이면 원본에 기록이 안 올라온 것이다. 0짜리 막대를 여섯 개
+  /// 그려 두면 "기록이 0"인지 "아직 없는지" 구분이 안 된다.
+  bool get hasDetail => shotTypes.any((t) => t.$2 > 0);
+}
+
 class TeamDetail {
   const TeamDetail({
     required this.team,
@@ -60,6 +125,7 @@ class TeamDetail {
     required this.players,
     required this.rankTrend,
     required this.results,
+    this.seasonRecord,
   });
 
   final Team team;
@@ -78,6 +144,10 @@ class TeamDetail {
   final List<int> rankTrend;
 
   final List<MatchResult> results;
+
+  /// 이번 시즌 팀기록. 원본에 없으면 `null`이고, 시안은 그때
+  /// "상세 팀 기록을 준비 중이에요"를 띄운다.
+  final TeamSeasonRecord? seasonRecord;
 
   String get divisionLabel =>
       team.gender.divisionLabel;

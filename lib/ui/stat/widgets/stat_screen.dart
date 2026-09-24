@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/repositories/schedule_repository.dart';
 import '../../../domain/models/gender.dart';
+import '../../../domain/models/season.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_error_view.dart';
@@ -33,6 +36,7 @@ class StatScreen extends ConsumerWidget {
       children: [
         const _Header(),
         _TabBar(current: tab, onSelect: vm.selectTab),
+        const _OffseasonBanner(),
         Expanded(
           child: async.when(
             skipLoadingOnReload: true,
@@ -62,6 +66,57 @@ class StatScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 시안 `statOffseason` — 시즌이 끝난 뒤 보는 기록이라는 걸 알려 준다.
+///
+/// 비시즌에 순위표만 덩그러니 있으면 지금 진행 중인 시즌으로 읽힌다.
+class _OffseasonBanner extends ConsumerWidget {
+  const _OffseasonBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.mh;
+    final offseason = ref.watch(offseasonProvider).valueOrNull ?? false;
+    if (!offseason) return const SizedBox.shrink();
+
+    final season = ref.watch(preferencesRepositoryProvider).season;
+    final next = Season.ofYear(season.startYear + 1);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          MhSpacing.gutter, 14, MhSpacing.gutter, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: MhColors.closed,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text('시즌 종료',
+                  style: MhText.custom(
+                      size: 11, weight: FontWeight.w800, color: Colors.white)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '${season.label} 시즌 최종 기록이에요 · ${next.label} 시즌은 11월 개막',
+                style: MhText.custom(
+                    size: 12, weight: FontWeight.w500, color: c.textSub),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

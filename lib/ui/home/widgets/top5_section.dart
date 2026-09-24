@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_config.dart';
 import '../../../domain/models/player_stat.dart';
+import '../../../data/repositories/preferences_repository.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_tap.dart';
@@ -30,7 +31,8 @@ class Top5Section extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('시즌 TOP5', style: MhText.sectionTitle(c.text)),
-              Text('${state.gender.divisionLabel} · 25-26 정규리그',
+              Text('${state.gender.divisionLabel} · '
+                  '${ref.watch(preferencesRepositoryProvider).season.label} 정규리그',
                   style: MhText.caption(c.textNeutral)),
             ],
           ),

@@ -172,6 +172,20 @@ class ScheduleRepository {
   }
 }
 
+/// 지금이 비시즌인지. 시안 `isOffseason` / `statOffseason`.
+///
+/// **"가까운 경기"에 앞으로 치를 경기가 하나도 없으면 비시즌**이다.
+/// 홈이 이미 받아 둔 응답을 저장소가 캐시하고 있어서 추가 요청이 없다.
+final offseasonProvider = FutureProvider<bool>((ref) async {
+  try {
+    final games = await ref.watch(scheduleRepositoryProvider).getUpcomingGames();
+    return !games.any((g) => g.status != GameStatus.finished);
+  } on Exception {
+    // 모르면 배너를 띄우지 않는다. 틀린 안내보다 없는 편이 낫다.
+    return false;
+  }
+});
+
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
   (ref) => ScheduleRepository(ref.watch(handballApiServiceProvider)),
 );
