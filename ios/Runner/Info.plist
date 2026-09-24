@@ -72,17 +72,16 @@
 	</array>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
-	<!-- 개발용: 같은 Wi-Fi의 맥에서 도는 API(http://192.168.x.x:3000)에 붙기 위한 것.
-	     NSAllowsLocalNetworking은 **로컬 네트워크에만** 평문을 허용하고 인터넷
-	     구간의 ATS는 그대로 둔다. 운영 서버는 https라 영향이 없다.
-	     배포본에서 뺐던 NSAllowsArbitraryLoadsInWebContent와는 범위가 다르다.
-	     실기기 테스트가 끝나면 이 두 키는 지워도 된다. -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>개발 중인 API 서버에 연결하기 위해 같은 네트워크의 기기를 찾습니다.</string>
+	<!-- NSAppTransportSecurity 예외를 두지 않는다. 운영 서버는 https라
+	     필요가 없고, NSAllowsLocalNetworking을 남기면 앱을 처음 켤 때
+	     "로컬 네트워크 기기 검색" 권한 팝업이 뜬다 — 쓰지도 않는 권한을
+	     사용자에게 묻는 꼴이라 2026-09-24 출시 준비에서 뺐다.
+	     실기기로 로컬 API(http://192.168.x.x:3000)를 칠 일이 있으면
+	     그때만 아래를 잠깐 되살린다. 커밋하지 말 것.
+	       <key>NSAppTransportSecurity</key>
+	       <dict><key>NSAllowsLocalNetworking</key><true/></dict>
+	       <key>NSLocalNetworkUsageDescription</key>
+	       <string>개발 중인 API 서버에 연결하기 위해 같은 네트워크의 기기를 찾습니다.</string>
+	-->
 </dict>
 </plist>

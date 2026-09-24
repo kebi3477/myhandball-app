@@ -370,11 +370,10 @@ flutter run -d <기기> \
 - 첫 실행 때 **"로컬 네트워크 기기 검색" 권한 팝업**이 뜬다. 거부하면 요청이
   전부 실패한다. 실수로 거부했으면 설정 > 마이핸드볼에서 다시 켠다
 
-`ios/Runner/Info.plist`에 `NSAllowsLocalNetworking`과
-`NSLocalNetworkUsageDescription`을 넣어 뒀다. **로컬 네트워크에만 평문을
-허용**하고 인터넷 구간 ATS는 그대로라, 배포본에서 뺐던
-`NSAllowsArbitraryLoadsInWebContent`와는 범위가 다르다. 운영은 https라
-영향이 없다. 실기기 테스트를 접으면 두 키는 지워도 된다.
+**`NSAllowsLocalNetworking`은 2026-09-24에 뺐다.** 남겨 두면 앱을 처음 켤 때
+"로컬 네트워크 기기 검색" 권한 팝업이 뜬다 — 운영은 https라 쓰지도 않는
+권한을 묻는 꼴이다. 실기기로 로컬 API를 칠 일이 있으면 `Info.plist`의
+주석에 적어 둔 두 키를 잠깐 되살리고 **커밋하지 않는다.**
 
 **주의 — 번들 ID가 스토어 배포본과 같다**(`com.kebi.myhandball-ios`).
 실기기에 디버그 빌드를 깔면 **스토어에서 받은 앱을 덮어쓴다.** 원래대로
@@ -651,7 +650,7 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 | 서명 팀 | `R36UYT2XU8` / CODE_SIGN_STYLE Automatic |
 | 표시 이름 | 마이핸드볼 |
 | 앱 카테고리 | `public.app-category.entertainment` |
-| 버전 | `1.1.0+4` — 스토어 현재 값(빌드 3)에서 하나 올려 둔 상태 |
+| 버전 | `1.2.0+5` — 스토어 현재 값은 1.1.0 (빌드 3). 2026-09-24 출시 준비에서 올렸다 |
 | 지원 기기 | iPhone + iPad (`TARGETED_DEVICE_FAMILY = "1,2"`) |
 | 방향 | **세로 고정** — Info.plist·AndroidManifest·`SystemChrome` 세 곳 |
 | iOS 최소 버전 | 15.0 (배포본은 26.0이었으나 잘못된 설정으로 판단해 낮춤) |
@@ -688,8 +687,9 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
   `flutter doctor --android-licenses`를 돌려야 한다 (여기서는 설치할 수 없다)
 - 개인정보 처리방침·이용약관 웹 페이지는 API 저장소가 제공한다 (`/privacy`, `/terms` → Caddy → API).
   미니 PC 서버에 배포되면 링크가 살아난다
-- 실기기 테스트가 끝나면 `NSAllowsLocalNetworking`·`NSLocalNetworkUsageDescription`
-  제거를 검토한다
+- **출시 전 남은 것** — 응원글 신고·차단 UI(App Store Guideline 1.2,
+  없으면 리젝), 새로 만들어진 API 연동(프로필·랭킹·팬덤·직관·가이드
+  진행도·관심 선수·시즌), 개인정보 처리방침에 Keychain 식별자 명시
 
 ## 서버 상태
 

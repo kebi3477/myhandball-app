@@ -76,8 +76,8 @@ abstract final class AppConfig {
 
   /// 설정 화면에 표시할 앱 버전. `pubspec.yaml`의 `version`과 맞춰야 하며
   /// `test/app_version_test.dart`가 어긋나면 잡는다.
-  static const appVersion = '1.1.0';
-  static const buildNumber = '4';
+  static const appVersion = '1.2.0';
+  static const buildNumber = '5';
 
   /// 홈 상단 "시즌 TOP5"가 보여주는 줄 수.
   static const topPlayerCount = 5;

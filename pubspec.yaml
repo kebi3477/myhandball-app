@@ -3,7 +3,7 @@ description: "마이핸드볼 - 핸드볼 경기 일정, 순위, 기록"
 publish_to: 'none'
 
 # 스토어 현재 버전은 1.1.0(빌드 3). Flutter 전환본은 빌드 4로 올린다.
-version: 1.1.0+4
+version: 1.2.0+5
 
 environment:
   sdk: ^3.13.2
