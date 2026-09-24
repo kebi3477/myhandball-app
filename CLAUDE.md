@@ -41,19 +41,28 @@ MY 맨 위에 프로필 카드가 붙어 그 자리에서 고친다. 규칙은
 **한 글자를 1로 세므로 `length`가 아니라 `runes.length`를 쓴다.**
 
 저장 키는 `mh_nick`, 처음 정한 달이 `mh_joined`("2026.09 가입")다.
-**아직 서버에 안 올라간다.** 적중률 랭킹에 이름을 띄우려면 기기 ID와 닉네임을
-서버가 알아야 하는데 그 API가 없다.
+
+**랭킹에 올라가는 이름은 따로다.** `PUT /api/profile`에 닉네임과 응원팀을
+올려야 적중률 랭킹에 뜬다(`ui/home/widgets/profile_sheet.dart`, `spec/sheets.md`).
+`mh_nick`은 프로필을 안 만든 사람에게도 있는 기기 안의 이름이고, 프로필을
+만들거나 MY에서 이름을 바꾸면 **둘이 같이 바뀐다** — 한쪽만 바꾸면 랭킹에
+옛 이름이 남아 두 화면이 다른 사람처럼 보인다.
+
+**중복은 서버만 안다.** `Nickname`이 막는 건 길이·문자·사칭 단어까지고,
+이미 쓰는 이름은 저장할 때 409로 돌아온다. 그 문구는 서버가 주는 것을
+그대로 띄운다.
 
 **홈이 3탭이 됐다** (`HomeTab`, `ui/home/view_models/home_tab.dart`).
 하단 4탭(`ShellTab`)과는 다른 층이다.
 
 - **승부예측** — 프로필 · 이번 주 예측 · 적중률 랭킹 · 팬덤 적중률 · 내 예측 기록.
-  랭킹과 팬덤은 **서버가 없어 "준비 중" 카드로 자리만 잡아 뒀다.** 숫자를
-  지어내면 랭킹처럼 보이는 가짜가 된다. 이번 주 예측은 경기마다
-  `GET /api/game/:matchSeq/prediction`을 부르므로 `_tallyLimit`(6)으로 막아
-  뒀다 — 주간 집계 엔드포인트가 생기면 이 상한은 없어져야 한다
+  랭킹·팬덤·내 기록은 서버 집계다. 이번 주 예측만 아직 경기마다
+  `GET /api/game/:matchSeq/prediction`을 불러서 `_tallyLimit`(6)으로 막아
+  뒀다 — `/api/prediction/week`을 붙이면 이 상한은 없어져야 한다.
+  **프로필이 없는 채로 예측을 고르면 시트가 먼저 열리고, 만들고 나면 그
+  선택이 이어서 저장된다** (시안 `pfPending`)
 - **직관** — 시즌 요약 · 경기장 도장깨기 · 다음 직관 · 직관 일지.
-  **전부 기기 값(`mh_attended`)과 시즌 일정으로 만든다.** 서버가 없어서
+  **전부 기기 값(`mh_attended`)과 시즌 일정으로 만든다.** `/api/attendance`를 아직 안 붙여서
   앱을 지우면 같이 사라진다
 
 승부예측 탭의 빨간 점은 **홈이 이미 받아 둔 경기**만 본다
@@ -220,23 +229,46 @@ lib/
 `/api/player/:playerSeq`까지 연결돼서 **앱이 안 쓰는 엔드포인트는 위젯·푸시뿐**이고
 그 둘은 네이티브 작업이 선행돼야 한다.
 
-**새로 API 작업이 필요한 것** (2026-09-24 시안 개편 포함):
+**API는 모두 배포돼 있다** (`../myhandball-api/docs/app-integration.md`, 2026-09-24).
+그 문서에 엔드포인트별 **실제 응답 원문**이 있으니 매핑을 고칠 때 먼저 읽는다.
 
-- **프로필(닉네임)** — 기기 ID에 닉네임·응원팀을 붙여 둬야 적중률 랭킹에
-  이름이 뜬다. 지금은 `mh_nick`으로 기기에만 있다
-- **적중률 랭킹 · 팬덤 적중률** — 승부예측 탭의 두 섹션이 이것 때문에
-  "준비 중"으로 떠 있다
-- **주간 예측 묶음** — 이번 주 경기 + 집계 + 내 선택을 한 번에. 지금은
-  경기마다 따로 부른다
-- **직관 기록** — `mh_attended`가 기기에만 있어 앱을 지우면 사라진다
-- **내 예측 목록** — 서버는 경기별 집계만 준다. MY 화면이 "내가 예측한 경기"를
-  모아 보여주려면 목록이 필요한데, 지금은 내 선택만 기기에 캐시해 대신하고 있다
-  (`PreferencesRepository._predictions`)
-- **응원글 신고·차단** — `cheers.hidden`을 DB에서 손으로 켜는 것뿐이다.
-  스토어 심사에서 UGC 신고 수단을 요구할 수 있다 (API 07 B-1)
+앱이 붙인 것:
+
+| 엔드포인트 | 앱에서 쓰는 곳 |
+|---|---|
+| `GET/PUT/DELETE /api/profile` | 승부예측 프로필 시트 · MY 닉네임 편집 |
+| `GET /api/prediction/leaderboard` | 승부예측 · 적중률 랭킹 (`scope=all\|team`) |
+| `GET /api/prediction/fandom` | 승부예측 · 팬덤 적중률 |
+| `GET /api/prediction/my` | 승부예측 · 내 예측 기록, MY의 참여·적중·적중률 |
+| `POST /api/team/:teamNum/cheer/:cheerId/report` · `POST/GET/DELETE /api/block` | 응원글 신고·차단, 설정 > 차단한 사용자 |
+| `GET /api/app/version` | 업데이트 안내 (iOS만 설정됨, android는 404) |
+
+**아직 안 붙인 것:** `/api/attendance`, `/api/progress/guide`,
+`/api/favorites/players`, `/api/season`, `/api/prediction/week`.
+전부 기기 저장(`mh_attended` 등)으로 돌아가고 있어 **기기를 바꾸면 사라진다.**
+
+- **주간 예측 묶음(`/api/prediction/week`)** — 이번 주 경기 + 집계 + 내 선택을
+  한 번에 준다. 지금은 `PredictionViewModel._tallyLimit`(6)만큼 **경기마다**
+  따로 부른다. 붙이면 그 상한이 없어진다
 - **선수의 최근 경기별 기록** — 시안 선수 시트에 "최근 5경기"가 있는데
   `/api/player/:playerSeq`는 시즌 단위만 준다. 경기별은 `/api/game/:matchSeq`를
   경기마다 받아야 해서 시트에 넣기엔 무겁다. 아직 구현하지 않았다
+
+### 서버 값과 기기 값이 갈리지 않게 하기
+
+프로필·예측 기록은 **서버가 정본**이고 기기 값은 **못 받았을 때만** 쓰는
+사본이다. 조회 실패를 "없음"으로 다루면 안 된다:
+
+- 프로필 조회가 실패했는데 `null`로 두면, 지하철에서 앱을 연 사람에게
+  "프로필을 만들어 보세요"가 뜨고 거기서 저장하면 닉네임 중복(409)으로
+  막힌다. `ProfileRepository`가 마지막 응답을 `mh_profile`에 적어 두고
+  실패하면 그걸 쓴다
+- 적중 수를 화면마다 따로 세면 승부예측 탭과 MY의 「예측 고수」 배지가 다른
+  숫자를 말한다. 둘 다 `MyPredictions`(서버 집계)를 먼저 보고, 없을 때만
+  기기의 `mh_preds`로 센다
+- 랭킹·팬덤을 **못 받았을 때 빈 목록을 그리지 않는다.** "아직 아무도 없다"와
+  "연결이 안 됐다"가 같은 화면이 되면 안 된다 (`PredictionState.leaderboard`가
+  `null`이면 그 섹션만 "다시 시도"를 띄운다)
 
 ### 푸시 (마이팀 경기)
 
@@ -621,6 +653,9 @@ mh_onboarded  mh_guide  mh_attended  mh_recent_search  mh_fav_players
 mh_theme  mh_gender  mh_season  mh_notif  mh_my_team
 mh_preds      # 내 예측만. 집계는 서버가 갖는다
 mh_device_id  # 익명 기기 UUID (X-Device-Id)
+mh_profile    # 랭킹 프로필(닉네임·응원팀)의 서버 응답 사본
+mh_joined     # 프로필을 처음 만든 시점
+mh_blocked_names  # 차단한 authorId → 그때 본 닉네임 (서버는 id만 준다)
 mh_nick       # 닉네임 (2026-09-24 시안 개편)
 mh_joined     # 닉네임을 처음 정한 시각. 가입 월로 보여준다
 mh_update_skipped  # 업데이트 안내에서 "나중에"를 고른 버전
@@ -687,9 +722,9 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
   `flutter doctor --android-licenses`를 돌려야 한다 (여기서는 설치할 수 없다)
 - 개인정보 처리방침·이용약관 웹 페이지는 API 저장소가 제공한다 (`/privacy`, `/terms` → Caddy → API).
   미니 PC 서버에 배포되면 링크가 살아난다
-- **출시 전 남은 것** — 응원글 신고·차단 UI(App Store Guideline 1.2,
-  없으면 리젝), 새로 만들어진 API 연동(프로필·랭킹·팬덤·직관·가이드
-  진행도·관심 선수·시즌), 개인정보 처리방침에 Keychain 식별자 명시
+- **출시 전 남은 것** — 개인정보 처리방침에 Keychain 식별자와 **랭킹 공개
+  항목(닉네임·응원팀·적중 기록)** 명시, 남은 API 연동(직관·가이드 진행도·
+  관심 선수·시즌·주간 예측)
 
 ## 서버 상태
 

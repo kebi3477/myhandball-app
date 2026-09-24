@@ -8,6 +8,7 @@ import '../../../domain/models/game.dart';
 import '../../../domain/models/game_detail.dart';
 import '../../../domain/models/gender.dart';
 import '../../../domain/models/player.dart';
+import '../../../domain/models/prediction.dart';
 import '../../../domain/models/rank_row.dart';
 import '../../../domain/models/team.dart';
 
@@ -62,6 +63,7 @@ class MyState {
     required this.recentGames,
     required this.attendance,
     required this.predictions,
+    this.mine,
     this.error,
   });
 
@@ -81,6 +83,13 @@ class MyState {
 
   final List<AttendanceRecord> attendance;
   final List<PredictionRecord> predictions;
+
+  /// 서버가 센 내 예측 집계 (`GET /api/prediction/my`).
+  ///
+  /// **여기서 따로 세지 않는다.** 예전에는 기기에 남은 `mh_preds`로만
+  /// 셌는데, 그러면 승부예측 탭(서버 집계)과 이 카드·「예측 고수」 배지가
+  /// 서로 다른 숫자를 말한다. 못 받았을 때만 [predictions]로 센다.
+  final MyPredictions? mine;
 
   /// 일부를 못 받아왔을 때의 원인. **화면을 통째로 지우지 않는다** —
   /// 마이팀·닉네임·직관 기록은 기기에 있어서 연결이 끊겨도 보여줄 수 있다.
@@ -115,12 +124,17 @@ class MyState {
   /// 적중률. **분모는 판정이 끝난 예측이다** (시안 `hits / decided.length`).
   /// 아직 안 끝난 경기를 분모에 넣으면 예측할수록 적중률이 떨어진다.
   String get predictionRate {
+    if (mine case final m?) return m.rateLabel;
     final decided = predictions.where((p) => p.settled).length;
     if (decided == 0) return '-';
     return '${(predictionHits * 100 / decided).round()}%';
   }
 
-  int get predictionHits => predictions.where((p) => p.hit).length;
+  int get predictionHits =>
+      mine?.hits ?? predictions.where((p) => p.hit).length;
+
+  /// 참여 수. 결과를 기다리는 예측도 센다.
+  int get predictionCount => mine?.count ?? predictions.length;
 
   /// 시안 "시즌 기록" 8칸. `/api/ranking`이 주는 값 그대로다.
   List<(String label, String value, bool highlight)> get seasonStats {
@@ -178,18 +192,28 @@ class MyViewModel extends AsyncNotifier<MyState> {
     var nextGame = <Game>[];
     var recent = <Game>[];
 
-    // 직관·예측 기록은 경기 상세에서 저장한 id를 실제 경기로 되살린다.
+    // 직관 기록은 경기 상세에서 저장한 id를 실제 경기로 되살린다.
     final allGames = await keep(_allGames, const <Game>[]);
     final attendance = <AttendanceRecord>[];
-    final predictions = <PredictionRecord>[];
 
     for (final g in allGames) {
       if (prefs.didAttend(g.id)) {
         attendance.add(_toAttendance(g, team));
       }
-      final pick = prefs.predictionFor(g.id);
-      if (pick != null) predictions.add(_toPrediction(g, pick));
     }
+
+    // 예측은 서버가 정본이다. 못 받았을 때만 기기에 남은 선택으로 되살린다.
+    final mine = await keep<MyPredictions?>(
+      () => ref.read(handballApiServiceProvider).fetchMyPredictions(),
+      null,
+    );
+    final predictions = mine == null
+        ? [
+            for (final g in allGames)
+              if (prefs.predictionFor(g.id) case final pick?)
+                _toPrediction(g, pick),
+          ]
+        : [for (final item in mine.items) _toPrediction2(item)];
 
     if (team != null) {
       for (final r in ranking) {
@@ -222,9 +246,19 @@ class MyViewModel extends AsyncNotifier<MyState> {
       recentGames: recent,
       attendance: attendance,
       predictions: predictions,
+      mine: mine,
       error: failure,
     );
   }
+
+  /// 서버가 준 한 줄.
+  PredictionRecord _toPrediction2(MyPredictionItem item) => PredictionRecord(
+        matchLabel: item.matchLabel,
+        pickLabel: item.pickLabel,
+        dateLabel: item.dateLabel,
+        settled: item.settled,
+        hit: item.hit,
+      );
 
   /// **판정은 [AttendanceEntry.resultFor] 하나만 쓴다.**
   ///
@@ -313,6 +347,7 @@ class MyViewModel extends AsyncNotifier<MyState> {
         recentGames: current.recentGames,
         attendance: current.attendance,
         predictions: current.predictions,
+        mine: current.mine,
       ),
     );
   }

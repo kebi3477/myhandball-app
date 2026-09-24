@@ -37,6 +37,19 @@ void main() {
     expect(Nickname.validate('가'), isNotNull);
   });
 
+  test('자음·모음 단독은 막는다', () {
+    // 시안이 `공백·자음 단독 불가`로 적어 뒀고 서버도 완성형만 받는다.
+    expect(Nickname.isValid('ㅋㅋ'), isFalse);
+    expect(Nickname.isValid('ㅏㅏ'), isFalse);
+  });
+
+  test('운영자를 사칭하는 이름은 막는다', () {
+    expect(Nickname.isValid('운영자'), isFalse);
+    expect(Nickname.isValid('마이핸드볼운영'), isFalse);
+    expect(Nickname.isValid('ADMIN99'), isFalse);
+    expect(Nickname.validate('관리자'), '사용할 수 없는 단어가 들어 있어요');
+  });
+
   test('추천은 항상 규칙을 통과한다', () {
     for (var seed = 0; seed < 200; seed++) {
       final value = Nickname.suggest(seed);

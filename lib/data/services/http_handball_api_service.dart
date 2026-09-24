@@ -4,6 +4,7 @@ import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
+import '../../domain/models/prediction.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
@@ -873,6 +874,127 @@ class HttpHandballApiService implements HandballApiService {
   Future<void> unblockAuthor(String authorId) async =>
       client.delete('/block/$authorId');
 
+  // --- 승부예측 프로필·랭킹 ---
+
+  @override
+  Future<PredictionProfile?> fetchProfile() async {
+    final json = await client.get('/profile');
+    // 아직 안 만들었으면 서버가 200에 본문 `null`을 준다.
+    return json == null ? null : _profile(json);
+  }
+
+  @override
+  Future<PredictionProfile> saveProfile({
+    required String nickname,
+    required int teamNum,
+    required Gender gender,
+  }) async =>
+      _profile(await client.put('/profile', body: {
+        'nickname': nickname,
+        'teamNum': teamNum,
+        'gender': gender.code,
+      }));
+
+  @override
+  Future<void> deleteProfile() => client.delete('/profile');
+
+  PredictionProfile _profile(Object? json) {
+    final j = _map(json);
+    return PredictionProfile(
+      nickname: _str(j['nickname']) ?? '',
+      teamNum: _int(j['teamNum']) ?? 0,
+      teamName: _str(j['teamName']) ?? '',
+      gender: Gender.fromCode(_str(j['gender'])),
+      teamLogoUrl: _str(j['teamLogoUrl']),
+      createdAt: _date(j['createdAt']),
+    );
+  }
+
+  @override
+  Future<Leaderboard> fetchLeaderboard({
+    required LeaderboardScope scope,
+    int? teamNum,
+  }) async {
+    final j = _map(await client.get('/prediction/leaderboard', {
+      'season': season(),
+      'scope': scope.code,
+      if (teamNum != null) 'teamNum': '$teamNum',
+    }));
+
+    return Leaderboard(
+      scope: scope,
+      minSettled: _int(j['minSettled']) ?? 10,
+      total: _int(j['total']) ?? 0,
+      rows: [for (final raw in _list(j['rows'])) _leaderboardRow(raw)],
+      me: j['me'] == null ? null : _leaderboardRow(j['me']),
+      meHint: _str(j['meHint']),
+      meTopPercent: _int(j['meTopPercent']),
+    );
+  }
+
+  LeaderboardRow _leaderboardRow(Object? raw) {
+    final r = _map(raw);
+    return LeaderboardRow(
+      rank: _int(r['rank']) ?? 0,
+      nickname: _str(r['nickname']) ?? '',
+      teamName: _str(r['teamName']) ?? '',
+      settled: _int(r['settled']) ?? 0,
+      hits: _int(r['hits']) ?? 0,
+      // `54.5`처럼 소수가 온다.
+      rate: _double(r['rate']) ?? 0,
+      isMe: r['isMe'] == true,
+      teamLogoUrl: _str(r['teamLogoUrl']),
+    );
+  }
+
+  @override
+  Future<List<FandomRow>> fetchFandom(Gender gender) async {
+    final j = _map(await client.get('/prediction/fandom', {
+      'gender': gender.code,
+      'season': season(),
+    }));
+    return [
+      for (final raw in _list(j['items']))
+        if (_map(raw) case final f)
+          FandomRow(
+            rank: _int(f['rank']) ?? 0,
+            teamNum: _int(f['teamNum']) ?? 0,
+            teamName: _str(f['teamName']) ?? '',
+            fans: _int(f['fans']) ?? 0,
+            rate: _double(f['rate']) ?? 0,
+            teamLogoUrl: _str(f['teamLogoUrl']),
+          ),
+    ];
+  }
+
+  @override
+  Future<MyPredictions> fetchMyPredictions({int limit = 50}) async {
+    final j = _map(await client.get('/prediction/my', {
+      'season': season(),
+      'limit': '$limit',
+    }));
+    return MyPredictions(
+      count: _int(j['count']) ?? 0,
+      settled: _int(j['settled']) ?? 0,
+      hits: _int(j['hits']) ?? 0,
+      rate: _double(j['rate']) ?? 0,
+      items: [
+        for (final raw in _list(j['items']))
+          if (_map(raw) case final m)
+            MyPredictionItem(
+              matchSeq: _int(m['matchSeq']) ?? 0,
+              homeName: _str(m['homeName']) ?? '',
+              awayName: _str(m['awayName']) ?? '',
+              pick: _str(m['pick']) ?? '',
+              settled: m['settled'] == true,
+              hit: m['hit'] == true,
+              startsAt: _date(m['startsAt']),
+              scoreText: _str(m['scoreText']),
+            ),
+      ],
+    );
+  }
+
   List<CheerPost> _cheers(Object? json) => [
         for (final raw in _list(_map(json)['items']))
           if (_map(raw) case final c)
@@ -915,6 +1037,14 @@ class HttpHandballApiService implements HandballApiService {
     final t = v.trim();
     return t.isEmpty ? null : t;
   }
+
+  /// 적중률은 `54.5`처럼 소수로 온다. 반올림하면 랭킹 순서가 흔들린다.
+  static double? _double(Object? v) => switch (v) {
+        int() => v.toDouble(),
+        double() => v,
+        String() => double.tryParse(v),
+        _ => null,
+      };
 
   static int? _int(Object? v) => switch (v) {
         int() => v,

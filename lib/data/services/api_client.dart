@@ -90,6 +90,10 @@ class ApiClient {
           {Map<String, String?>? query, Object? body}) =>
       _send('POST', path, query, body);
 
+  Future<dynamic> put(String path,
+          {Map<String, String?>? query, Object? body}) =>
+      _send('PUT', path, query, body);
+
   Future<dynamic> delete(String path, [Map<String, String?>? query]) =>
       _send('DELETE', path, query);
 
@@ -112,6 +116,8 @@ class ApiClient {
     try {
       final request = switch (method) {
         'POST' => _client.post(uri,
+            headers: headers, body: body == null ? null : jsonEncode(body)),
+        'PUT' => _client.put(uri,
             headers: headers, body: body == null ? null : jsonEncode(body)),
         'DELETE' => _client.delete(uri, headers: headers),
         _ => _client.get(uri, headers: headers),

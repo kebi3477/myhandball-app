@@ -4,14 +4,27 @@
 /// 두 군데에서 하므로 규칙을 여기 한 곳에 둔다 — 한쪽만 고치면 온보딩은
 /// 통과했는데 MY에서는 저장이 안 되는 상태가 된다.
 ///
-/// **서버 검증이 생기면 이 규칙을 서버와 맞춰야 한다.** 지금은 기기에만
-/// 남고 중복 검사도 없다 (`PreferencesRepository.nickname`).
+/// **서버도 같은 값을 검사한다** (`PUT /api/profile` — 2자 미만 400,
+/// 공백·특수문자 400, 중복 409). 여기서 통과시킨 값이 서버에서 막히면
+/// 사용자는 이유 없이 거절당한 것처럼 보이므로 규칙을 맞춰 둔다.
+/// **중복만은 여기서 알 수 없다** — 서버의 409를 받아 문구로 바꾼다.
 abstract final class Nickname {
   static const minLength = 2;
   static const maxLength = 10;
 
-  /// 한글(완성형·자모), 영문, 숫자만. 공백·이모지·특수문자는 막는다.
-  static final _allowed = RegExp(r'^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]+$');
+  /// 완성형 한글, 영문, 숫자만. 공백·이모지·특수문자는 막는다.
+  ///
+  /// **자음·모음 단독(`ㄱ`, `ㅏ`)은 뺀다.** 시안이 `공백·자음 단독 불가`로
+  /// 적어 뒀고, 서버도 완성형만 받는다.
+  static final _allowed = RegExp(r'^[가-힣a-zA-Z0-9]+$');
+
+  /// 시안 `NICK_BANNED` — 운영자를 사칭하는 이름.
+  static const banned = ['운영자', '관리자', 'admin', '핸드볼연맹', '마이핸드볼'];
+
+  static bool _isBanned(String value) {
+    final lower = value.toLowerCase();
+    return banned.any((w) => lower.contains(w.toLowerCase()));
+  }
 
   /// 입력값을 저장 형태로 다듬는다. 앞뒤 공백만 떼고 대소문자는 그대로 둔다.
   static String normalize(String raw) => raw.trim();
@@ -27,6 +40,7 @@ abstract final class Nickname {
     if (value.characters < minLength) return '$minLength자 이상 입력해 주세요';
     if (value.characters > maxLength) return '$maxLength자까지 쓸 수 있어요';
     if (!_allowed.hasMatch(value)) return '한글, 영문, 숫자만 쓸 수 있어요';
+    if (_isBanned(value)) return '사용할 수 없는 단어가 들어 있어요';
     return null;
   }
 
@@ -35,13 +49,14 @@ abstract final class Nickname {
     return value.isNotEmpty &&
         value.characters >= minLength &&
         value.characters <= maxLength &&
-        _allowed.hasMatch(value);
+        _allowed.hasMatch(value) &&
+        !_isBanned(value);
   }
 
   /// 시안의 "추천" 버튼. 형용사 + 명사 + 두 자리 숫자.
   ///
-  /// 서버에 중복 검사가 없으므로 겹칠 수 있다. 숫자를 붙이는 건 그 확률을
-  /// 낮추려는 것이고, 중복 자체를 막지는 못한다.
+  /// 서버에 물어보지 않으므로 이미 쓰는 이름이 나올 수 있다. 숫자를 붙이는
+  /// 건 그 확률을 낮추려는 것이고, 중복 자체는 저장할 때 409로 걸러진다.
   static String suggest([int? seed]) {
     final n = seed ?? DateTime.now().microsecondsSinceEpoch;
     final adjective = _adjectives[n % _adjectives.length];

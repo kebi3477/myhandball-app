@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repositories/profile_repository.dart';
+import '../../../data/services/api_client.dart';
 import '../../../domain/models/nickname.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
@@ -44,9 +46,36 @@ class _MyProfileCardState extends ConsumerState<MyProfileCard> {
 
   Future<void> _save() async {
     if (!Nickname.isValid(_controller.text)) return;
+    final nickname = Nickname.normalize(_controller.text);
+
+    // **랭킹에 올라가 있으면 서버 이름부터 바꾼다.** 기기에만 바꾸면
+    // 랭킹에는 옛 이름이 남아 두 화면이 다른 사람처럼 보인다.
+    final profile = ref.read(profileProvider).valueOrNull;
+    if (profile != null && profile.nickname != nickname) {
+      try {
+        await ref.read(profileProvider.notifier).save(
+              nickname: nickname,
+              teamNum: profile.teamNum,
+              gender: profile.gender,
+            );
+      } on ApiException catch (e) {
+        if (!mounted) return;
+        showMhToast(
+          context,
+          // 중복 닉네임 문구는 서버가 준다.
+          e.statusCode == 409 || e.statusCode == 400
+              ? e.message
+              : e.isOffline
+                  ? '오프라인 상태라 닉네임을 바꾸지 못했어요. 연결을 확인해 주세요.'
+                  : '일시적인 오류로 닉네임을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.',
+        );
+        return;
+      }
+    }
+
     // 저장소에 직접 쓰면 승부예측 탭의 프로필이 안 따라온다 — 저장소는
     // `Provider`라 내부 값이 바뀌어도 아무도 다시 그리지 않는다.
-    await ref.read(nicknameProvider.notifier).set(_controller.text);
+    await ref.read(nicknameProvider.notifier).set(nickname);
     if (!mounted) return;
     setState(() => _editing = false);
     showMhToast(context, '닉네임을 바꿨어요');

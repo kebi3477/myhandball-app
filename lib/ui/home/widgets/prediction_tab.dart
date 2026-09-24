@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/game_detail.dart';
+import '../../../domain/models/prediction.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/error_message.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/team_logo.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
-import '../../shell/view_models/shell_view_model.dart';
 import '../view_models/prediction_view_model.dart';
+import 'profile_sheet.dart';
 import 'section_header.dart';
 
 /// 홈 · 승부예측 탭.
@@ -17,9 +18,9 @@ import 'section_header.dart';
 /// 시안 순서: 프로필 → 이번 주 예측 → 적중률 랭킹 → 팬덤 적중률 →
 /// 내 예측 기록.
 ///
-/// **랭킹과 팬덤 적중률은 서버가 없다.** 다른 사람의 적중률을 모으는
-/// 엔드포인트가 아직 없어서 자리만 잡아 두고 "준비 중"으로 띄운다.
-/// 숫자를 지어내면 랭킹처럼 보이는 가짜가 된다.
+/// 랭킹·팬덤은 서버 집계다 (`/api/prediction/{leaderboard,fandom}`).
+/// **못 받았을 때 빈 랭킹을 그리지 않는다** — "아직 아무도 없다"와
+/// "연결이 안 됐다"가 같은 화면이 되면 안 된다.
 class PredictionTab extends ConsumerWidget {
   const PredictionTab({super.key});
 
@@ -54,18 +55,9 @@ class PredictionTab extends ConsumerWidget {
             const SizedBox(height: MhSpacing.md),
             _WeekSection(state: state),
             const SizedBox(height: MhSpacing.md),
-            _ComingSoon(
-              title: '적중률 랭킹',
-              trailing: state.seasonLabel,
-              message: '다른 사람들의 적중률을 모으는 중이에요',
-              note: '확정 10경기 이상 참여자 대상 · 동률이면 참여 수가 많은 순',
-            ),
+            _RankingSection(state: state),
             const SizedBox(height: MhSpacing.md),
-            const _ComingSoon(
-              title: '팬덤 적중률',
-              trailing: '팬 평균',
-              message: '팀별 팬 평균 적중률은 곧 열려요',
-            ),
+            _FandomSection(state: state),
             const SizedBox(height: MhSpacing.md),
             _HistorySection(state: state),
           ],
@@ -124,10 +116,7 @@ class _ProfileCard extends ConsumerWidget {
               const SizedBox(width: 14),
               MhTap(
                 haptic: MhHaptic.impact,
-                // 닉네임은 MY 탭 프로필 카드에서 정한다.
-                onTap: () => ref
-                    .read(shellViewModelProvider.notifier)
-                    .select(ShellTab.my),
+                onTap: () => showProfileSheet(context),
                 child: Container(
                   height: 38,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -156,7 +145,10 @@ class _ProfileCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
-      child: Container(
+      child: MhTap(
+        // 시안 — 카드를 누르면 프로필 편집 시트가 열린다.
+        onTap: () => showProfileSheet(context),
+        child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: c.card,
@@ -176,7 +168,7 @@ class _ProfileCard extends ConsumerWidget {
                   child: Center(
                     child: TeamLogo(
                       size: 46,
-                      logoUrl: state.team?.logoUrl,
+                      logoUrl: state.teamLogoUrl,
                       inset: 0.74,
                     ),
                   ),
@@ -199,7 +191,7 @@ class _ProfileCard extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         [
-                          '${state.team?.name} 팬',
+                          '${state.teamName} 팬',
                           if (state.joinedLabel case final j?) '$j 가입',
                         ].join(' · '),
                         style: MhText.custom(
@@ -227,12 +219,12 @@ class _ProfileCard extends ConsumerWidget {
                     color: MhColors.brand,
                   ),
                   _Stat(value: state.recordLabel, label: '적중 / 확정'),
-                  // 랭킹 API가 없어 등수를 모른다. 빈칸 대신 한 줄로 알린다.
-                  _Stat(value: '-', label: '랭킹 준비 중'),
+                  _Stat(value: state.myRankLabel, label: state.myRankSub),
                 ],
               ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -349,7 +341,11 @@ class _WeekSection extends ConsumerWidget {
           for (final row in state.rows) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
-              child: _PredictionCard(row: row, myTeamName: state.team?.name),
+              child: _PredictionCard(
+                row: row,
+                myTeamName: state.team?.name,
+                hasProfile: state.hasProfile,
+              ),
             ),
             const SizedBox(height: 12),
           ],
@@ -411,16 +407,35 @@ class _Chip extends StatelessWidget {
 
 /// 경기 하나짜리 예측 카드 — 홈/무/원정 3칸 + 분포 막대.
 class _PredictionCard extends ConsumerWidget {
-  const _PredictionCard({required this.row, required this.myTeamName});
+  const _PredictionCard({
+    required this.row,
+    required this.myTeamName,
+    required this.hasProfile,
+  });
 
   final PredictionRow row;
   final String? myTeamName;
+
+  /// 랭킹 프로필이 있는지. 없으면 고르기 전에 시트를 먼저 연다.
+  final bool hasProfile;
+
+  /// 시안 `pickPredFor` — 프로필이 없으면 고른 값을 들고 시트를 열고,
+  /// 만들고 나면 **그 선택을 그대로 이어서** 저장한다. 시트를 닫아도
+  /// 예측은 남기므로 "눌렀는데 아무 일도 없다"가 되지 않는다.
+  Future<void> _pick(
+    BuildContext context,
+    WidgetRef ref,
+    PredictionPick choice,
+  ) async {
+    if (!hasProfile) await showProfileSheet(context);
+    if (!context.mounted) return;
+    await ref.read(predictionViewModelProvider.notifier).pick(row.game, choice);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
     final game = row.game;
-    final vm = ref.read(predictionViewModelProvider.notifier);
     final isMine = game.home.name == myTeamName || game.away.name == myTeamName;
 
     return Container(
@@ -498,7 +513,7 @@ class _PredictionCard extends ConsumerWidget {
                     logoUrl: game.home.logoUrl,
                     selected: row.myPick == PredictionPick.home,
                     enabled: row.open,
-                    onTap: () => vm.pick(game, PredictionPick.home),
+                    onTap: () => _pick(context, ref, PredictionPick.home),
                   ),
                 ),
                 const SizedBox(width: MhSpacing.xs),
@@ -508,7 +523,7 @@ class _PredictionCard extends ConsumerWidget {
                     label: '무승부',
                     selected: row.myPick == PredictionPick.draw,
                     enabled: row.open,
-                    onTap: () => vm.pick(game, PredictionPick.draw),
+                    onTap: () => _pick(context, ref, PredictionPick.draw),
                   ),
                 ),
                 const SizedBox(width: MhSpacing.xs),
@@ -518,7 +533,7 @@ class _PredictionCard extends ConsumerWidget {
                     logoUrl: game.away.logoUrl,
                     selected: row.myPick == PredictionPick.away,
                     enabled: row.open,
-                    onTap: () => vm.pick(game, PredictionPick.away),
+                    onTap: () => _pick(context, ref, PredictionPick.away),
                   ),
                 ),
               ],
@@ -831,7 +846,7 @@ class _HistoryRow extends StatelessWidget {
           ),
           const SizedBox(width: MhSpacing.xs),
           Text(
-            row.game.meta,
+            row.dateLabel,
             style: MhText.custom(
               size: 11,
               weight: FontWeight.w500,
@@ -844,30 +859,278 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// 서버가 아직 없는 섹션. 자리는 잡되 가짜 숫자는 넣지 않는다.
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon({
-    required this.title,
-    required this.trailing,
-    required this.message,
-    this.note,
-  });
+/// 시안 "적중률 랭킹".
+class _RankingSection extends ConsumerWidget {
+  const _RankingSection({required this.state});
 
-  final String title;
-  final String trailing;
-  final String message;
-  final String? note;
+  final PredictionState state;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mh;
+    final vm = ref.read(predictionViewModelProvider.notifier);
+    final board = state.leaderboard;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(
-          title: title,
+          title: '적중률 랭킹',
           trailing: Text(
-            trailing,
+            state.seasonLabel,
+            style: MhText.custom(
+              size: 11,
+              weight: FontWeight.w500,
+              color: c.textNeutral,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
+          child: Row(
+            children: [
+              for (final scope in LeaderboardScope.values) ...[
+                if (scope != LeaderboardScope.values.first)
+                  const SizedBox(width: MhSpacing.xs),
+                _Chip(
+                  // '내 팀 팬'은 팀 이름을 넣어 부른다 (시안 `SK호크스 팬`).
+                  label: scope == LeaderboardScope.team &&
+                          state.teamName.isNotEmpty
+                      ? '${state.teamName} 팬'
+                      : scope.label,
+                  selected: state.scope == scope,
+                  onTap: () => vm.selectScope(scope),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: c.card,
+              borderRadius: BorderRadius.circular(MhRadius.card),
+            ),
+            child: board == null
+                ? _SectionError(onRetry: vm.refresh)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (board.rows.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 22),
+                          child: Text(
+                            state.scope == LeaderboardScope.team
+                                ? '아직 이 팀 팬 중에 랭킹에 오른 사람이 없어요'
+                                : '아직 랭킹에 오른 사람이 없어요',
+                            textAlign: TextAlign.center,
+                            style: MhText.meta(c.textSub),
+                          ),
+                        ),
+                      for (final row in board.rows) _RankRow(row: row),
+                      if (board.pinsMe) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            '···',
+                            textAlign: TextAlign.center,
+                            style: MhText.custom(
+                              size: 12,
+                              weight: FontWeight.w400,
+                              color: c.textFaint,
+                            ).copyWith(letterSpacing: 3),
+                          ),
+                        ),
+                        _RankRow(row: board.me!),
+                      ],
+                      if (board.meHint case final hint?) ...[
+                        const SizedBox(height: 4),
+                        MhTap(
+                          onTap: state.hasProfile
+                              ? null
+                              : () => showProfileSheet(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: c.border),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              hint,
+                              textAlign: TextAlign.center,
+                              style: MhText.custom(
+                                size: 12,
+                                weight: FontWeight.w500,
+                                color: c.textSub,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+          ),
+        ),
+        if (board != null) ...[
+          const SizedBox(height: MhSpacing.xs2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
+            child: Text(
+              '확정 ${board.minSettled}경기 이상 참여자 대상 · 동률이면 참여 수가 많은 순 · '
+              '참여 ${board.totalLabel}명',
+              style: MhText.custom(
+                size: 11,
+                weight: FontWeight.w500,
+                color: c.textFaint,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _RankRow extends StatelessWidget {
+  const _RankRow({required this.row});
+
+  final LeaderboardRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: row.isMe ? MhColors.brand.withValues(alpha: 0.1) : null,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: Text(
+              '${row.rank}',
+              textAlign: TextAlign.center,
+              style: MhText.custom(
+                size: 14,
+                weight: FontWeight.w800,
+                // 시안 — 1~3위와 내 줄만 브랜드색이다.
+                color: row.isMe || row.rank <= 3 ? MhColors.brand : c.text,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          TeamLogo(size: 32, logoUrl: row.teamLogoUrl),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        row.nickname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: MhText.custom(
+                          size: 14,
+                          weight: FontWeight.w700,
+                          color: row.isMe ? MhColors.brand : c.text,
+                        ),
+                      ),
+                    ),
+                    if (row.isMe) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: MhColors.brand,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '나',
+                          style: MhText.custom(
+                            size: 9,
+                            weight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  row.teamName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: MhText.custom(
+                    size: 11,
+                    weight: FontWeight.w400,
+                    color: c.textSub,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: MhSpacing.xs),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                row.rateLabel,
+                style: MhText.custom(
+                  size: 15,
+                  weight: FontWeight.w800,
+                  color: c.text,
+                ),
+              ),
+              Text(
+                row.recordLabel,
+                style: MhText.custom(
+                  size: 10,
+                  weight: FontWeight.w400,
+                  color: c.textSub,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 시안 "팬덤 적중률" — 사용자 평균이 아니라 경기 수 가중 평균이다.
+class _FandomSection extends ConsumerWidget {
+  const _FandomSection({required this.state});
+
+  final PredictionState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.mh;
+    final vm = ref.read(predictionViewModelProvider.notifier);
+    final rows = state.fandom;
+    // 막대 너비는 1위 대비 비율이다.
+    final top = rows == null || rows.isEmpty
+        ? 0.0
+        : rows.map((r) => r.rate).reduce((a, b) => a > b ? a : b);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(
+          title: '팬덤 적중률',
+          trailing: Text(
+            '${state.fandomGender.divisionLabel} · 팬 평균',
             style: MhText.custom(
               size: 11,
               weight: FontWeight.w500,
@@ -879,39 +1142,151 @@ class _ComingSoon extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: MhSpacing.gutter),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 26),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: c.card,
               borderRadius: BorderRadius.circular(MhRadius.card),
             ),
-            child: Column(
-              children: [
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: MhText.custom(
-                    size: 13,
-                    weight: FontWeight.w600,
-                    color: c.textSub,
+            child: rows == null
+                ? _SectionError(onRetry: vm.refresh)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (rows.every((r) => r.fans == 0))
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          child: Text(
+                            '아직 팬덤 적중률을 낼 만큼 기록이 모이지 않았어요',
+                            textAlign: TextAlign.center,
+                            style: MhText.meta(c.textSub),
+                          ),
+                        )
+                      else
+                        for (final row in rows)
+                          _FandomRowView(
+                            row: row,
+                            ratio: top == 0 ? 0 : row.rate / top,
+                            mine: row.teamNum == state.team?.teamNum,
+                          ),
+                    ],
                   ),
-                ),
-                if (note != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    note!,
-                    textAlign: TextAlign.center,
-                    style: MhText.custom(
-                      size: 11,
-                      weight: FontWeight.w500,
-                      color: c.textFaint,
-                    ),
-                  ),
-                ],
-              ],
-            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FandomRowView extends StatelessWidget {
+  const _FandomRowView({
+    required this.row,
+    required this.ratio,
+    required this.mine,
+  });
+
+  final FandomRow row;
+  final double ratio;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    final color = mine ? MhColors.brand : c.text;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            child: Text(
+              '${row.rank}',
+              textAlign: TextAlign.center,
+              style: MhText.custom(
+                  size: 13, weight: FontWeight.w700, color: color),
+            ),
+          ),
+          const SizedBox(width: 10),
+          TeamLogo(size: 28, logoUrl: row.teamLogoUrl),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  row.teamName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: MhText.custom(
+                      size: 13, weight: FontWeight.w700, color: color),
+                ),
+                const SizedBox(height: 5),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: ratio.clamp(0, 1),
+                    minHeight: 5,
+                    backgroundColor: c.border,
+                    valueColor: AlwaysStoppedAnimation(
+                        mine ? MhColors.brand : c.textNeutral),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 40,
+            child: Text(
+              row.rateLabel,
+              textAlign: TextAlign.right,
+              style: MhText.custom(
+                  size: 13, weight: FontWeight.w800, color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 섹션 하나만 실패했을 때. 탭 전체를 오류로 덮지 않는다.
+class _SectionError extends StatelessWidget {
+  const _SectionError({required this.onRetry});
+
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mh;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 22),
+      child: Column(
+        children: [
+          Text('집계를 불러오지 못했어요',
+              style: MhText.custom(
+                  size: 13, weight: FontWeight.w700, color: c.text)),
+          const SizedBox(height: 8),
+          MhTap(
+            haptic: MhHaptic.impact,
+            onTap: onRetry,
+            child: Container(
+              height: 34,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: c.border),
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Text('다시 시도',
+                    style: MhText.custom(
+                        size: 13, weight: FontWeight.w700, color: c.text)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../domain/models/player_stat.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/schedule_day.dart';
 import '../../domain/models/team.dart';
+import '../../domain/models/prediction.dart';
 import '../../domain/models/team_detail.dart';
 
 /// 외부 데이터 소스 래퍼. 상태를 갖지 않는다.
@@ -114,4 +115,29 @@ abstract interface class HandballApiService {
   Future<void> blockAuthor(String authorId);
 
   Future<void> unblockAuthor(String authorId);
+
+  // --- 승부예측 프로필·랭킹 ---
+
+  /// 내 프로필. 아직 안 만들었으면 `null` (서버가 200 + null을 준다).
+  Future<PredictionProfile?> fetchProfile();
+
+  /// 프로필 저장. 닉네임이 겹치면 `409`, 팀과 부가 안 맞으면 `404`.
+  Future<PredictionProfile> saveProfile({
+    required String nickname,
+    required int teamNum,
+    required Gender gender,
+  });
+
+  /// 랭킹 참여 중단. 예측 기록 자체는 서버에 남는다.
+  Future<void> deleteProfile();
+
+  Future<Leaderboard> fetchLeaderboard({
+    required LeaderboardScope scope,
+    int? teamNum,
+  });
+
+  Future<List<FandomRow>> fetchFandom(Gender gender);
+
+  /// 내 예측 집계와 최근 목록.
+  Future<MyPredictions> fetchMyPredictions({int limit});
 }

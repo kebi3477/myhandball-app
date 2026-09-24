@@ -8,6 +8,7 @@ import '../../config/app_config.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/nickname.dart';
+import '../../domain/models/prediction.dart';
 import '../../domain/models/season.dart';
 import '../../domain/models/team.dart';
 import '../services/device_id_store.dart';
@@ -63,9 +64,16 @@ class PreferencesRepository {
 
   /// 시안 `mh_nick` — 경기장에서 불릴 닉네임. 온보딩 5스텝에서 정한다.
   ///
-  /// **아직 기기에만 남는다.** 적중률 랭킹에 이름을 올리려면 서버가
-  /// 기기 ID ↔ 닉네임을 알아야 하는데 그 API가 없다.
+  /// 랭킹에 올리려면 서버에도 있어야 한다 ([cachedProfile]). 이 값은
+  /// 프로필을 안 만든 사람에게도 있는 **기기 안의 이름**이다.
   String _nickname = '';
+
+  /// 시안 `mh_profile` — 서버에 올린 랭킹 프로필의 마지막 사본.
+  ///
+  /// **오프라인에서 "프로필 만들기"로 되돌아가지 않게 하려고 둔다.**
+  /// 프로필이 있는데 `GET /api/profile`이 실패했을 때 이 값이 없으면
+  /// 화면이 아직 안 만든 사람과 똑같아진다.
+  PredictionProfile? _cachedProfile;
 
   /// 시안 `{{ pv.since }} 가입` — 프로필을 처음 만든 달.
   ///
@@ -143,6 +151,8 @@ class PreferencesRepository {
         (prefs.getInt(_kGuide) ?? 0).clamp(0, AppConfig.guideLessonCount);
     _notificationsOn = prefs.getBool(_kNotifications) ?? true;
     _nickname = prefs.getString(_kNickname) ?? '';
+    final profile = prefs.getString(_kProfile);
+    _cachedProfile = profile == null ? null : _decodeProfile(profile);
     _skippedUpdateVersion = prefs.getString(_kSkippedUpdate) ?? '';
     for (final entry in prefs.getStringList(_kBlockedNames) ?? const []) {
       final sep = entry.indexOf(':');
@@ -180,6 +190,10 @@ class PreferencesRepository {
       prefs.setInt(_kGuide, _guideDoneCount),
       prefs.setBool(_kNotifications, _notificationsOn),
       prefs.setString(_kNickname, _nickname),
+      if (_cachedProfile case final p?)
+        prefs.setString(_kProfile, _encodeProfile(p))
+      else
+        prefs.remove(_kProfile),
       prefs.setString(_kSkippedUpdate, _skippedUpdateVersion),
       prefs.setStringList(_kBlockedNames,
           [for (final e in _blockedNames.entries) '${e.key}:${e.value}']),
@@ -202,6 +216,32 @@ class PreferencesRepository {
       else
         prefs.remove(_kMyTeam),
     ]);
+  }
+
+  static String _encodeProfile(PredictionProfile p) => jsonEncode({
+        'nickname': p.nickname,
+        'teamNum': p.teamNum,
+        'teamName': p.teamName,
+        'gender': p.gender.code,
+        'teamLogoUrl': p.teamLogoUrl,
+        'createdAt': p.createdAt?.toIso8601String(),
+      });
+
+  static PredictionProfile? _decodeProfile(String raw) {
+    try {
+      final map = jsonDecode(raw);
+      if (map is! Map || map['nickname'] is! String) return null;
+      return PredictionProfile(
+        nickname: map['nickname'] as String,
+        teamNum: map['teamNum'] as int? ?? 0,
+        teamName: map['teamName'] as String? ?? '',
+        gender: Gender.fromCode(map['gender'] as String?),
+        teamLogoUrl: map['teamLogoUrl'] as String?,
+        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? ''),
+      );
+    } on FormatException {
+      return null;
+    }
   }
 
   static String _encodeTeam(Team team) => jsonEncode({
@@ -243,6 +283,7 @@ class PreferencesRepository {
   static const _kGuideCompletedAt = 'mh_guide_done_at';
   static const _kBlockedNames = 'mh_blocked_names';
   static const _kProfileCreatedAt = 'mh_joined';
+  static const _kProfile = 'mh_profile';
 
   /// 시안 `mh_onboarded`
   bool get onboarded => _onboarded;
@@ -336,6 +377,21 @@ class PreferencesRepository {
 
   Future<void> toggleFavoritePlayer(String id) async {
     if (!_favoritePlayerIds.remove(id)) _favoritePlayerIds.add(id);
+    await _persist();
+  }
+
+  /// 마지막으로 확인된 랭킹 프로필. 서버가 정본이고 이건 사본이다.
+  PredictionProfile? get cachedProfile => _cachedProfile;
+
+  /// 서버 응답을 그대로 적어 둔다. `null`이면 지운다(랭킹 참여 중단).
+  ///
+  /// 닉네임도 같이 맞춰 둔다 — 프로필을 만들면 MY 화면의 이름도 그 이름이다.
+  Future<void> setCachedProfile(PredictionProfile? profile) async {
+    _cachedProfile = profile;
+    if (profile != null) {
+      _nickname = profile.nickname;
+      _profileCreatedAt = profile.createdAt ?? _profileCreatedAt ?? DateTime.now();
+    }
     await _persist();
   }
 

@@ -168,7 +168,7 @@ class MyPredictionCard extends ConsumerWidget {
       title: '나의 승부 예측',
       trailing: _TabLink(label: '랭킹 보기', tab: HomeTab.prediction),
       tiles: [
-        ('${state.predictions.length}', '참여', false),
+        ('${state.predictionCount}', '참여', false),
         ('${state.predictionHits}', '적중', false),
         (state.predictionRate, '적중률', true),
       ],

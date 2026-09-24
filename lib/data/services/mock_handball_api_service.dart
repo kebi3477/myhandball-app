@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/models/game.dart';
 import '../../domain/models/game_detail.dart';
 import '../../domain/models/gender.dart';
 import '../../domain/models/player.dart';
 import '../../domain/models/player_stat.dart';
+import '../../domain/models/prediction.dart';
 import '../../domain/models/rank_row.dart';
 import '../../domain/models/season.dart';
 import '../../domain/models/schedule_day.dart';
@@ -640,6 +643,20 @@ class MockHandballApiService implements HandballApiService {
   static final _cheers = <String, List<CheerPost>>{};
   static final _reports = <String>{};
   static final _blocks = <String, DateTime>{};
+  static PredictionProfile? _profile;
+
+  /// 테스트가 사이에 끼어들어 남긴 값을 지운다.
+  ///
+  /// static이라 한 테스트가 만든 프로필이 다음 테스트에 그대로 남는다.
+  @visibleForTesting
+  static void resetUserContent() {
+    _predictions.clear();
+    _mvpVotes.clear();
+    _cheers.clear();
+    _reports.clear();
+    _blocks.clear();
+    _profile = null;
+  }
 
   @override
   Future<PredictionTally> fetchPrediction(Game game) async {
@@ -719,6 +736,122 @@ class MockHandballApiService implements HandballApiService {
       total: voted.fold<int>(0, (a, c) => a + c.votes),
       open: game.status == GameStatus.finished,
       myVoteId: mine,
+    );
+  }
+
+  @override
+  Future<PredictionProfile?> fetchProfile() async {
+    await _delay();
+    return _profile;
+  }
+
+  @override
+  Future<PredictionProfile> saveProfile({
+    required String nickname,
+    required int teamNum,
+    required Gender gender,
+  }) async {
+    await _delay();
+    if (nickname == '중복닉네임') {
+      throw const ApiException('이미 사용 중인 닉네임이에요', statusCode: 409);
+    }
+    final teams = gender == Gender.women ? _womensTeams : _mensTeams;
+    final team = teams.firstWhere((t) => t.teamNum == teamNum,
+        orElse: () => teams.first);
+    return _profile = PredictionProfile(
+      nickname: nickname,
+      teamNum: team.teamNum ?? teamNum,
+      teamName: team.name,
+      gender: gender,
+      teamLogoUrl: team.logoUrl,
+      createdAt: _profile?.createdAt ?? DateTime.now(),
+    );
+  }
+
+  @override
+  Future<void> deleteProfile() async {
+    await _delay();
+    _profile = null;
+  }
+
+  @override
+  Future<Leaderboard> fetchLeaderboard({
+    required LeaderboardScope scope,
+    int? teamNum,
+  }) async {
+    await _delay();
+    final teams = _mensTeams.take(4).toList();
+    const names = ['피벗왕', '날쌘피벗12', '골키퍼짱', '슈가사랑'];
+    const rates = [80.0, 75.0, 70.0, 54.5];
+    const settled = [15, 12, 10, 11];
+    final me = _profile?.nickname;
+
+    final rows = [
+      for (final (i, team) in teams.indexed)
+        LeaderboardRow(
+          rank: i + 1,
+          nickname: i == 1 && me != null ? me : names[i],
+          teamName: team.name,
+          settled: settled[i],
+          hits: (settled[i] * rates[i] / 100).round(),
+          rate: rates[i],
+          isMe: i == 1 && me != null,
+          teamLogoUrl: team.logoUrl,
+        ),
+    ];
+
+    return Leaderboard(
+      scope: scope,
+      minSettled: 10,
+      total: rows.length,
+      rows: rows,
+      me: me == null ? null : rows[1],
+      meHint: me == null ? '프로필을 만들면 내 순위가 여기에 표시돼요 ›' : null,
+      meTopPercent: me == null ? null : 50,
+    );
+  }
+
+  @override
+  Future<List<FandomRow>> fetchFandom(Gender gender) async {
+    await _delay();
+    final teams = gender == Gender.women ? _womensTeams : _mensTeams;
+    return [
+      for (final (i, team) in teams.indexed)
+        FandomRow(
+          rank: i + 1,
+          teamNum: team.teamNum ?? 0,
+          teamName: team.name,
+          fans: i < 3 ? 3 - i : 0,
+          rate: i < 3 ? 80 - i * 10 : 0,
+          teamLogoUrl: team.logoUrl,
+        ),
+    ];
+  }
+
+  @override
+  Future<MyPredictions> fetchMyPredictions({int limit = 50}) async {
+    await _delay();
+    final picks = _predictions.entries.toList();
+    if (picks.isEmpty) return const MyPredictions.empty();
+    final hits = picks.length ~/ 2;
+    return MyPredictions(
+      count: picks.length,
+      settled: picks.length,
+      hits: hits,
+      rate: hits * 100 / picks.length,
+      items: [
+        for (final (i, e) in picks.take(limit).indexed)
+          MyPredictionItem(
+            matchSeq: i,
+            homeName: 'SK호크스',
+            awayName: '두산',
+            pick: e.value.code,
+            settled: true,
+            hit: i < hits,
+            startsAt: DateTime.now().subtract(Duration(days: i + 1)),
+            scoreText: '28 : 26',
+          ),
+      ],
     );
   }
 
