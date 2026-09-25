@@ -783,7 +783,7 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 | 앱 카테고리 | `public.app-category.entertainment` |
 | 버전 | `1.2.0+5` — 스토어 현재 값은 1.1.0 (빌드 3). 2026-09-24 출시 준비에서 올렸다 |
 | 지원 기기 | iPhone + iPad (`TARGETED_DEVICE_FAMILY = "1,2"`) |
-| 방향 | **세로 고정** — Info.plist·AndroidManifest·`SystemChrome` 세 곳 |
+| 방향 | **세로 고정.** 단 iPad는 Info.plist에 4방향을 다 선언한다(아래) |
 | iOS 최소 버전 | 15.0 (배포본은 26.0이었으나 잘못된 설정으로 판단해 낮춤) |
 | Android applicationId | `com.myhandball.app` (Play Console 실제 값, 2026-09-23 확인). `namespace`·`MainActivity` 패키지도 같은 값 |
 | iOS 번들 ID | `com.kebi.myhandball-ios` (App Store 실제 값). 두 플랫폼의 ID가 다른 건 기존 배포본 그대로라서다. 바꾸면 새 앱이 된다 |
@@ -854,6 +854,28 @@ Play Console에서 **업로드 키 재설정**을 요청해야 한다(앱 서명
 
 `flutter build`는 예전 산출물을 지우지 않는다. **날짜를 보고 집으라** —
 `app-release.apk`가 디버그 키로 서명된 옛 파일로 남아 있을 수 있다.
+
+### iPad는 Info.plist에 4방향을 다 선언해야 한다
+
+`UISupportedInterfaceOrientations~ipad`에 세로 둘만 넣으면 **업로드가
+검증에서 막힌다**:
+
+```
+Validation failed (409) Invalid bundle. ... you need to include all of the
+"...Portrait,...PortraitUpsideDown,...LandscapeLeft,...LandscapeRight"
+orientations to support iPad multitasking.
+```
+
+멀티태스킹(분할 보기)을 지원하는 앱은 어떤 방향으로도 리사이즈될 수 있어야
+한다는 규칙이고, iPad를 지원 기기로 두는 한 피할 수 없다.
+
+**그래도 앱은 세로로 돈다.** `main.dart`의
+`setPreferredOrientations([portraitUp, portraitDown])`가 런타임에서 막기
+때문이다 — 2026-09-25에 iPad 시뮬레이터를 회전시켜 확인했다(가로가 아니라
+180° 뒤집힌 세로가 됐다). plist는 검증용 선언이고 실제 방향은 Dart가 정한다.
+
+`UIRequiresFullScreen`으로 멀티태스킹을 빼는 길도 있지만 Apple이 걷어내는
+중이라 쓰지 않았다.
 
 ### 남은 배포 과제
 
