@@ -373,7 +373,9 @@ flutter test                             # 전체 테스트 (test/ 만)
 flutter test test/widget_test.dart       # 파일 단위
 flutter test --plain-name "테스트 이름"    # 단일 테스트
 flutter run                              # 개발 실행
-flutter build ios --no-codesign --debug  # iOS 빌드 검증 (서명 없이)
+flutter build ios --no-codesign --debug  # iOS 빌드 검증 (서명 없이, 올릴 수는 없다)
+flutter build ipa --release              # iOS 스토어 업로드용 (서명됨)
+flutter build appbundle --release        # Play 업로드용 (key.properties 필요)
 
 # 개발용 플래그 (lib/config/app_config.dart)
 flutter run \
@@ -789,20 +791,42 @@ keyPassword=...
 
 `key.properties`와 `*.jks`는 `android/.gitignore`가 막는다. **커밋하지 않는다.**
 
+키가 맞는지는 `tool/check_upload_key.sh`가 본다 — 저장소 비밀번호와 키
+비밀번호를 **따로** 확인하고(다를 수 있다) 인증서 지문을 찍는다. 그 지문을
+Play Console의 `앱 무결성 > 업로드 키 인증서`와 대조해야 업로드가 통과할지
+미리 알 수 있다.
+
+**이 맥의 업로드 키는 `~/myapp-release.keystore`**(별칭 `myhandball`,
+2026-01-19 생성, 2051년까지 유효)이고 백업이 없다.
+
 **아무 키나 새로 만들면 안 된다.** `com.myhandball.app`이 Play Console에 이미
 있으므로, 등록된 업로드 인증서와 맞는 키여야 업로드가 통과한다. 잃어버렸으면
 Play Console에서 **업로드 키 재설정**을 요청해야 한다(앱 서명 키는 Google이
 갖고 있어 앱 자체는 살아 있다). 이 맥에는 키스토어가 없다(2026-09-25 확인).
+
+### 빌드 산출물이 어디에 나오나
+
+| 플랫폼 | 경로 | 올릴 수 있나 |
+|---|---|---|
+| iOS | `build/ios/ipa/myhandball.ipa` | **예** — Transporter나 `xcrun altool`로 업로드 |
+| iOS | `build/ios/archive/Runner.xcarchive` | Xcode Organizer에서 업로드할 때 쓴다 |
+| iOS | `build/ios/iphoneos/Runner.app` | **아니오** — `--no-codesign` 검증용 |
+| Android | `build/app/outputs/bundle/release/app-release.aab` | **예** — Play Console |
+| Android | `build/app/outputs/flutter-apk/*.apk` | **아니오** — Play는 aab를 받는다 |
+
+`flutter build`는 예전 산출물을 지우지 않는다. **날짜를 보고 집으라** —
+`app-release.apk`가 디버그 키로 서명된 옛 파일로 남아 있을 수 있다.
 
 ### 남은 배포 과제
 
 - 개인정보 처리방침·이용약관 웹 페이지는 API 저장소가 제공한다 (`/privacy`, `/terms` → Caddy → API).
   **2026-09-25 확인: v3.0, 시행일 2026-09-24로 HTTPS 200.** 키체인 지속·랭킹
   공개 항목·신고 처리·국외이전이 다 들어가 있다
-- **iOS 푸시의 `aps-environment`가 `development`다**(`Runner.entitlements`).
-  자동 서명이면 배포 때 Xcode가 `production`으로 바꿔 서명하지만, 서명 없이
-  빌드해선 확인할 수 없다. **TestFlight에서 알림이 실제로 오는지 한 번 봐야
-  한다** — 틀리면 스토어 버전에서만 조용히 안 온다
+- **iOS 푸시의 `aps-environment`는 배포본에서 `production`이 맞다** (2026-09-25
+  확인). 소스의 `Runner.entitlements`에는 `development`로 적혀 있지만, 자동
+  서명이 아카이브할 때 배포 프로필의 값으로 바꿔 준다. `--no-codesign`
+  빌드로는 확인할 수 없고, `flutter build ipa`로 나온 IPA를
+  `codesign -d --entitlements :-`로 열어 봐야 보인다
 
 ## 서버 상태
 
