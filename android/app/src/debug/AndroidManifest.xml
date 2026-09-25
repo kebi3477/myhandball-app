@@ -4,4 +4,17 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 로컬·사내 API에 http로 붙기 위한 예외.
+
+         안드로이드는 targetSdk 28부터 평문 HTTP를 막는다. 이게 없으면
+         API_BASE_URL을 http로 준 빌드가 전부 오프라인 오류로 떨어진다.
+
+         디버그 소스셋에만 둔다. release 매니페스트에는 없으므로 배포본은
+         평문을 계속 막는다. iOS에서 NSAllowsLocalNetworking을 뺀 것과 같은
+         이유이고, 그쪽과 달리 빌드 종류로 갈라지므로 커밋해도 안전하다.
+
+         XML 주석에는 연달아 쓰는 붙임표 두 개를 넣을 수 없다. dart-define
+         플래그를 그대로 적었다가 매니페스트 파싱이 깨진 적이 있다. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

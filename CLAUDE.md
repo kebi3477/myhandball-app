@@ -438,6 +438,17 @@ flutter run -d <기기> \
 실기기에 디버그 빌드를 깔면 **스토어에서 받은 앱을 덮어쓴다.** 원래대로
 되돌리려면 지우고 App Store에서 다시 받아야 한다.
 
+**안드로이드는 평문 HTTP를 막는다.** targetSdk 28부터의 기본값이라
+`API_BASE_URL`을 http로 주면 전 화면이 오프라인 오류가 된다. 그래서
+`android/app/src/debug/AndroidManifest.xml`에만
+`android:usesCleartextTraffic="true"`를 뒀다 — **release 매니페스트에는 없다**
+(2026-09-25에 `aapt2 dump xmltree`로 release APK를 열어 확인했다).
+iOS의 `NSAllowsLocalNetworking`을 뺀 것과 같은 이유이고, 그쪽과 달리 빌드
+종류로 갈라지므로 커밋해도 안전하다.
+
+**XML 주석에 붙임표 두 개를 연달아 쓸 수 없다.** dart-define 플래그를 주석에
+그대로 적었다가 매니페스트 파싱이 깨져 빌드가 실패한 적이 있다.
+
 **Android 빌드된다** (2026-09-25). SDK·build-tools·라이선스는 원래 다 있었고
 `cmdline-tools`만 없어서 `flutter doctor`가 막고 있었다. 이렇게 풀었다:
 
