@@ -381,7 +381,7 @@ flutter build appbundle --release        # Play 업로드용 (key.properties 필
 flutter run \
   --dart-define=MH_SKIP_ONBOARDING=true \  # 온보딩 건너뛰기 (마이팀도 자동 지정)
   --dart-define=MH_INITIAL_TAB=stat \      # home / schedule / stat / my
-  --dart-define=MH_INITIAL_THEME=light \   # 기본은 시안대로 dark
+  --dart-define=MH_INITIAL_THEME=dark \    # 기본은 light
   --dart-define=MH_OPEN_GUIDE=true         # 규칙 가이드를 바로 연다
 
 # 화면 전체를 PNG로 떠서 레이아웃 확인 (tool/preview/*.png, gitignore됨)
@@ -702,7 +702,14 @@ v1(화면 7개)보다 훨씬 크다. 시안 기준:
 - 응원 보드, 선수 즐겨찾기, 팀 비교, 순위 추이 그래프, 검색
 - 인라인 SVG 70개
 
-시안이 **다크 테마 기본**이다. v1 웹은 라이트 기본이었다.
+시안은 **다크 테마 기본**으로 그려져 있지만, **앱은 라이트로 시작한다**
+(2026-09-25에 사용자가 정했다. v1 웹도 라이트 기본이었다). 두 벌 다 있고
+설정에서 바꾼다.
+
+**기본값을 바꿀 때 `mh_theme`를 읽는 쪽도 같이 뒤집어야 한다.**
+`prefs.getString(_kTheme) == 'light' ? light : dark`로 두면 저장된 값이
+없을 때 다크로 떨어져서, 필드 초기값만 바꿔 봐야 `load()`가 덮어쓴다.
+이미 쓰던 사람의 선택은 그대로 유지된다 (`test/preferences_repository_test.dart`).
 
 ### 로컬 저장 키
 

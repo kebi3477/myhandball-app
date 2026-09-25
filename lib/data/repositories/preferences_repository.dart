@@ -34,8 +34,12 @@ class PreferencesRepository {
   final DeviceIdStore _deviceIds;
 
   bool _onboarded = AppConfig.skipOnboarding;
+  /// **기본은 라이트다.** 시안은 다크로 그려져 있지만 2026-09-25에
+  /// 사용자가 라이트를 기본으로 정했다. 이미 쓰던 사람의 선택은
+  /// `mh_theme`에 남아 있어서 그대로 유지된다 — 새로 깐 사람만 라이트로
+  /// 시작한다.
   ThemeMode _themeMode =
-      AppConfig.initialTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
+      AppConfig.initialTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
   /// 개발용 스킵 플래그로 들어올 땐 마이팀도 채워둔다.
   /// 안 그러면 MY팀 달력이 항상 "팀을 골라주세요"로만 보인다.
   Team? _myTeam =
@@ -154,8 +158,10 @@ class PreferencesRepository {
         : prefs.getBool(_kOnboarded) ?? false;
 
     if (AppConfig.initialTheme.isEmpty) {
+      // 저장된 값이 없으면 라이트다. `== 'dark'`로 봐야 한다 —
+      // `== 'light'`로 보면 값이 없을 때 다크로 떨어진다.
       _themeMode =
-          prefs.getString(_kTheme) == 'light' ? ThemeMode.light : ThemeMode.dark;
+          prefs.getString(_kTheme) == 'dark' ? ThemeMode.dark : ThemeMode.light;
     }
 
     _preferredGender = Gender.fromCode(prefs.getString(_kGender));

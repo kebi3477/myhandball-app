@@ -71,17 +71,18 @@ void main() {
     expect(find.text('직관'), findsOneWidget);
   });
 
-  testWidgets('테마를 라이트로 바꾸면 팔레트 배경이 흰색이 된다', (tester) async {
+  testWidgets('테마를 바꾸면 팔레트 배경이 따라 바뀐다', (tester) async {
     final container = _container(onboarded: true);
     await _pumpApp(tester, container);
 
-    expect(container.read(paletteProvider).bg, const Color(0xFF111111));
+    // 기본은 라이트다 (2026-09-25에 바뀌었다).
+    expect(container.read(paletteProvider).bg, const Color(0xFFFFFFFF));
 
     await container.read(appViewModelProvider.notifier).toggleTheme();
     await tester.pump();
 
-    expect(container.read(paletteProvider).bg, const Color(0xFFFFFFFF));
-    expect(container.read(appViewModelProvider).themeMode, ThemeMode.light);
+    expect(container.read(paletteProvider).bg, const Color(0xFF111111));
+    expect(container.read(appViewModelProvider).themeMode, ThemeMode.dark);
   });
 
   testWidgets('온보딩을 끝내면 앱 본체로 전환된다', (tester) async {

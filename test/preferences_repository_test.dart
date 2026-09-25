@@ -75,7 +75,7 @@ void main() {
     final prefs = await reopen((p) async {
       await p.setMyTeam(const Team(
           name: 'SK호크스', teamNum: 132, gender: Gender.men, logoUrl: 'x'));
-      await p.setThemeMode(ThemeMode.light);
+      await p.setThemeMode(ThemeMode.dark);
       await p.setPreferredGender(Gender.women);
       await p.setSeason(Season.ofYear(2024));
       await p.setNotificationsOn(value: false);
@@ -84,11 +84,28 @@ void main() {
 
     expect(prefs.myTeam?.name, 'SK호크스');
     expect(prefs.myTeam?.teamNum, 132);
-    expect(prefs.themeMode, ThemeMode.light);
+    // 기본이 라이트라 **다크**를 넣어야 저장을 실제로 검사한다.
+    expect(prefs.themeMode, ThemeMode.dark);
     expect(prefs.preferredGender, Gender.women);
     expect(prefs.season, Season.ofYear(2024));
     expect(prefs.notificationsOn, isFalse);
     expect(prefs.guideDoneCount, 3);
+  });
+
+  test('처음 켜면 라이트로 시작한다', () async {
+    // 시안은 다크지만 2026-09-25에 사용자가 라이트를 기본으로 정했다.
+    SharedPreferences.setMockInitialValues({});
+    final prefs = PreferencesRepository();
+    await prefs.load();
+    expect(prefs.themeMode, ThemeMode.light);
+  });
+
+  test('저장된 다크는 그대로 유지된다', () async {
+    // 이미 쓰던 사람의 선택을 기본값 변경이 덮어쓰면 안 된다.
+    SharedPreferences.setMockInitialValues({'mh_theme': 'dark'});
+    final prefs = PreferencesRepository();
+    await prefs.load();
+    expect(prefs.themeMode, ThemeMode.dark);
   });
 
   test('기기 ID는 한 번 만들어지고 바뀌지 않는다', () async {
