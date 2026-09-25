@@ -99,16 +99,18 @@ class HomeState {
   /// 개막일을 알면 그 날짜를, 모르면 일정이 나오면 알리겠다고 한다.
   /// **알림이 꺼져 있으면 알리겠다는 말을 하지 않는다** — 지킬 수 없는
   /// 약속이다.
+  ///
+  /// **"지금은 비시즌이에요"를 앞에 붙이지 않는다.** 카드 맨 위가 이미
+  /// `26-27 시즌 개막까지`라서 같은 말을 두 번 하는 꼴이었다
+  /// (2026-09-25에 사용자가 뺐다).
   String get offseasonNote {
     final opens = nextSeasonOpensAt;
     if (opens != null) {
       const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-      return '지금은 비시즌이에요 · ${opens.month}월 ${opens.day}일'
+      return '${opens.month}월 ${opens.day}일'
           '(${weekdays[opens.weekday - 1]}) 개막 예정이에요';
     }
-    return notificationsOn
-        ? '지금은 비시즌이에요 · 일정이 나오면 알려드릴게요'
-        : '지금은 비시즌이에요 · 개막 일정 발표 전이에요';
+    return notificationsOn ? '일정이 나오면 알려드릴게요' : '개막 일정 발표 전이에요';
   }
 
   /// 시상대에 올라가는 1~3위.

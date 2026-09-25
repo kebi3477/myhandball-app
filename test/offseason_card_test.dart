@@ -32,17 +32,17 @@ void main() {
 
   test('개막일을 알면 날짜를 그대로 적는다', () {
     final s = state(opensAt: DateTime(2026, 11, 14));
-    expect(s.offseasonNote, '지금은 비시즌이에요 · 11월 14일(토) 개막 예정이에요');
+    expect(s.offseasonNote, '11월 14일(토) 개막 예정이에요');
   });
 
   test('개막일을 모르면 일정이 나오면 알리겠다고 한다', () {
-    expect(state().offseasonNote, '지금은 비시즌이에요 · 일정이 나오면 알려드릴게요');
+    expect(state().offseasonNote, '일정이 나오면 알려드릴게요');
   });
 
   test('알림이 꺼져 있으면 알리겠다고 약속하지 않는다', () {
     // 못 지킬 약속이다.
     expect(state(notificationsOn: false).offseasonNote,
-        '지금은 비시즌이에요 · 개막 일정 발표 전이에요');
+        '개막 일정 발표 전이에요');
   });
 
   test('개막일을 알면 알림이 꺼져 있어도 날짜를 적는다', () {
