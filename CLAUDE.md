@@ -436,7 +436,23 @@ flutter run -d <기기> \
 실기기에 디버그 빌드를 깔면 **스토어에서 받은 앱을 덮어쓴다.** 원래대로
 되돌리려면 지우고 App Store에서 다시 받아야 한다.
 
-**Android는 아직 빌드 불가** — `flutter doctor`가 cmdline-tools 누락을 보고한다. Android Studio에서 SDK Command-line Tools 설치 후 `flutter doctor --android-licenses` 필요.
+**Android 빌드된다** (2026-09-25). SDK·build-tools·라이선스는 원래 다 있었고
+`cmdline-tools`만 없어서 `flutter doctor`가 막고 있었다. 이렇게 풀었다:
+
+```bash
+# 1. cmdline-tools만 받아서 SDK 안에 넣는다 (Android Studio GUI 없이 된다)
+curl -sSL -o /tmp/cmdline-tools.zip \
+  https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip
+unzip -q /tmp/cmdline-tools.zip -d /tmp/ct
+mkdir -p ~/Library/Android/sdk/cmdline-tools
+mv /tmp/ct/cmdline-tools ~/Library/Android/sdk/cmdline-tools/latest
+
+# 2. JDK는 Android Studio에 딸린 것(JBR 21)을 쓴다. `java`는 PATH에 없다
+flutter config --jdk-dir "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+
+# 3. 라이선스
+yes | flutter doctor --android-licenses
+```
 
 ## API 계약
 
@@ -755,15 +771,38 @@ v1의 CSS 변수 세트가 `_legercy/myhandball/apps/web/src/assets/styles/globa
 - **안드로이드는 확인할 방법이 없다.** Play 스토어에 공개 조회 API가 없다.
   서버에 버전 엔드포인트가 생기면 그때 붙인다
 
+### Android 서명 — 업로드 키가 있어야 Play에 올라간다
+
+`flutter build appbundle --release`는 되지만, **`android/key.properties`가 없으면
+디버그 키로 서명된다. 그 빌드는 Play가 거부한다** (`CN=Android Debug`).
+
+`android/app/build.gradle.kts`가 `key.properties`가 있으면 그걸 쓰고 없으면
+디버그로 떨어지게 돼 있다 — 로컬에서 `flutter run --release`는 되게 두려는
+길이다. 파일 형식:
+
+```properties
+storeFile=/절대/경로/upload-keystore.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+`key.properties`와 `*.jks`는 `android/.gitignore`가 막는다. **커밋하지 않는다.**
+
+**아무 키나 새로 만들면 안 된다.** `com.myhandball.app`이 Play Console에 이미
+있으므로, 등록된 업로드 인증서와 맞는 키여야 업로드가 통과한다. 잃어버렸으면
+Play Console에서 **업로드 키 재설정**을 요청해야 한다(앱 서명 키는 Google이
+갖고 있어 앱 자체는 살아 있다). 이 맥에는 키스토어가 없다(2026-09-25 확인).
+
 ### 남은 배포 과제
 
-- **Android 빌드가 안 된다.** `~/Library/Android/sdk`에 `cmdline-tools`가 없다.
-  Android Studio에서 SDK Command-line Tools를 설치하고
-  `flutter doctor --android-licenses`를 돌려야 한다 (여기서는 설치할 수 없다)
 - 개인정보 처리방침·이용약관 웹 페이지는 API 저장소가 제공한다 (`/privacy`, `/terms` → Caddy → API).
-  미니 PC 서버에 배포되면 링크가 살아난다
-- **출시 전 남은 것** — 개인정보 처리방침에 Keychain 식별자와 **랭킹 공개
-  항목(닉네임·응원팀·적중 기록)** 명시
+  **2026-09-25 확인: v3.0, 시행일 2026-09-24로 HTTPS 200.** 키체인 지속·랭킹
+  공개 항목·신고 처리·국외이전이 다 들어가 있다
+- **iOS 푸시의 `aps-environment`가 `development`다**(`Runner.entitlements`).
+  자동 서명이면 배포 때 Xcode가 `production`으로 바꿔 서명하지만, 서명 없이
+  빌드해선 확인할 수 없다. **TestFlight에서 알림이 실제로 오는지 한 번 봐야
+  한다** — 틀리면 스토어 버전에서만 조용히 안 온다
 
 ## 서버 상태
 
