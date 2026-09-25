@@ -49,6 +49,8 @@ app.*.map.json
 
 # 디자인 프리뷰 산출물 (tool/design_preview_test.dart)
 tool/preview/
+# 시뮬레이터 스크린샷 (다시 찍으면 되는 것)
+tool/screenshots/
 
 # Xcode가 만드는 SwiftPM 상태 파일
 ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
