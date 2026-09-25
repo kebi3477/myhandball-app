@@ -12,11 +12,17 @@ KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool
 PROPS="$(dirname "$0")/../android/key.properties"
 
 [ -f "$PROPS" ] || { echo "✗ android/key.properties가 없습니다"; exit 1; }
-grep -q '<' "$PROPS" && { echo "✗ 비밀번호 자리(<...>)가 그대로입니다"; exit 1; }
 
+# **주석이 아니라 값만 본다.** 안내 주석에도 `<...>`가 들어 있어서
+# 파일 전체를 grep 하면 다 채워 넣어도 "그대로"라고 잘못 말한다.
 get() { grep "^$1=" "$PROPS" | head -1 | cut -d= -f2-; }
 STORE_FILE=$(get storeFile); STORE_PW=$(get storePassword)
 ALIAS=$(get keyAlias);      KEY_PW=$(get keyPassword)
+
+for v in "$STORE_FILE" "$STORE_PW" "$ALIAS" "$KEY_PW"; do
+  [ -n "$v" ] || { echo "✗ key.properties에 빠진 항목이 있습니다"; exit 1; }
+  case "$v" in *"<"*) echo "✗ 비밀번호 자리(<...>)가 그대로입니다"; exit 1;; esac
+done
 
 [ -f "$STORE_FILE" ] || { echo "✗ 키스토어가 없습니다: $STORE_FILE"; exit 1; }
 
