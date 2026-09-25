@@ -20,8 +20,11 @@ import '../../my/view_models/nickname_provider.dart';
 /// 시안 `pf.open` — 승부예측 프로필 시트 (`spec/sheets.md`).
 ///
 /// 랭킹에 올라갈 **닉네임과 응원팀만** 정한다. 회원가입이 아니다.
-/// 처음과 수정의 차이는 네 가지뿐이다: 제목, 동의 초기값, 저장 문구,
-/// 맨 아래 참여 중단 링크.
+///
+/// **동의는 여기서 받지 않는다.** 온보딩의 닉네임 스텝(`obConsent`)이
+/// 받는다 — 닉네임을 이미 정해 놓고 또 묻는 꼴이라 2026-09-25에 옮겼다.
+/// 이 시트는 그 뒤의 편집용이고, `랭킹 참여 중단`으로 지운 사람이 다시
+/// 만들 때도 쓴다.
 ///
 /// 저장에 성공하면 만들어진 프로필을, 닫으면 `null`을 돌려준다.
 Future<PredictionProfile?> showProfileSheet(BuildContext context) =>
@@ -50,7 +53,6 @@ class _ProfileSheetState extends ConsumerState<_ProfileSheet> {
 
   late Gender _gender;
   Team? _team;
-  late bool _consent;
 
   /// 서버가 돌려준 중복 안내. 닉네임을 고치면 지운다.
   String? _serverError;
@@ -66,7 +68,6 @@ class _ProfileSheetState extends ConsumerState<_ProfileSheet> {
     final profile = _existing;
     _controller.text = profile?.nickname ?? prefs.nickname;
     _gender = profile?.gender ?? prefs.myTeam?.gender ?? prefs.preferredGender;
-    _consent = profile != null;
     // 기존 프로필의 팀은 이름만 아는 상태로 시작한다. 목록이 오면
     // 같은 번호의 팀으로 바꿔 로고까지 맞춘다.
     _team = prefs.myTeam;
@@ -90,8 +91,7 @@ class _ProfileSheetState extends ConsumerState<_ProfileSheet> {
     return (true, '사용할 수 있는 닉네임이에요');
   }
 
-  bool get _canSave =>
-      _check.$1 && _consent && _team?.teamNum != null && !_saving;
+  bool get _canSave => _check.$1 && _team?.teamNum != null && !_saving;
 
   @override
   Widget build(BuildContext context) {
@@ -184,11 +184,6 @@ class _ProfileSheetState extends ConsumerState<_ProfileSheet> {
             ),
             const SizedBox(height: 20),
             const _DisclosureCard(),
-            const SizedBox(height: 20),
-            _ConsentRow(
-              checked: _consent,
-              onTap: () => setState(() => _consent = !_consent),
-            ),
             const SizedBox(height: 20),
             MhTap(
               haptic: MhHaptic.impact,
@@ -670,57 +665,6 @@ class _DisclosureCard extends StatelessWidget {
                 weight: FontWeight.w600,
                 color: c.textNeutral,
               ).copyWith(decoration: TextDecoration.underline),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConsentRow extends StatelessWidget {
-  const _ConsentRow({required this.checked, required this.onTap});
-
-  final bool checked;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.mh;
-    return MhTap(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: checked ? MhColors.brand : Colors.transparent,
-              border: Border.all(
-                color: checked ? MhColors.brand : c.textFaint,
-                width: 1.5,
-              ),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: checked
-                ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                text: '랭킹에 닉네임·응원팀 공개에 동의해요 ',
-                style: MhText.custom(
-                    size: 13, weight: FontWeight.w500, color: c.text),
-                children: [
-                  TextSpan(
-                    text: '(필수)',
-                    style: MhText.custom(
-                        size: 13, weight: FontWeight.w500, color: c.textSub),
-                  ),
-                ],
-              ),
             ),
           ),
         ],

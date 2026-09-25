@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../config/app_config.dart';
 import '../../../domain/models/gender.dart';
 import '../../../domain/models/nickname.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
+import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../core/ui/team_logo.dart';
@@ -81,6 +83,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     state: state,
                     onChanged: vm.setNickname,
                     onSuggest: vm.suggestNickname,
+                    onToggleConsent: vm.toggleRankingConsent,
                   ),
                   _WelcomeStep(state: state),
                 ],
@@ -569,6 +572,7 @@ class _PrimaryButton extends StatelessWidget {
 /// 때문이다 — 어디에 쓰이는지 보여주고 정하게 한다.
 class _NicknameStep extends StatefulWidget {
   const _NicknameStep({
+    required this.onToggleConsent,
     required this.state,
     required this.onChanged,
     required this.onSuggest,
@@ -577,6 +581,7 @@ class _NicknameStep extends StatefulWidget {
   final OnboardingState state;
   final ValueChanged<String> onChanged;
   final VoidCallback onSuggest;
+  final VoidCallback onToggleConsent;
 
   @override
   State<_NicknameStep> createState() => _NicknameStepState();
@@ -726,6 +731,14 @@ class _NicknameStepState extends State<_NicknameStep> {
           ),
           const SizedBox(height: MhSpacing.md),
           _NicknamePreview(state: state),
+          const SizedBox(height: MhSpacing.md),
+          const _DisclosureCard(),
+          const SizedBox(height: 12),
+          _ConsentRow(
+            checked: state.rankingConsent,
+            onTap: widget.onToggleConsent,
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -733,6 +746,132 @@ class _NicknameStepState extends State<_NicknameStep> {
 
   /// 시안 `obNickBorder` / `obNickMsgColor`의 경고색.
   static const _errorColor = Color(0xFFFF4D6A);
+}
+
+/// 시안 — 랭킹에 무엇이 공개되는지 보여주는 카드.
+///
+/// 승부예측 프로필 시트에도 같은 표가 있었는데, 동의를 온보딩으로 옮기면서
+/// 여기로 따라왔다. **온보딩은 테마와 무관하게 다크**라 토큰 대신 시안의
+/// literal 색을 그대로 쓴다.
+class _DisclosureCard extends StatelessWidget {
+  const _DisclosureCard();
+
+  static const _rows = [
+    ('공개', '닉네임 · 응원팀 · 예측 적중 기록'),
+    ('받지 않음', '이름 · 이메일 · 전화번호 · 위치'),
+    ('구분 방법', '기기마다 익명 ID가 자동 생성돼요'),
+  ];
+
+  static const _value = Color(0xFFA6A6A6);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: MhColors.onboardCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (label, value) in _rows)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 64,
+                    child: Text(label,
+                        style: MhText.custom(
+                            size: 12,
+                            weight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.5)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(value,
+                        style: MhText.custom(
+                            size: 12,
+                            weight: FontWeight.w400,
+                            color: _value,
+                            height: 1.5)),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 2),
+          MhTap(
+            onTap: () => openExternalUrl(context, AppConfig.privacyUrl),
+            child: Text(
+              '개인정보 처리방침',
+              style: MhText.custom(
+                size: 11,
+                weight: FontWeight.w600,
+                color: _value,
+              ).copyWith(decoration: TextDecoration.underline),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 시안 `obConsent` — `(필수)`다. 체크하지 않으면 [OnboardingState.canAdvance]가
+/// 막아서 다음으로 못 넘어간다.
+class _ConsentRow extends StatelessWidget {
+  const _ConsentRow({required this.checked, required this.onTap});
+
+  final bool checked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MhTap(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: checked ? MhColors.brand : Colors.transparent,
+              border: Border.all(
+                color: checked ? MhColors.brand : MhColors.onboardBorder,
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: checked
+                ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: '랭킹에 닉네임·응원팀 공개에 동의해요 ',
+                style: MhText.custom(
+                    size: 13, weight: FontWeight.w500, color: Colors.white),
+                children: [
+                  TextSpan(
+                    text: '(필수)',
+                    style: MhText.custom(
+                        size: 13,
+                        weight: FontWeight.w500,
+                        color: _DisclosureCard._value),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// 닉네임 + 마이팀 로고 미리보기. 시안의 마지막 덩어리.

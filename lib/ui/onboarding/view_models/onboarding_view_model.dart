@@ -6,6 +6,7 @@ import '../../../domain/models/gender.dart';
 import '../../../domain/models/nickname.dart';
 import '../../../domain/models/team.dart';
 import '../../app/view_models/app_view_model.dart';
+import '../../../data/repositories/profile_repository.dart';
 import '../../my/view_models/nickname_provider.dart';
 
 /// 시안 온보딩 1스텝의 관심사 선택지.
@@ -32,6 +33,7 @@ class OnboardingState {
     this.teamGender = Gender.men,
     this.team,
     this.nickname = '',
+    this.rankingConsent = false,
     this.teams = const [],
     this.loadingTeams = false,
   });
@@ -58,6 +60,13 @@ class OnboardingState {
 
   /// 시안 `obNick`. 아직 다듬지 않은 입력 그대로 들고 있는다.
   final String nickname;
+
+  /// 시안 `obConsent` — 랭킹에 닉네임·응원팀을 공개하는 데 대한 동의.
+  ///
+  /// **여기서 받지 않으면 랭킹 프로필을 만들지 않는다.** 예전에는 승부예측
+  /// 탭의 프로필 시트(`pfConsent`)에서 받았는데, 온보딩에서 닉네임을 이미
+  /// 정해 놓고 또 묻는 꼴이라 2026-09-25에 온보딩으로 옮겼다.
+  final bool rankingConsent;
   final List<Team> teams;
   final bool loadingTeams;
 
@@ -93,7 +102,8 @@ class OnboardingState {
         1 => interest != null,
         2 => gender != null && ageGroup != null,
         3 => team != null,
-        nicknameStep => Nickname.isValid(nickname),
+        // 동의는 `(필수)`다 — 닉네임만 맞아도 넘어가지 않는다.
+        nicknameStep => Nickname.isValid(nickname) && rankingConsent,
         _ => true,
       };
 
@@ -106,6 +116,7 @@ class OnboardingState {
     Team? team,
     bool clearTeam = false,
     String? nickname,
+    bool? rankingConsent,
     List<Team>? teams,
     bool? loadingTeams,
   }) =>
@@ -117,6 +128,7 @@ class OnboardingState {
         teamGender: teamGender ?? this.teamGender,
         team: clearTeam ? null : (team ?? this.team),
         nickname: nickname ?? this.nickname,
+        rankingConsent: rankingConsent ?? this.rankingConsent,
         teams: teams ?? this.teams,
         loadingTeams: loadingTeams ?? this.loadingTeams,
       );
@@ -162,6 +174,9 @@ class OnboardingViewModel extends Notifier<OnboardingState> {
   /// 시안 `onPfNick`.
   void setNickname(String value) => state = state.copyWith(nickname: value);
 
+  void toggleRankingConsent() =>
+      state = state.copyWith(rankingConsent: !state.rankingConsent);
+
   /// 시안 `suggestNick` — "추천" 버튼.
   void suggestNickname() =>
       state = state.copyWith(nickname: Nickname.suggest());
@@ -177,7 +192,28 @@ class OnboardingViewModel extends Notifier<OnboardingState> {
     await prefs.setMyTeam(state.team);
     await prefs.setPreferredGender(state.teamGender);
     await ref.read(nicknameProvider.notifier).set(state.nickname);
+    await _createProfile();
     await ref.read(appViewModelProvider.notifier).completeOnboarding();
+  }
+
+  /// 온보딩에서 받은 동의로 랭킹 프로필까지 만든다 (시안 `goApp`).
+  ///
+  /// **실패해도 온보딩을 막지 않는다.** 서버가 안 되는 상태에서 앱을 아예
+  /// 못 쓰게 하는 것보다, 들어간 뒤 승부예측 탭에서 다시 시도하는 편이 낫다
+  /// (프로필이 없으면 그 탭이 `시작하기` 카드를 띄운다).
+  Future<void> _createProfile() async {
+    final team = state.team;
+    final teamNum = team?.teamNum;
+    if (!state.rankingConsent || teamNum == null) return;
+    try {
+      await ref.read(profileProvider.notifier).save(
+            nickname: Nickname.normalize(state.nickname),
+            teamNum: teamNum,
+            gender: state.teamGender,
+          );
+    } on Exception {
+      // 닉네임이 겹쳤거나(409) 연결이 안 됐다. 둘 다 나중에 고칠 수 있다.
+    }
   }
 }
 

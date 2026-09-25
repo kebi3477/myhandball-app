@@ -10,10 +10,10 @@ import 'package:myhandball/ui/core/themes/tokens.dart';
 import 'package:myhandball/ui/home/widgets/profile_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 승부예측 프로필 시트 (`spec/sheets.md`).
+/// 승부예측 프로필 시트.
 ///
-/// **동의 없이는 저장되면 안 된다.** 닉네임·응원팀이 랭킹에 공개되는
-/// 동작이라 체크박스가 필수고, 시안도 그렇게 적어 뒀다.
+/// **동의는 여기가 아니라 온보딩에서 받는다** (`test/onboarding_consent_test.dart`).
+/// 이 시트는 그 뒤의 편집용이다.
 /// 시트 안에 무한 애니메이션(스피너)이 있어 `pumpAndSettle`을 쓸 수 없다.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
@@ -74,21 +74,15 @@ void main() {
     return prefs;
   }
 
-  testWidgets('동의를 하지 않으면 저장되지 않는다', (tester) async {
+  testWidgets('닉네임과 응원팀만 맞으면 저장된다', (tester) async {
+    // 동의는 온보딩에서 이미 받았으므로 시트에서 다시 묻지 않는다.
     final prefs = await open(tester);
 
     await tester.enterText(find.byType(TextField), '날쌘피벗12');
     await tester.pump();
     expect(find.text('사용할 수 있는 닉네임이에요'), findsOneWidget);
+    expect(find.textContaining('공개에 동의해요'), findsNothing);
 
-    // 닉네임만 넣고 눌러 본다. 시트가 그대로 있어야 한다.
-    await tester.tap(find.text('랭킹 참여하기'));
-    await _settle(tester);
-    expect(find.text('랭킹 참여하기'), findsOneWidget);
-    expect(prefs.cachedProfile, isNull);
-
-    await tester.tap(find.textContaining('랭킹에 닉네임·응원팀 공개에 동의해요'));
-    await tester.pump();
     await tester.tap(find.text('랭킹 참여하기'));
     await _settle(tester);
 
@@ -101,8 +95,6 @@ void main() {
     final prefs = await open(tester);
 
     await tester.enterText(find.byType(TextField), '중복닉네임');
-    await tester.pump();
-    await tester.tap(find.textContaining('랭킹에 닉네임·응원팀 공개에 동의해요'));
     await tester.pump();
     await tester.tap(find.text('랭킹 참여하기'));
     await _settle(tester);
