@@ -87,11 +87,9 @@ abstract final class AppConfig {
   /// `--dart-define=MH_ADS=false`
   static const adsEnabled = bool.fromEnvironment('MH_ADS', defaultValue: true);
 
-  /// AdMob 광고 단위 ID — 위치별로 나눠 성과를 비교한다.
-  ///
-  /// 플랫폼마다 ID가 다르므로 빌드할 때 그 플랫폼 값을 넣는다.
-  /// 비워 두면 **디버그에서는 구글 테스트 광고**가 나오고, **릴리스에서는
-  /// 그 슬롯을 끈다** — 테스트 광고가 스토어에 나가지 않게.
+  /// AdMob 광고 단위 ID 덮어쓰기. 실제 ID는 `AdSlot`에 들어 있어서
+  /// 보통은 비워 둔다 (릴리스 = 실제 광고, 디버그 = 테스트 광고).
+  /// 다른 광고 단위로 시험할 때만 준다.
   /// `--dart-define=MH_AD_HOME=ca-app-pub-.../...`
   static const adUnitHome = String.fromEnvironment('MH_AD_HOME');
   static const adUnitSchedule = String.fromEnvironment('MH_AD_SCHEDULE');

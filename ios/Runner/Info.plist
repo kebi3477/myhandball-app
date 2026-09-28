@@ -26,10 +26,9 @@
 	     이 키가 없으면 App Store Connect가 업로드마다 같은 질문을 한다. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- AdMob 앱 ID. 지금은 구글 테스트 앱 ID다 — 출시 전에 AdMob 콘솔의
-	     iOS 앱 ID(ca-app-pub-...~...)로 바꾼다. 광고 단위 ID는 dart-define이다. -->
+	<!-- AdMob 앱 ID (iOS). 광고 단위 ID는 lib/data/services/ads_service.dart -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-6280185901199691~2509302707</string>
 	<!-- ATT 창 문구. 창은 UMP가 AdMob 콘솔의 IDFA 안내 메시지 설정대로 띄운다. -->
 	<key>NSUserTrackingUsageDescription</key>
 	<string>맞춤 광고를 보여드리는 데 사용됩니다. 허용하지 않아도 앱은 그대로 쓸 수 있어요.</string>

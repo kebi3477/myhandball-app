@@ -385,10 +385,15 @@ lib/
   고정 치수가 양쪽에 있으니 **한쪽을 고치면 셋 다 고친다**
 - 게시글형은 시안이 첫 줄에 광고주명을 쓰지만 AdMob이 제목 표시를 요구해서 제목을 둔다
 - SDK와 UMP 동의는 셸에 들어와 푸시 권한 창이 끝난 뒤 시작한다. 실패하면 슬롯이 전부 접힌다
-- 광고 단위 ID는 `MH_AD_HOME`/`MH_AD_SCHEDULE`/`MH_AD_CHEER` dart-define.
-  비우면 디버그는 테스트 광고, **릴리스는 슬롯을 끈다**
+- 광고 단위 ID는 `AdSlot`(`data/services/ads_service.dart`)에 실제 값이 있다.
+  **릴리스는 실제 광고, 디버그는 테스트 광고** — 개발 중 실제 광고를 누르면
+  계정 정지 위험이 있다. `MH_AD_*` dart-define은 덮어쓰기용이다.
+  (처음엔 릴리스에 dart-define이 없으면 슬롯을 껐는데, 빠뜨린 빌드가 광고
+  없이 나와서 2026-09-28에 뒤집었다)
 - 앱 ID: Android는 `android/gradle.properties`의 `admobAppId`, iOS는 Info.plist
-  `GADApplicationIdentifier`. **둘 다 지금은 구글 테스트 ID다**
+  `GADApplicationIdentifier`. 퍼블리셔 `pub-6280185901199691`
+- **app-ads.txt가 아직 없다.** 스토어에 개발자 웹사이트가 없어서 AdMob 앱이
+  "검토 필요" 상태다. 한 줄: `google.com, pub-6280185901199691, DIRECT, f08c47fec0942fa0`
 - `MH_ADS=false`면 광고 없이 뜬다 (스크린샷용)
 
 ## 커밋

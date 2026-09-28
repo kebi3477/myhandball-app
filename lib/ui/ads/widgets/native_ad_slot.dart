@@ -74,12 +74,11 @@ class _NativeAdSlotState extends ConsumerState<NativeAdSlot> {
   }
 
   void _load() {
-    final unitId = widget.slot.unitId;
-    if (unitId == null || _loading != null) return;
+    if (_loading != null) return;
 
     late final NativeAd ad;
     ad = NativeAd(
-      adUnitId: unitId,
+      adUnitId: widget.slot.unitId,
       factoryId: widget.slot.factoryId,
       customOptions: {'dark': _dark ?? false},
       nativeAdOptions: NativeAdOptions(
