@@ -80,17 +80,39 @@ enum AdSlot {
 class AdsService {
   bool? _started;
 
+  /// 동의가 필요한 지역(EEA·영국·스위스)이라 설정에 "광고 개인정보 옵션"을
+  /// 둬야 하는지. UMP가 요구하는 진입점이다. [start] 뒤에 정해진다.
+  bool privacyOptionsRequired = false;
+
   /// 광고를 요청해도 되면 `true`.
   Future<bool> start() async {
     if (_started != null) return _started!;
     try {
       await _requestConsent();
+      privacyOptionsRequired =
+          await ConsentInformation.instance.getPrivacyOptionsRequirementStatus() ==
+              PrivacyOptionsRequirementStatus.required;
       final canRequest = await ConsentInformation.instance.canRequestAds();
       if (canRequest) await MobileAds.instance.initialize();
       return _started = canRequest;
     } on Exception catch (e) {
       if (kDebugMode) debugPrint('[MyHandball] 광고 꺼짐 — $e');
       return _started = false;
+    }
+  }
+
+  /// 이미 한 동의 선택을 다시 고르는 창 (설정 → 광고 개인정보 옵션).
+  /// 닫힌 뒤 광고를 요청해도 되는지 돌려준다 — 거부로 바꿨으면 `false`.
+  Future<bool> showPrivacyOptions() async {
+    try {
+      await ConsentForm.showPrivacyOptionsForm((_) {});
+      final canRequest = await ConsentInformation.instance.canRequestAds();
+      // 처음엔 거부했다가 여기서 동의한 경우. 이미 초기화됐으면 바로 끝난다.
+      if (canRequest) await MobileAds.instance.initialize();
+      return _started = canRequest;
+    } on Exception catch (e) {
+      if (kDebugMode) debugPrint('[MyHandball] 개인정보 옵션 실패 — $e');
+      return _started ?? false;
     }
   }
 

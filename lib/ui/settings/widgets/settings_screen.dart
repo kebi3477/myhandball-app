@@ -8,6 +8,7 @@ import '../../core/themes/tokens.dart';
 import '../../core/ui/external_actions.dart';
 import '../../core/ui/mh_tap.dart';
 import '../../core/ui/sub_page_scaffold.dart';
+import '../../ads/view_models/ads_view_model.dart';
 import '../../app/view_models/app_update_view_model.dart';
 import 'blocked_users_screen.dart';
 import '../view_models/settings_view_model.dart';
@@ -70,6 +71,19 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => openExternalUrl(context, AppConfig.privacyUrl),
             ),
             _Divider(),
+            // 유럽(EEA·영국·스위스)처럼 광고 동의가 필요한 지역에서만 보인다.
+            // 동의를 나중에 바꿀 곳을 두라는 UMP 요구이고, 처리방침 15항이
+            // 이 메뉴를 가리킨다.
+            if (ref.watch(adsViewModelProvider).privacyOptions) ...[
+              _LinkRow(
+                label: '광고 개인정보 옵션',
+                trailing: '>',
+                onTap: () => ref
+                    .read(adsViewModelProvider.notifier)
+                    .openPrivacyOptions(),
+              ),
+              _Divider(),
+            ],
             _LinkRow(
               label: '서비스 이용약관',
               trailing: '>',

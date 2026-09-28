@@ -56,7 +56,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       // 온보딩은 광고 금지 구역이라 셸에 들어온 뒤에 SDK와 동의 창을 띄운다.
       // 푸시 권한 창과 겹치지 않게 그 뒤에 한다.
       _startPush().whenComplete(() {
-        if (mounted) ref.read(showAdsProvider.notifier).start();
+        if (mounted) ref.read(adsViewModelProvider.notifier).start();
       });
       _checkUpdate();
       _syncRecords();
