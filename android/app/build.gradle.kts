@@ -59,6 +59,12 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // AdMob 앱 ID. 출시 빌드는 android/gradle.properties에
+        // `admobAppId=ca-app-pub-...~...`를 넣는다. 없으면 구글 테스트 앱 ID.
+        manifestPlaceholders["admobAppId"] =
+            (project.findProperty("admobAppId") as String?)
+                ?: "ca-app-pub-3940256099942544~3347511713"
     }
 
     buildTypes {

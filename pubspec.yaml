@@ -42,6 +42,7 @@ dependencies:
   # lib/data/services/push_service.dart 참조
   firebase_core: ^4.1.1
   firebase_messaging: ^16.0.2
+  google_mobile_ads: ^9.1.0
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +58,8 @@ flutter:
     - assets/design/
     # 디자인 프로젝트의 figassets/ 를 내보내 넣는 자리 — 없어도 앱은 뜬다
     - assets/figassets/
+    # 자체 팀 엠블럼 14종 (lib/ui/core/ui/team_emblems.dart)
+    - assets/emblems/
 
   fonts:
     # 시안 전역 font-family: Pretendard

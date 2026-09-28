@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/services/ads_service.dart';
 import '../../../domain/models/team_detail.dart';
+import '../../ads/widgets/native_ad_slot.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_icons.dart';
@@ -201,7 +203,7 @@ class _TeamCheerTabState extends ConsumerState<TeamCheerTab> {
             ),
           )
         else
-          for (final post in state.cheers) ...[
+          for (final (i, post) in state.cheers.indexed) ...[
             _CheerCard(
               post: post,
               liked: post.liked,
@@ -215,6 +217,12 @@ class _TeamCheerTabState extends ConsumerState<TeamCheerTab> {
               ),
             ),
             const SizedBox(height: 12),
+            // 핸드오프 C — 2번째 글 뒤, 이후 6개마다.
+            if (i % 6 == 1)
+              const NativeAdSlot(
+                AdSlot.cheerBoard,
+                padding: EdgeInsets.only(bottom: 12),
+              ),
           ],
         // 목록이 있는데 숨긴 것도 있을 때. 왜 몇 개가 안 보이는지 알린다.
         if (state.cheers.isNotEmpty && hasHidden)

@@ -14,6 +14,7 @@ import '../../core/ui/mh_tap.dart';
 import '../../core/ui/nav_icons.dart';
 import '../../core/ui/push_sync.dart';
 import '../../game_detail/widgets/game_detail_screen.dart';
+import '../../ads/view_models/ads_view_model.dart';
 import '../../app/view_models/app_update_view_model.dart';
 import '../../app/widgets/update_prompt.dart';
 import '../../guide/view_models/guide_progress.dart';
@@ -52,7 +53,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (AppConfig.openGuide) GuideScreen.open(context);
-      _startPush();
+      // 온보딩은 광고 금지 구역이라 셸에 들어온 뒤에 SDK와 동의 창을 띄운다.
+      // 푸시 권한 창과 겹치지 않게 그 뒤에 한다.
+      _startPush().whenComplete(() {
+        if (mounted) ref.read(showAdsProvider.notifier).start();
+      });
       _checkUpdate();
       _syncRecords();
     });

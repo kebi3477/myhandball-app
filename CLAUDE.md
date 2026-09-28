@@ -373,6 +373,24 @@ lib/
 - 서버는 인증서를 수동 갱신한다. **앱은 만료되면 통째로
   먹통이 된다** (아래 "서버 상태")
 
+### 네이티브 광고 (AdMob)
+
+2026-09-28 디자인 핸드오프(`../design_handoff/README.md`)로 붙였다. 슬롯은 3개 —
+홈 가이드 카드 아래(`mh_feed_media`), 일정 목록 2번째 뒤·4개마다(`mh_list_small`),
+응원글 2번째 뒤·6개마다(`mh_cheer_post`). **온보딩·랭킹 동의·라이브 중계·예측
+시트·설정에는 넣지 않는다.**
+
+- 카드는 **네이티브가 그린다** (Android `MhNativeAdFactories.kt`, iOS
+  `MhNativeAdFactories.swift`). Flutter `NativeAdSlot`은 높이만 잡는다 —
+  고정 치수가 양쪽에 있으니 **한쪽을 고치면 셋 다 고친다**
+- 게시글형은 시안이 첫 줄에 광고주명을 쓰지만 AdMob이 제목 표시를 요구해서 제목을 둔다
+- SDK와 UMP 동의는 셸에 들어와 푸시 권한 창이 끝난 뒤 시작한다. 실패하면 슬롯이 전부 접힌다
+- 광고 단위 ID는 `MH_AD_HOME`/`MH_AD_SCHEDULE`/`MH_AD_CHEER` dart-define.
+  비우면 디버그는 테스트 광고, **릴리스는 슬롯을 끈다**
+- 앱 ID: Android는 `android/gradle.properties`의 `admobAppId`, iOS는 Info.plist
+  `GADApplicationIdentifier`. **둘 다 지금은 구글 테스트 ID다**
+- `MH_ADS=false`면 광고 없이 뜬다 (스크린샷용)
+
 ## 커밋
 
 **작업이 한 단락 끝나면 커밋까지 알아서 한다.** 따로 요청을 기다리지 않는다.
@@ -538,6 +556,13 @@ Keychain은 앱을 지워도 항목이 남는다 (Apple이 문서로 보장하�
 로고 URL은 `https://www.koreahandball.com/static/images/logo/logo_{m|w}_{teamNum}.png`
 형식이다. 목업의 팀 번호는 연맹 사이트의 팀 소개 페이지
 (`/introduce/team_men.php`, `/introduce/team_women.php`)에서 확인한 실제 값이다.
+
+**앱은 이 URL로 요청하지 않는다** (2026-09-28). 연맹 로고는 사용 허가가 없어서
+광고를 붙이면서 자체 엠블럼(`assets/emblems/*.svg`, 디자인 핸드오프)으로 바꿨다.
+`TeamLogo`가 URL의 `{m|w}_{teamNum}`을 `TeamEmblems`(`ui/core/ui/team_emblems.dart`)
+표로 엠블럼에 매핑하고, 모르는 팀은 회색 원이다 (핸드오프의
+`team-logo-default.png`는 SK호크스 공식 로고라 안 가져왔다). **팀 번호가 바뀌거나 팀이
+새로 생기면 이 표를 고친다.** 허가가 나면 이 파일 한 곳에서 되돌린다.
 
 ### 경기 상태와 중계
 

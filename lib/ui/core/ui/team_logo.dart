@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../themes/tokens.dart';
+import 'team_emblems.dart';
 
 /// 시안의 팀 로고 배지.
+///
+/// [logoUrl]은 서버가 주는 연맹 로고 URL이지만 **그 주소로 요청하지 않는다.**
+/// [TeamEmblems]가 자체 엠블럼 에셋으로 바꿔 그린다.
 ///
 /// 원형/둥근사각 흰 바탕 안에 로고를 `background-size: contain`으로 넣는
 /// 패턴이 화면마다 반복된다 (홈 카드 64px 원형, 순위 40px 라운드,
@@ -40,21 +45,20 @@ class TeamLogo extends StatelessWidget {
       child: SizedBox(
         width: size * inset,
         height: size * inset,
-        child: logoUrl == null
-            ? _Placeholder(size: size * inset)
-            : Image.network(
-                logoUrl!,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => _Placeholder(size: size * inset),
-                loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : _Placeholder(size: size * inset),
-              ),
+        child: _emblem(TeamEmblems.assetFor(logoUrl)),
       ),
     );
   }
+
+  Widget _emblem(String? asset) {
+    final placeholder = _Placeholder(size: size * inset);
+    if (asset == null) return placeholder;
+    return SvgPicture.asset(asset,
+        fit: BoxFit.contain, placeholderBuilder: (_) => placeholder);
+  }
 }
 
-/// 로고가 없거나 로딩 중일 때. 시안의 `logoFallback`에 해당한다.
+/// 로고가 없거나 모르는 팀일 때. 시안의 `logoFallback`에 해당한다.
 class _Placeholder extends StatelessWidget {
   const _Placeholder({required this.size});
 

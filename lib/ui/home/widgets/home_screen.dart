@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../data/repositories/preferences_repository.dart';
+import '../../../data/services/ads_service.dart';
 import '../../../domain/models/game.dart';
+import '../../ads/widgets/native_ad_slot.dart';
 import '../../core/themes/theme.dart';
 import '../../core/themes/tokens.dart';
 import '../../core/ui/mh_error_view.dart';
@@ -169,6 +171,12 @@ class _HomeContent extends ConsumerWidget {
             NearbyGamesSection(state: state),
             const SizedBox(height: MhSpacing.md),
             GuideBanner(doneCount: ref.watch(guideDoneCountProvider)),
+            // 핸드오프 A — 가이드 카드 바로 아래, 홈에 1개 고정.
+            const NativeAdSlot(
+              AdSlot.homeFeed,
+              padding: EdgeInsets.fromLTRB(
+                  MhSpacing.gutter, MhSpacing.md, MhSpacing.gutter, 0),
+            ),
             const SizedBox(height: MhSpacing.md),
             RankingSection(state: state),
             const SizedBox(height: MhSpacing.md),

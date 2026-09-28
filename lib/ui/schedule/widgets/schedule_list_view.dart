@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/services/ads_service.dart';
 import '../../../domain/models/game.dart';
+import '../../ads/widgets/native_ad_slot.dart';
 import '../../../domain/models/gender.dart';
 import '../../../domain/models/team.dart';
 import '../../core/themes/theme.dart';
@@ -70,10 +72,24 @@ class ScheduleListView extends ConsumerWidget {
                     itemCount: games.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: MhSpacing.xs),
-                    itemBuilder: (context, i) => MhTap(
-                      onTap: () => GameDetailScreen.open(context, games[i]),
-                      child: _ScheduleGameCard(game: games[i]),
-                    ),
+                    itemBuilder: (context, i) {
+                      final card = MhTap(
+                        onTap: () => GameDetailScreen.open(context, games[i]),
+                        child: _ScheduleGameCard(game: games[i]),
+                      );
+                      // 핸드오프 B — 2번째 카드 뒤, 이후 4개마다.
+                      if (i % 4 != 1) return card;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          card,
+                          const NativeAdSlot(
+                            AdSlot.scheduleList,
+                            padding: EdgeInsets.only(top: MhSpacing.xs),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
         ),

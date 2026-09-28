@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:myhandball/ui/core/ui/team_emblems.dart';
 import 'package:myhandball/ui/onboarding/view_models/onboarding_view_model.dart';
 
 /// 시안 에셋이 번들에 실제로 들어갔는지 확인한다.
@@ -33,5 +34,36 @@ void main() {
       final data = await rootBundle.load(path);
       expect(data.lengthInBytes, greaterThan(0), reason: '$path 가 비어 있다');
     }
+  });
+
+  test('팀 엠블럼이 모두 번들에 있다', () async {
+    for (final path in TeamEmblems.allAssets) {
+      final data = await rootBundle.load(path);
+      expect(data.lengthInBytes, greaterThan(0), reason: '$path 가 비어 있다');
+    }
+  });
+
+  group('TeamEmblems.assetFor', () {
+    const base = 'https://www.koreahandball.com/static/images/logo';
+
+    test('연맹 로고 URL을 자체 엠블럼으로 바꾼다', () {
+      expect(TeamEmblems.assetFor('$base/logo_m_132.png'),
+          'assets/emblems/skh.svg');
+      expect(TeamEmblems.assetFor('$base/logo_w_123.png'),
+          'assets/emblems/sks.svg');
+    });
+
+    test('남녀 팀 번호가 겹쳐도 성별로 구분한다', () {
+      expect(TeamEmblems.assetFor('$base/logo_m_22.png'),
+          'assets/emblems/sm.svg');
+      expect(TeamEmblems.assetFor('$base/logo_w_23.png'),
+          'assets/emblems/dg.svg');
+    });
+
+    test('모르는 팀이나 URL이 없으면 null (회색 원)', () {
+      expect(TeamEmblems.assetFor('$base/logo_m_999.png'), isNull);
+      expect(TeamEmblems.assetFor('https://example.com/x.png'), isNull);
+      expect(TeamEmblems.assetFor(null), isNull);
+    });
   });
 }

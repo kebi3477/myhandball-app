@@ -81,4 +81,19 @@ abstract final class AppConfig {
 
   /// 홈 상단 "시즌 TOP5"가 보여주는 줄 수.
   static const topPlayerCount = 5;
+
+  /// 네이티브 광고 전체 스위치 (디자인 핸드오프의 `showAds`).
+  /// 스크린샷을 찍을 때처럼 광고 없이 띄우려면
+  /// `--dart-define=MH_ADS=false`
+  static const adsEnabled = bool.fromEnvironment('MH_ADS', defaultValue: true);
+
+  /// AdMob 광고 단위 ID — 위치별로 나눠 성과를 비교한다.
+  ///
+  /// 플랫폼마다 ID가 다르므로 빌드할 때 그 플랫폼 값을 넣는다.
+  /// 비워 두면 **디버그에서는 구글 테스트 광고**가 나오고, **릴리스에서는
+  /// 그 슬롯을 끈다** — 테스트 광고가 스토어에 나가지 않게.
+  /// `--dart-define=MH_AD_HOME=ca-app-pub-.../...`
+  static const adUnitHome = String.fromEnvironment('MH_AD_HOME');
+  static const adUnitSchedule = String.fromEnvironment('MH_AD_SCHEDULE');
+  static const adUnitCheer = String.fromEnvironment('MH_AD_CHEER');
 }
