@@ -392,8 +392,9 @@ lib/
   없이 나와서 2026-09-28에 뒤집었다)
 - 앱 ID: Android는 `android/gradle.properties`의 `admobAppId`, iOS는 Info.plist
   `GADApplicationIdentifier`. 퍼블리셔 `pub-6280185901199691`
-- **app-ads.txt가 아직 없다.** 스토어에 개발자 웹사이트가 없어서 AdMob 앱이
-  "검토 필요" 상태다. 한 줄: `google.com, pub-6280185901199691, DIRECT, f08c47fec0942fa0`
+- **app-ads.txt**는 `https://myhandball.lab241.com/app-ads.txt`에서 나간다 (API 저장소
+  `deploy/Caddyfile`, 2026-09-28). AdMob은 스토어의 **개발자 웹사이트** 도메인에서
+  찾으므로 Play·App Store 양쪽에 이 도메인이 적혀 있어야 "검토 필요"가 풀린다
 - `MH_ADS=false`면 광고 없이 뜬다 (스크린샷용)
 
 ## 커밋
