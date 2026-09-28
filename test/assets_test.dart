@@ -45,6 +45,16 @@ void main() {
     }
   });
 
+  test('엠블럼에 flutter_svg가 브라우저와 다르게 그리는 요소가 없다', () {
+    // skh.svg가 <text>(글꼴 없음·text-anchor 무시)와 skewX로 "SK"가 잘렸었다.
+    // 글자는 path로, 기울이기는 좌표에 미리 적용해 둔다.
+    for (final path in TeamEmblems.allAssets) {
+      final svg = File(path).readAsStringSync();
+      expect(svg.contains('<text'), isFalse, reason: '$path: <text>');
+      expect(svg.contains('skew'), isFalse, reason: '$path: skew');
+    }
+  });
+
   group('TeamEmblems.assetFor', () {
     const base = 'https://www.koreahandball.com/static/images/logo';
 

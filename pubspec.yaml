@@ -48,6 +48,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # 스토어 스크린샷 자동 촬영 (tool/store_screenshots.sh)
+  integration_test:
+    sdk: flutter
+
   flutter_lints: ^6.0.0
 
 flutter:

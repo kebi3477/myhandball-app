@@ -445,6 +445,10 @@ flutter run --dart-define=MH_USE_MOCK=true                     # 목업
 "데이터가 이상하다" 싶으면 기동 로그의 `[MyHandball] 데이터 소스:` 줄을 본다.
 
 ```bash
+# 스토어 스크린샷 (상태바 9:41 고정, 푸시·광고 창 없이 6장). 같은 공유기에서는
+# 도메인에 못 붙으므로 미니 PC의 집 안 입구를 넘긴다
+tool/store_screenshots.sh <시뮬레이터 UDID> ../screenshot/ios-phone http://192.168.55.4:8080
+
 # 실제 서버에 붙여 전 엔드포인트 점검 (네트워크 필요, CI는 안 돌린다)
 flutter test tool/api_smoke_test.dart --dart-define=API_BASE_URL=http://localhost:3000
 ```
