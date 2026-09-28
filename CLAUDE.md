@@ -559,8 +559,11 @@ Keychain은 앱을 지워도 항목이 남는다 (Apple이 문서로 보장하�
 
 **앱은 이 URL로 요청하지 않는다** (2026-09-28). 연맹 로고는 사용 허가가 없어서
 광고를 붙이면서 자체 엠블럼(`assets/emblems/*.svg`, 디자인 핸드오프)으로 바꿨다.
-`TeamLogo`가 URL의 `{m|w}_{teamNum}`을 `TeamEmblems`(`ui/core/ui/team_emblems.dart`)
-표로 엠블럼에 매핑하고, 모르는 팀은 회색 원이다 (핸드오프의
+`TeamLogo`가 URL을 `TeamEmblems`(`ui/core/ui/team_emblems.dart`) 표로 엠블럼에
+매핑한다. **연맹 로고 URL은 두 종류다** — 팀 목록 계열은 `logo/logo_m_149.png`
+(`team_num`), 일정·순위·경기 계열은 `logo_api/logo_m_1.png`(`team_seq`, 1~14).
+처음에 앞의 것만 넣어서 일정·순위·경기 카드만 회색 원이 됐었다
+(`test/assets_test.dart`가 fixtures의 로고 URL을 전부 대조한다). 모르는 팀은 회색 원이다 (핸드오프의
 `team-logo-default.png`는 SK호크스 공식 로고라 안 가져왔다). **팀 번호가 바뀌거나 팀이
 새로 생기면 이 표를 고친다.** 허가가 나면 이 파일 한 곳에서 되돌린다.
 

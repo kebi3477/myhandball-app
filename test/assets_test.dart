@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,6 +60,32 @@ void main() {
           'assets/emblems/sm.svg');
       expect(TeamEmblems.assetFor('$base/logo_w_23.png'),
           'assets/emblems/dg.svg');
+    });
+
+    test('일정·순위·경기의 logo_api 경로(team_seq)도 같은 엠블럼이다', () {
+      expect(TeamEmblems.assetFor('https://www.koreahandball.com/static/images/logo_api/logo_m_6.png'),
+          'assets/emblems/skh.svg');
+      expect(TeamEmblems.assetFor('https://www.koreahandball.com/static/images/logo_api/logo_m_1.png'),
+          'assets/emblems/ds.svg');
+      expect(TeamEmblems.assetFor('https://www.koreahandball.com/static/images/logo_api/logo_w_7.png'),
+          'assets/emblems/sks.svg');
+    });
+
+    test('폴더가 다르면 번호가 같아도 다른 팀이다', () {
+      // logo/logo_m_1 은 존재하지 않는 team_num — 두산(logo_api 1)으로 착각하면 안 된다.
+      expect(TeamEmblems.assetFor('$base/logo_m_1.png'), isNull);
+    });
+
+    test('실제 API 응답(fixtures)에 나오는 로고가 전부 엠블럼으로 바뀐다', () {
+      final url = RegExp(r'https?://[^"]*/logo(?:_api)?/logo_[mw]_\d+\.png');
+      final found = <String>{};
+      for (final f in Directory('test/fixtures').listSync().whereType<File>()) {
+        found.addAll(url.allMatches(f.readAsStringSync()).map((m) => m[0]!));
+      }
+      expect(found, isNotEmpty);
+      for (final u in found) {
+        expect(TeamEmblems.assetFor(u), isNotNull, reason: '$u 에 맞는 엠블럼이 없다');
+      }
     });
 
     test('모르는 팀이나 URL이 없으면 null (회색 원)', () {
